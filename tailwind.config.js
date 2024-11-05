@@ -2,7 +2,15 @@
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}'],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        primary: ['Plus Jakarta Sans', 'sans-serif'],
+      },
+      colors: {
+        primaryLight: '#0866FF',
+        primaryDark: '#070054',
+      },
+    },
   },
   plugins: [],
 };
