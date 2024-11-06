@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 const MaterialPage = () => {
   return (
     <View>
-      <Text>Hi</Text>
+      <Text>Material</Text>
     </View>
   );
 };

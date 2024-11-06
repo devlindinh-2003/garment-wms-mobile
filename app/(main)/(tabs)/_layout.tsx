@@ -1,17 +1,16 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { Bell, Box, Shirt, Warehouse } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
+import { View } from 'react-native';
+import AppBarHeaderLayout from '@/components/common/AppBar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+const TabLayout: React.FC = () => {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Theme.primaryLightBackgroundColor,
         tabBarInactiveTintColor: Theme.greyText,
         headerShown: false,
       }}
@@ -24,7 +23,7 @@ export default function TabLayout() {
             <Warehouse
               size={22}
               color={
-                focused ? Colors[colorScheme ?? 'light'].tint : Theme.greyText
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
               }
               strokeWidth={focused ? 2.5 : 2}
             />
@@ -39,7 +38,7 @@ export default function TabLayout() {
             <Box
               size={22}
               color={
-                focused ? Colors[colorScheme ?? 'light'].tint : Theme.greyText
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
               }
               strokeWidth={focused ? 2.5 : 2}
             />
@@ -54,7 +53,7 @@ export default function TabLayout() {
             <Shirt
               size={22}
               color={
-                focused ? Colors[colorScheme ?? 'light'].tint : Theme.greyText
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
               }
               strokeWidth={focused ? 2.5 : 2}
             />
@@ -69,7 +68,7 @@ export default function TabLayout() {
             <Bell
               size={22}
               color={
-                focused ? Colors[colorScheme ?? 'light'].tint : Theme.greyText
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
               }
               strokeWidth={focused ? 2.5 : 2}
             />
@@ -78,4 +77,17 @@ export default function TabLayout() {
       />
     </Tabs>
   );
-}
+};
+
+const Layout: React.FC = () => {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <AppBarHeaderLayout />
+      <View style={{ flex: 1 }}>
+        <TabLayout />
+      </View>
+    </SafeAreaView>
+  );
+};
+
+export default Layout;
