@@ -4,7 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SafeAreaLayout: React.FC<ViewProps> = ({ children, ...props }) => {
   return (
-    <SafeAreaView style={styles.container} {...props}>
+    <SafeAreaView
+      style={styles.container}
+      edges={['left', 'right', 'bottom']}
+      {...props}
+    >
       {children}
     </SafeAreaView>
   );
