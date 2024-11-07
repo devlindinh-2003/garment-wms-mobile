@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Bell, Box, Shirt, Warehouse } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -33,7 +33,51 @@ const TabLayout: React.FC = () => {
           ),
         }}
       />
-      {/* Additional screens */}
+      <Tabs.Screen
+        name='material'
+        options={{
+          title: 'Material',
+          tabBarIcon: ({ focused }) => (
+            <Box
+              size={22}
+              color={
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
+              }
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name='product'
+        options={{
+          title: 'Product',
+          tabBarIcon: ({ focused }) => (
+            <Shirt
+              size={22}
+              color={
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
+              }
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name='notification'
+        options={{
+          title: 'Notification',
+          tabBarIcon: ({ focused }) => (
+            <Bell
+              size={22}
+              color={
+                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
+              }
+              strokeWidth={focused ? 2.5 : 2}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 };
@@ -111,6 +155,7 @@ const Layout: React.FC = () => {
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
       renderDrawerContent={renderDrawerContent}
+      drawerPosition='right'
     >
       <SafeAreaView style={{ flex: 1 }}>
         {/* Pass toggleDrawer as a prop to AppBarHeaderLayout */}
