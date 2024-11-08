@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import React, { useState } from 'react';
 import { Bell, Box, Shirt, Warehouse } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
@@ -7,6 +7,7 @@ import AppBarHeaderLayout from '@/components/common/AppBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Drawer } from 'react-native-drawer-layout';
 import avatar from '@/assets/images/avatar.png';
+import { Button } from 'react-native-paper';
 
 const TabLayout: React.FC = () => {
   return (
@@ -146,6 +147,14 @@ const Layout: React.FC = () => {
       >
         <Text className='text-white text-center font-semibold'>Sign out</Text>
       </TouchableOpacity>
+      <Button
+        buttonColor={Theme.primaryLightBackgroundColor}
+        textColor='white'
+        className='mt-9'
+        onPress={() => router.push('/(auth)/login')}
+      >
+        Test login
+      </Button>
     </SafeAreaView>
   );
 
@@ -158,7 +167,6 @@ const Layout: React.FC = () => {
       drawerPosition='right'
     >
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Pass toggleDrawer as a prop to AppBarHeaderLayout */}
         <AppBarHeaderLayout toggleDrawer={toggleDrawer} />
         <View style={{ flex: 1 }}>
           <TabLayout />
