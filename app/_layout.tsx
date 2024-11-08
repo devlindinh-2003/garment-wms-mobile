@@ -1,6 +1,6 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -20,6 +20,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      router.replace('/(main)/(tabs)');
     }
   }, [loaded]);
 
@@ -34,6 +35,10 @@ export default function RootLayout() {
           <Stack>
             <Stack.Screen
               name='(main)/(tabs)'
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name='(auth)/login'
               options={{ headerShown: false }}
             />
             <Stack.Screen name='+not-found' />
