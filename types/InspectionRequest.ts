@@ -2,6 +2,8 @@ import { InspectionRequestStatus } from '@/enums/inspectionRequestStatus';
 import { ImportRequest } from './ImportRequestType';
 import { PurchasingStaff } from './PurchasingStaff';
 import { WarehouseManager } from './WarehouseManager';
+import { InspectionDepartment } from './InspectionDepartment';
+import { InspectionReport } from './InspectionReport';
 
 export interface InspectionRequest {
   id: string;
@@ -22,21 +24,6 @@ export interface InspectionRequest {
   purchasingStaff?: PurchasingStaff | null;
   productionDeparment?: ProductionDepartment | null;
   warehouseManager?: WarehouseManager | null;
-}
-
-export interface InspectionReport {
-  // Define fields based on InspectionReport structure
-  id: string;
-  reportDetails: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface InspectionDepartment {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ProductionDepartment {
