@@ -1,6 +1,6 @@
 import { View, ScrollView } from 'react-native';
 import SafeAreaLayout from '@/components/common/SafeAreaLayout';
-import { Text, Card } from 'react-native-paper';
+import { Text, Card, TouchableRipple } from 'react-native-paper';
 import { FC } from 'react';
 import { router } from 'expo-router';
 
@@ -38,9 +38,9 @@ const SectionHeader: FC<SectionHeaderProps> = ({ title, total, onPress }) => (
         </Text>
       </Card>
     </View>
-    <Text className='text-blue-500 underline' onPress={onPress}>
-      Details →
-    </Text>
+    <TouchableRipple onPress={onPress}>
+      <Text className='text-blue-500 underline'>Details →</Text>
+    </TouchableRipple>
   </View>
 );
 
