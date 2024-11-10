@@ -1,6 +1,6 @@
 import Theme from '@/constants/Theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 import { Card, Text } from 'react-native-paper';
 

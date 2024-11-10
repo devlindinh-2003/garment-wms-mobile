@@ -1,0 +1,8 @@
+export enum ImportRequestStatus {
+  ARRIVED = 'ARRIVED',
+  CANCELED = 'CANCELED',
+  REJECTED = 'REJECTED',
+  APPROVED = 'APPROVED',
+  INSPECTING = 'INSPECTING',
+  INSPECTED = 'INSPECTED',
+}
