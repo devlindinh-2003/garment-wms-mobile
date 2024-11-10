@@ -1,29 +1,46 @@
+import { ImportRequestStatus } from '@/enums/importRequestStatus';
+import { ImportRequestType } from '@/enums/importRequestType';
+import { MaterialPackage } from './MaterialTypes';
+import { PurchaseOrder } from './PurchaseOrder';
+import { PurchaseOrderDeliveryStatus } from '@/enums/purchaseOrderDeliveryStatus';
+import { InspectionRequest } from './InspectionRequest';
+import { PurchasingStaff } from './PurchasingStaff';
+import { WarehouseManager } from './WarehouseManager';
+import { WarehouseStaff } from './WarehouseStaff';
+
 export interface ImportRequest {
   id: string;
   warehouseStaffId: string | null;
-  status: 'ARRIVED' | 'PENDING' | 'CANCELLED'; // Other statuses if needed
-  type: 'MATERIAL_BY_PO' | 'OTHER_TYPES'; // Other types if applicable
-  startAt: string | null;
-  finishAt: string | null;
+  poDeliveryId: string;
+  purchasingStaffId: string | null;
+  warehouseManagerId: string | null;
+  productionDepartmentId: string | null;
+  productionBatchId: string | null;
+  status: ImportRequestStatus;
+  code: string;
+  type: ImportRequestType;
+  startedAt: string | null;
+  finishedAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  description: string | null;
+  approveNote: string | null;
+  rejectAt: string | null;
+  rejectReason: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  cancelAt: string | null;
-  cancelReason: string | null;
-  description: string;
-  poDeliveryId: string;
-  purchasingStaffId: string;
-  rejectAt: string | null;
-  rejectReason: string | null;
-  warehouseManagerId: string | null;
-  importRequestDetail: ImportRequestDetail[];
-  warehouseManager: WarehouseManager | null;
-  purchasingStaff: PurchasingStaff;
-  warehouseStaff: WarehouseStaff | null;
   poDelivery: PODelivery;
+  purchasingStaff?: PurchasingStaff | null;
+  warehouseManager?: WarehouseManager | null;
+  warehouseStaff?: WarehouseStaff | null;
+  productionBatch?: ProductionBatch | null;
+  productionDepartment?: ProductionDepartment | null;
+  importRequestDetail: ImportRequestDetail[];
+  inspectionRequest: InspectionRequest[];
 }
 
-type ImportRequestDetail = {
+export interface ImportRequestDetail {
   id: string;
   importRequestId: string;
   materialVariantId: string;
@@ -32,150 +49,39 @@ type ImportRequestDetail = {
   updatedAt: string;
   deletedAt: string | null;
   quantityByPack: number;
-  materialPackage: materialPackage;
-};
-
-type materialPackage = {
-  id: string;
-  materialId: string;
-  name: string;
-  code: string;
-  packUnit: string;
-  uomPerPack: number;
-  packedWidth: number;
-  packedLength: number;
-  packedHeight: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  packedWeight: number;
-  material: Material;
-};
-
-type Material = {
-  id: string;
-  materialTypeId: string;
-  materialUomId: string;
-  image: string;
-  name: string;
-  code: string;
-  reorderLevel: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  materialType: MaterialType;
-  materialAttribute: MaterialAttribute[];
-};
-
-type MaterialType = {
-  id: string;
-  name: string;
-  code: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-};
-
-type MaterialAttribute = any; // Define according to your needs if necessary
-interface User {
-  id: string;
-  email: string;
-  password: string;
-  username: string;
-  avatarUrl: string;
-  cidId: string | null;
-  dateOfBirth: string;
-  firstName: string;
-  gender: 'MALE' | 'FEMALE'; // Adjust if needed
-  isDeleted: boolean;
-  isVerified: boolean;
-  lastName: string;
-  phoneNumber: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
+  materialPackage: MaterialPackage;
 }
-type PurchasingStaff = {
-  id: string;
-  userId: string;
-  users: User;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-};
 
-type WarehouseManager = {
-  id: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-} | null;
-
-type WarehouseStaff = {
-  id: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-} | null;
-
-type PODelivery = {
+export interface PODelivery {
   id: string;
   purchaseOrderId: string;
   expectedDeliverDate: string;
   deliverDate: string | null;
-  status: 'IMPORTING' | 'DELIVERED'; // Add more statuses if needed
+  status: PurchaseOrderDeliveryStatus;
   isExtra: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
   purchaseOrder: PurchaseOrder;
-};
+}
 
-type PurchaseOrder = {
+export interface ProductionBatch {
   id: string;
-  poNumber: string;
-  quarterlyProductionPlanId: string | null;
-  purchasingStaffId: string;
-  currency: string;
-  subTotalAmount: number;
-  taxAmount: number;
-  shippingAmount: number;
-  otherAmount: number;
-  orderDate: string;
-  expectedFinishDate: string;
-  finishDate: string | null;
-  cancelledAt: string | null;
-  cancelledReason: string | null;
-  status: 'FINISHED' | 'PENDING'; // Add more statuses if needed
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  supplierId: string;
-  purchasingStaff: PurchasingStaff;
-  supplier: Supplier;
-};
+}
 
-export interface poDelivery {
+export interface ProductionDepartment {
   id: string;
-  purchaseOrderId: string;
-  expectedDeliverDate: string;
-  deliverDate: string;
-  purchaseOrder: PurchaseOrder;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }
 
-export interface Supplier {
-  supplierName: string;
-  address: string;
-  email: string;
-  phoneNumber: string;
-  fax: string;
-}
 export interface ImportRequestDetails {
   id: string;
-  materialPackage?: materialPackage;
+  materialPackage?: MaterialPackage;
   quantityByPack?: number;
 }
 
