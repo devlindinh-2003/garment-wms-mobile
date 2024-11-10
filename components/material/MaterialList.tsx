@@ -1,13 +1,19 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Card, DataTable, Searchbar, Text, Badge } from 'react-native-paper';
+import {
+  Card,
+  DataTable,
+  Searchbar,
+  Text,
+  TouchableRipple,
+} from 'react-native-paper';
 import { styled } from 'nativewind';
+import { useRouter } from 'expo-router';
 import StatusBadge from '../common/StatusBadge';
 
 const StyledCard = styled(Card);
 const StyledText = styled(Text);
 const StyledSearchbar = styled(Searchbar);
-const StyledBadge = styled(Badge);
 
 const MaterialList = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -16,6 +22,7 @@ const MaterialList = () => {
   const [itemsPerPage, onItemsPerPageChange] = React.useState(
     numberOfItemsPerPageList[0]
   );
+  const router = useRouter();
 
   const mockData = [
     { id: 'IP-0001', dateCreated: '10/02/2022', status: 'Inspected' },
@@ -53,9 +60,15 @@ const MaterialList = () => {
             inputStyle={{ fontSize: 16 }}
             iconColor='#6E6E6E'
           />
-          <StyledText className='text-blue-500 font-semibold underline'>
-            Incoming Request (10)
-          </StyledText>
+          <TouchableRipple
+            onPress={() => router.push('/(tabs)/material/incoming-request')}
+            rippleColor='rgba(0, 0, 0, 0.1)'
+            borderless
+          >
+            <StyledText className='text-blue-500 font-semibold underline'>
+              Incoming Request (10)
+            </StyledText>
+          </TouchableRipple>
         </View>
 
         <DataTable>
