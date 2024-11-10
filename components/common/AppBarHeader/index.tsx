@@ -33,7 +33,7 @@ const AppbarHeader: React.FC<AppbarHeaderProps> = ({
         <MoveLeft
           {...props}
           color={Theme.primaryLightBackgroundColor}
-          size={25}
+          size={30}
         />
       );
 
