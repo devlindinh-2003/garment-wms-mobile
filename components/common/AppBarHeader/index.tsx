@@ -8,7 +8,6 @@ import {
 import { View, GestureResponderEvent } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MoveLeft } from 'lucide-react-native';
-import { styled } from 'nativewind';
 import Theme from '@/constants/Theme';
 
 interface AppbarHeaderProps {
@@ -17,9 +16,6 @@ interface AppbarHeaderProps {
   icon?: (props: IconProps) => IconElement;
   titleSize?: number;
 }
-
-const StyledView = styled(View);
-const StyledText = styled(Text);
 
 const AppbarHeader: React.FC<AppbarHeaderProps> = ({
   title,
@@ -42,22 +38,22 @@ const AppbarHeader: React.FC<AppbarHeaderProps> = ({
   );
 
   const renderTitle = (): React.ReactElement => (
-    <StyledText
-      className={`text-center font-bold text-primaryLight`}
+    <Text
+      className='text-center font-bold text-primaryLight'
       style={{ fontSize: titleSize }}
     >
       {title}
-    </StyledText>
+    </Text>
   );
 
   return (
-    <StyledView className='bg-white'>
+    <View className='bg-white border-b border-gray-300 mb-5'>
       <TopNavigation
         accessoryLeft={BackAction}
         title={renderTitle}
         alignment='center'
       />
-    </StyledView>
+    </View>
   );
 };
 

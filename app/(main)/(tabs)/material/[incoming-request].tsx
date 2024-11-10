@@ -6,6 +6,7 @@ import AppbarHeader from '@/components/common/AppBarHeader';
 import { ScrollView } from 'react-native-gesture-handler';
 import DropDownPicker from 'react-native-dropdown-picker';
 import IncomingRequestItem from '@/components/common/IncomingRequestItem.tsx';
+import materialImg from '@/assets/images/materialSample.png';
 
 const IncomingRequest = () => {
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -22,9 +23,18 @@ const IncomingRequest = () => {
     router.back();
   };
 
+  // Mock data for 20 incoming requests
+  const mockRequests = Array.from({ length: 20 }, (_, index) => ({
+    id: `INS-REQ-${String(index + 1).padStart(6, '0')}`,
+    materialType: index % 2 === 0 ? 'Fabric' : 'Metal',
+    requestDate: `May ${16 + index}, 2022`,
+    imageSrc: materialImg,
+  }));
+
   return (
     <View className='flex-1 bg-white'>
       <AppbarHeader title='Incoming Request' onPress={handleBackPress} />
+
       {/* Title + Sort Date */}
       <View className='flex-row items-center justify-between mb-4 px-4'>
         <View className='space-y-2 items-center px-5'>
@@ -32,7 +42,7 @@ const IncomingRequest = () => {
             Total Request
           </Text>
           <Text variant='titleLarge' className='font-bold text-primaryLight'>
-            10
+            {mockRequests.length}
           </Text>
         </View>
         <View className='flex-1 px-4'>
@@ -78,16 +88,16 @@ const IncomingRequest = () => {
 
       {/* List request */}
       <ScrollView className='px-3 py-2'>
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
-        <IncomingRequestItem />
+        {mockRequests.map((request) => (
+          <IncomingRequestItem
+            key={request.id}
+            id={request.id}
+            materialType={request.materialType}
+            requestDate={request.requestDate}
+            imageSrc={request.imageSrc}
+            onInspectPress={() => console.log(`Inspect ${request.id}`)}
+          />
+        ))}
       </ScrollView>
     </View>
   );
