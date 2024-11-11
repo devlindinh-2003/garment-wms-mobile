@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import MaterialStatistic from '@/components/material/MaterialStatistic';
 import { Text } from 'react-native-paper';
 import MaterialList from '@/components/material/MaterialList';
+import { useGetAllInspectionRequest } from '@/hooks/useGetAllInspectionRequest';
 
 const MaterialPage = () => {
   return (

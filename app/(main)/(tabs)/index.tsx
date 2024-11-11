@@ -1,14 +1,8 @@
 import { View, ScrollView } from 'react-native';
 import SafeAreaLayout from '@/components/common/SafeAreaLayout';
-import {
-  Text,
-  Card,
-  TouchableRipple,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { Text, Card, TouchableRipple } from 'react-native-paper';
 import { FC } from 'react';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { useGetAllImportRequest } from '@/hooks/useGetAllImportRequest';
 
 type StatusCardProps = {
@@ -52,6 +46,10 @@ const SectionHeader: FC<SectionHeaderProps> = ({ title, total, onPress }) => (
 );
 
 const DashboardPage: FC = () => {
+  const { data, isPending, isError } = useGetAllImportRequest({
+    pageSize: 10,
+    pageIndex: 0,
+  });
   return (
     <SafeAreaLayout className='px-4 py-2'>
       <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
