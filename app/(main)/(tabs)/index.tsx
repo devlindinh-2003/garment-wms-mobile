@@ -1,8 +1,15 @@
 import { View, ScrollView } from 'react-native';
 import SafeAreaLayout from '@/components/common/SafeAreaLayout';
-import { Text, Card, TouchableRipple } from 'react-native-paper';
+import {
+  Text,
+  Card,
+  TouchableRipple,
+  ActivityIndicator,
+} from 'react-native-paper';
 import { FC } from 'react';
 import { router } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { useGetAllImportRequest } from '@/hooks/useGetAllImportRequest';
 
 type StatusCardProps = {
   count: number;
