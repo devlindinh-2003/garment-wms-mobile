@@ -6,6 +6,7 @@ import MaterialList from '@/components/material/MaterialList';
 import { useGetAllInspectionRequest } from '@/hooks/useGetAllInspectionRequest';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import { InspectionRequestStatus } from '@/enums/inspectionRequestStatus';
+import { useGetInspectionStatisticByType } from '@/hooks/useGetImportRequestStatistic';
 
 const MaterialPage = () => {
   const { data, isPending, isError, isSuccess } = useGetAllInspectionRequest({
@@ -13,7 +14,12 @@ const MaterialPage = () => {
     pageIndex: 0,
   });
 
-  // Filter for inspected materials
+  const {
+    data: materialStatistic,
+    isPending: isStatisticPending,
+    isError: isStatisticError,
+  } = useGetInspectionStatisticByType(InspectionRequestType.MATERIAL);
+
   const inspectedMaterialList = isSuccess
     ? data?.data.filter(
         (request) =>
@@ -22,7 +28,6 @@ const MaterialPage = () => {
       ) || []
     : [];
 
-  // Filter for inspecting materials
   const inspectingMaterialList = isSuccess
     ? data?.data.filter(
         (request) =>
@@ -41,7 +46,7 @@ const MaterialPage = () => {
         Raw Material Statistics
       </Text>
       {/* Material Statistic */}
-      <MaterialStatistic />
+      <MaterialStatistic statistic={materialStatistic?.data} />
       {/* Material List with both inspected and inspecting requests */}
       <MaterialList
         inspectedRequests={inspectedMaterialList}

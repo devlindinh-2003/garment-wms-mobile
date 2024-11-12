@@ -7,7 +7,7 @@ import { getInspectionStatisticByType } from '@/api/inspectionRequest';
 export const useGetInspectionStatisticByType = (
   type: InspectionRequestType
 ) => {
-  const { data, status, isLoading, isError, isSuccess, isFetching } = useQuery<
+  const { data, status, isPending, isError, isSuccess, isFetching } = useQuery<
     ApiResponse,
     AxiosError
   >({
@@ -16,5 +16,5 @@ export const useGetInspectionStatisticByType = (
     enabled: !!type,
   });
 
-  return { data, status, isLoading, isError, isSuccess, isFetching };
+  return { data, status, isPending, isError, isSuccess, isFetching };
 };

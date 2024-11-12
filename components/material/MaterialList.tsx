@@ -38,20 +38,27 @@ const MaterialList: React.FC<MaterialListProps> = ({
     <StatusBadge variant='success'>{status}</StatusBadge>
   );
 
+  const isDataEmpty =
+    inspectedRequests.length === 0 && inspectingRequests.length === 0;
+  const hasIncomingRequests = inspectingRequests.length > 0;
+
   return (
     <View className='mt-5 mb-9 px-2'>
       <Card className='rounded-lg shadow-lg p-6 bg-white'>
-        <View className='flex-row items-center space-x-3 mb-4'>
+        <View className='flex-row items-center justify-between mb-4 space-x-5'>
           <Searchbar
             placeholder='Search'
             onChangeText={setSearchQuery}
             value={searchQuery}
-            className='bg-blue-100 rounded-full flex-1 px-3 text-base'
+            className={`bg-blue-100 rounded-full flex-1 px-3 ${
+              isDataEmpty ? 'hidden' : ''
+            }`}
             inputStyle={{ fontSize: 16 }}
             iconColor='#6E6E6E'
           />
           <TouchableRipple
             onPress={() =>
+              hasIncomingRequests &&
               router.push({
                 pathname: '/(tabs)/material/[incoming-request]',
                 params: {
@@ -62,8 +69,13 @@ const MaterialList: React.FC<MaterialListProps> = ({
             }
             rippleColor='rgba(0, 0, 0, 0.1)'
             borderless
+            disabled={!hasIncomingRequests}
           >
-            <Text className='text-blue-500 font-semibold underline'>
+            <Text
+              className={`font-semibold underline ${
+                hasIncomingRequests ? 'text-blue-500' : 'text-gray-400'
+              }`}
+            >
               Incoming Request ({inspectingRequests.length})
             </Text>
           </TouchableRipple>
@@ -79,28 +91,38 @@ const MaterialList: React.FC<MaterialListProps> = ({
             </DataTable.Title>
           </DataTable.Header>
 
-          {inspectedRequests.slice(from, to).map((item) => (
-            <DataTable.Row key={item.id} className='h-12'>
-              <DataTable.Cell className='flex-1.5 justify-center items-center text-sm text-gray-800'>
-                {item.code}
-              </DataTable.Cell>
-              <DataTable.Cell className='flex-1 justify-center items-center'>
-                {renderStatusBadge(item.status)}
+          {isDataEmpty ? (
+            <DataTable.Row>
+              <DataTable.Cell className='justify-center items-center'>
+                <Text className='text-gray-500'>Table data is empty</Text>
               </DataTable.Cell>
             </DataTable.Row>
-          ))}
+          ) : (
+            inspectedRequests.slice(from, to).map((item) => (
+              <DataTable.Row key={item.id} className='h-12'>
+                <DataTable.Cell className='flex-1.5 justify-center items-center text-sm text-gray-800'>
+                  {item.code}
+                </DataTable.Cell>
+                <DataTable.Cell className='flex-1 justify-center items-center'>
+                  {renderStatusBadge(item.status)}
+                </DataTable.Cell>
+              </DataTable.Row>
+            ))
+          )}
 
-          <DataTable.Pagination
-            page={page}
-            numberOfPages={Math.ceil(inspectedRequests.length / itemsPerPage)}
-            onPageChange={(page) => setPage(page)}
-            label={`${from + 1}-${to} of ${inspectedRequests.length}`}
-            numberOfItemsPerPageList={numberOfItemsPerPageList}
-            numberOfItemsPerPage={itemsPerPage}
-            onItemsPerPageChange={onItemsPerPageChange}
-            showFastPaginationControls
-            selectPageDropdownLabel='Rows per page'
-          />
+          {!isDataEmpty && (
+            <DataTable.Pagination
+              page={page}
+              numberOfPages={Math.ceil(inspectedRequests.length / itemsPerPage)}
+              onPageChange={(page) => setPage(page)}
+              label={`${from + 1}-${to} of ${inspectedRequests.length}`}
+              numberOfItemsPerPageList={numberOfItemsPerPageList}
+              numberOfItemsPerPage={itemsPerPage}
+              onItemsPerPageChange={onItemsPerPageChange}
+              showFastPaginationControls
+              selectPageDropdownLabel='Rows per page'
+            />
+          )}
         </DataTable>
       </Card>
     </View>
