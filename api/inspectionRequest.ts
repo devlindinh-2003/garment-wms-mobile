@@ -89,3 +89,30 @@ export const getInspectionStatisticByType = async (
     throw new Error('An unexpected error occurred while fetching statistics.');
   }
 };
+
+export const getInspectionRequestById = async (
+  id: string
+): Promise<ApiResponse> => {
+  try {
+    const config = get(`/inspection-request/${id}`);
+    const response = await axios(config);
+    return response.data as ApiResponse;
+  } catch (error: any) {
+    console.error('Failed to fetch import request by ID:', error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        statusCode: error.response.status,
+        data: null,
+        message:
+          error.response.data.message ||
+          'An error occurred while fetching the import request.',
+        errors: error.response.data.errors || null,
+      } as ApiResponse;
+    }
+
+    throw new Error(
+      'An unexpected error occurred while fetching the import request.'
+    );
+  }
+};

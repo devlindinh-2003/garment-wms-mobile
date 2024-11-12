@@ -100,7 +100,15 @@ const MaterialList: React.FC<MaterialListProps> = ({
           ) : (
             inspectedRequests.slice(from, to).map((item) => (
               <DataTable.Row key={item.id} className='h-12'>
-                <DataTable.Cell className='flex-1.5 justify-center items-center text-sm text-gray-800'>
+                <DataTable.Cell
+                  className='flex-1.5 justify-center items-center text-sm text-blue-500'
+                  /*                onPress={() =>
+                    router.push({
+                      pathname: '/(main)(tabs)material[inspected-detail]',
+                      params: { 'inspected-detail': item.id },
+                    })
+                  } */
+                >
                   {item.code}
                 </DataTable.Cell>
                 <DataTable.Cell className='flex-1 justify-center items-center'>
