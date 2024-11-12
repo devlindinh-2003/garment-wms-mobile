@@ -7,7 +7,6 @@ import {
   Text,
   TouchableRipple,
 } from 'react-native-paper';
-import { styled } from 'nativewind';
 import { useRouter } from 'expo-router';
 import StatusBadge from '../common/StatusBadge';
 import { InspectionRequest } from '@/types/InspectionRequest';
@@ -19,6 +18,7 @@ interface MaterialListProps {
 
 const MaterialList: React.FC<MaterialListProps> = ({
   inspectedRequests = [],
+  inspectingRequests = [],
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [page, setPage] = React.useState<number>(0);
@@ -27,7 +27,6 @@ const MaterialList: React.FC<MaterialListProps> = ({
     numberOfItemsPerPageList[0]
   );
   const router = useRouter();
-
   const from = page * itemsPerPage;
   const to = Math.min((page + 1) * itemsPerPage, inspectedRequests.length);
 
@@ -52,12 +51,20 @@ const MaterialList: React.FC<MaterialListProps> = ({
             iconColor='#6E6E6E'
           />
           <TouchableRipple
-            onPress={() => router.push('/(tabs)/material/incoming-request')}
+            onPress={() =>
+              router.push({
+                pathname: '/(tabs)/material/incoming-request',
+                params: {
+                  inspectingRequestsList: JSON.stringify(inspectingRequests),
+                },
+              })
+            }
+            // onPress={() => router.push('/(tabs)/material/incoming-request')}
             rippleColor='rgba(0, 0, 0, 0.1)'
             borderless
           >
             <Text className='text-blue-500 font-semibold underline'>
-              Incoming Request ({inspectedRequests.length})
+              Incoming Request ({inspectingRequests.length})
             </Text>
           </TouchableRipple>
         </View>
