@@ -4,7 +4,7 @@ import { ApiResponse } from '@/types/ApiResponse';
 import { getInspectionRequestById } from '@/api/inspectionRequest';
 
 export const useGetInspectionRequestById = (id: string) => {
-  const { data, error, isLoading, isError, isSuccess, refetch } = useQuery<
+  const { data, error, isPending, isError, isSuccess, refetch } = useQuery<
     ApiResponse,
     AxiosError
   >({
@@ -13,5 +13,5 @@ export const useGetInspectionRequestById = (id: string) => {
     enabled: !!id,
   });
 
-  return { data, error, isLoading, isError, isSuccess, refetch };
+  return { data, error, isPending, isError, isSuccess, refetch };
 };
