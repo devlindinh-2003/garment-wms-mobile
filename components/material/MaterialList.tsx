@@ -53,13 +53,13 @@ const MaterialList: React.FC<MaterialListProps> = ({
           <TouchableRipple
             onPress={() =>
               router.push({
-                pathname: '/(tabs)/material/incoming-request',
+                pathname: '/(tabs)/material/[incoming-request]',
                 params: {
+                  'incoming-request': 'incoming-request',
                   inspectingRequestsList: JSON.stringify(inspectingRequests),
                 },
               })
             }
-            // onPress={() => router.push('/(tabs)/material/incoming-request')}
             rippleColor='rgba(0, 0, 0, 0.1)'
             borderless
           >
