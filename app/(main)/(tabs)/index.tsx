@@ -5,6 +5,7 @@ import { FC } from 'react';
 import { router } from 'expo-router';
 import { useGetInspectionStatisticByType } from '@/hooks/useGetImportRequestStatistic';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
+import MaterialStatistic from '@/components/material/MaterialStatistic';
 
 type StatusCardProps = {
   count: number;
@@ -57,62 +58,20 @@ const DashboardPage: FC = () => {
   return (
     <SafeAreaLayout className='px-4 py-2'>
       <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
-        <SectionHeader
-          title='Raw Material'
-          total={materialData?.data?.total || 0}
-          onPress={() => {
-            router.push('/material');
-          }}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard
-            count={materialData?.data?.inspected || 0}
-            status='Inspected'
-            color='bg-green-500'
-          />
-          <StatusCard
-            count={materialData?.data?.inspecting || 0}
-            status='Inspecting'
-            color='bg-blue-500'
-          />
-          <StatusCard
-            count={materialData?.data?.cancelled || 0}
-            status='Cancelled'
-            color='bg-red-500'
-          />
-        </View>
+        <Text variant='titleLarge' className='font-bold text-center mt-4 mb-2'>
+          Raw Material Statistics
+        </Text>
+        <MaterialStatistic statistic={materialData?.data} />
 
-        <SectionHeader
-          title='Finished Product'
-          total={productData?.data?.total || 0}
-          onPress={() => {
-            router.push('/product');
-          }}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard
-            count={productData?.data?.inspected || 0}
-            status='Inspected'
-            color='bg-green-500'
-          />
-          <StatusCard
-            count={productData?.data?.inspecting || 0}
-            status='Inspecting'
-            color='bg-blue-500'
-          />
-          <StatusCard
-            count={productData?.data?.cancelled || 0}
-            status='Cancelled'
-            color='bg-red-500'
-          />
-        </View>
+        <Text variant='titleLarge' className='font-bold text-center mt-6 mb-2'>
+          Finished Product Statistics
+        </Text>
+        <MaterialStatistic statistic={productData?.data} />
 
         <SectionHeader
           title='Notifications'
           total={11}
-          onPress={() => {
-            router.push('/notification');
-          }}
+          onPress={() => router.push('/notification')}
         />
         <View className='flex-row space-x-2'>
           <StatusCard count={6} status='Read' color='bg-green-500' />
