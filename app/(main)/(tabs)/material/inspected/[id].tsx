@@ -1,90 +1,89 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById'; // Custom hook to fetch data
+import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
+import MaterialInspectionRequestInfo from '@/components/inspected-detail/material/MaterialInspectionRequest';
+import MaterialInspectionReport from '@/components/inspected-detail/material/MaterialInspectionReport';
+import Theme from '@/constants/Theme';
 
-const InspectedDetail = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const {
-    data: inspectionData,
-    isPending,
-    isError,
-  } = useGetInspectionRequestById(id || '');
+const InspectedDetails = () => {
+  const { id } = useLocalSearchParams();
+  const { data, isSuccess } = useGetInspectionRequestById(id as string);
 
-  if (isPending) {
+  if (isSuccess && data) {
+    const {
+      code: inspectionRequestCode,
+      status: inspectionRequestStatus,
+      createdAt: inspectionReportCreatedAt,
+      note: inspectionRequestNote,
+      inspectionDepartment,
+      inspectionReport,
+    } = data.data;
+
+    const inspectionDeptFirstName =
+      inspectionDepartment?.account?.firstName || 'N/A';
+    const inspectionDeptLastName =
+      inspectionDepartment?.account?.lastName || 'N/A';
+
+    const totalMaterials =
+      inspectionReport?.inspectionReportDetail.reduce(
+        (acc: number, item: { quantityByPack: number }) =>
+          acc + item.quantityByPack,
+        0
+      ) || 0;
+
+    const passCount =
+      inspectionReport?.inspectionReportDetail.reduce(
+        (acc: number, item: { approvedQuantityByPack: number }) =>
+          acc + item.approvedQuantityByPack,
+        0
+      ) || 0;
+
+    const failCount =
+      inspectionReport?.inspectionReportDetail.reduce(
+        (acc: number, item: { defectQuantityByPack: number }) =>
+          acc + item.defectQuantityByPack,
+        0
+      ) || 0;
+    const passPercentage = ((passCount / totalMaterials) * 100).toFixed(0);
+    const failPercentage = ((failCount / totalMaterials) * 100).toFixed(0);
+    const chartData = [
+      {
+        value: parseFloat(failPercentage),
+        frontColor: Theme.red[500],
+        label: 'Fail',
+      },
+      {
+        value: parseFloat(passPercentage),
+        frontColor: Theme.green[500],
+        label: 'Pass',
+      },
+    ];
+
     return (
-      <ActivityIndicator size='large' color='#0000ff' style={styles.loader} />
+      <ScrollView className='bg-white px-2 py-4'>
+        {/* Inspect Request Info */}
+        <MaterialInspectionRequestInfo
+          inspectionRequestCode={inspectionRequestCode}
+          inspectionRequestStatus={inspectionRequestStatus}
+          inspectionReportCreatedAt={inspectionReportCreatedAt}
+          inspectionDeptFirstName={inspectionDeptFirstName}
+          inspectionDeptLastName={inspectionDeptLastName}
+          inspectionRequestNote={inspectionRequestNote}
+        />
+        {/* Inspection Report */}
+        <MaterialInspectionReport
+          inspectionReportCode={inspectionReport?.code || 'N/A'}
+          totalMaterials={totalMaterials}
+          chartData={chartData}
+          failPercentage={failPercentage}
+          passPercentage={passPercentage}
+        />
+      </ScrollView>
     );
   }
 
-  if (isError || !inspectionData) {
-    return <Text style={styles.errorText}>Failed to load data.</Text>;
-  }
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Inspection Details</Text>
-      <View style={styles.detailContainer}>
-        <Text style={styles.label}>Report Code:</Text>
-        <Text style={styles.value}>{inspectionData?.data?.code || 'N/A'}</Text>
-      </View>
-      <View style={styles.detailContainer}>
-        <Text style={styles.label}>Status:</Text>
-        <Text style={styles.value}>
-          {inspectionData?.data?.status || 'N/A'}
-        </Text>
-      </View>
-      <View style={styles.detailContainer}>
-        <Text style={styles.label}>Material Type:</Text>
-        <Text style={styles.value}>
-          {inspectionData?.data?.materialType || 'N/A'}
-        </Text>
-      </View>
-      <View style={styles.detailContainer}>
-        <Text style={styles.label}>Inspection Date:</Text>
-        <Text style={styles.value}>
-          {inspectionData?.data?.createdAt || 'N/A'}
-        </Text>
-      </View>
-      {/* Add more fields as needed */}
-    </View>
-  );
+  return null;
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: 'white',
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    textAlign: 'center',
-    color: 'red',
-    marginTop: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  detailContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  label: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  value: {
-    color: '#555',
-  },
-});
-
-export default InspectedDetail;
+export default InspectedDetails;

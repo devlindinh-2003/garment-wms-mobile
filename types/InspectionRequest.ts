@@ -14,7 +14,7 @@ export interface InspectionRequest {
   productionDeparmentId?: string | null;
   inspectionDepartmentId: string;
   status: InspectionRequestStatus;
-  type: InspectionRequestType; // New field for the inspection request type
+  type: InspectionRequestType;
   createdAt?: string | null;
   updatedAt?: string | null;
   deletedAt?: string | null;
