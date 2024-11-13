@@ -1,3 +1,4 @@
+import { InspectionReportDetail } from './InspectionReportDetail';
 import { InspectionRequest } from './InspectionRequest';
 
 export interface InspectionReport {
@@ -15,15 +16,6 @@ export interface InspectionReport {
 export interface ImportReceipt {
   id: string;
   receiptCode: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
-}
-
-export interface InspectionReportDetail {
-  id: string;
-  inspectionReportId: string;
-  detail: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;

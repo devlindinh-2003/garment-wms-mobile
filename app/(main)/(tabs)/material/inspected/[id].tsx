@@ -4,11 +4,18 @@ import { useLocalSearchParams } from 'expo-router';
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
 import MaterialInspectionRequestInfo from '@/components/inspected-detail/material/MaterialInspectionRequest';
 import MaterialInspectionReport from '@/components/inspected-detail/material/MaterialInspectionReport';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
 import Theme from '@/constants/Theme';
 
 const InspectedDetails = () => {
   const { id } = useLocalSearchParams();
-  const { data, isSuccess } = useGetInspectionRequestById(id as string);
+  const { data, isSuccess, isPending } = useGetInspectionRequestById(
+    id as string
+  );
+
+  if (isPending) {
+    return <SpinnerLoading />;
+  }
 
   if (isSuccess && data) {
     const {
@@ -45,8 +52,10 @@ const InspectedDetails = () => {
           acc + item.defectQuantityByPack,
         0
       ) || 0;
+
     const passPercentage = ((passCount / totalMaterials) * 100).toFixed(0);
     const failPercentage = ((failCount / totalMaterials) * 100).toFixed(0);
+
     const chartData = [
       {
         value: parseFloat(failPercentage),
@@ -73,6 +82,7 @@ const InspectedDetails = () => {
         />
         {/* Inspection Report */}
         <MaterialInspectionReport
+          inspectionReport={inspectionReport}
           inspectionReportCode={inspectionReport?.code || 'N/A'}
           totalMaterials={totalMaterials}
           chartData={chartData}

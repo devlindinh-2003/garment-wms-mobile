@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import MaterialDetailCard from './MaterialDetailCard';
+import { InspectionReport } from '@/types/InspectionReport';
 
 interface MaterialInspectionReportProps {
   inspectionReportCode: string;
@@ -9,6 +10,7 @@ interface MaterialInspectionReportProps {
   chartData: { value: number; frontColor: string; label: string }[];
   failPercentage: string;
   passPercentage: string;
+  inspectionReport: InspectionReport;
 }
 
 const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
@@ -17,6 +19,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   chartData,
   failPercentage,
   passPercentage,
+  inspectionReport,
 }) => {
   return (
     <View>
@@ -66,10 +69,25 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
         <Text className='font-bold'>{passPercentage}%</Text>
       </View>
 
-      {/* Inspection Report Details */}
       <View>
-        <Text className='text-blue-500 mt-5'>Inspection Report Details:</Text>
-        <MaterialDetailCard />
+        <Text className='text-blue-500 mt-7 text-center text-2xl font-semibold mb-3 uppercase'>
+          Inspection Report Details
+        </Text>
+        {inspectionReport.inspectionReportDetail.map((detail) => (
+          <MaterialDetailCard
+            key={detail.id}
+            image={detail.materialPackage?.materialVariant?.image || ''}
+            name={detail.materialPackage?.name || 'N/A'}
+            code={detail.materialPackage?.code || 'N/A'}
+            height={`${detail.materialPackage?.packedHeight || 0}m`}
+            width={`${detail.materialPackage?.packedWidth || 0}m`}
+            weight={`${detail.materialPackage?.packedWeight || 0}kg`}
+            length={`${detail.materialPackage?.packedLength || 0}m`}
+            total={detail.quantityByPack || 0}
+            pass={detail.approvedQuantityByPack}
+            fail={detail.defectQuantityByPack}
+          />
+        ))}
       </View>
     </View>
   );

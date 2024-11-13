@@ -12,7 +12,6 @@ export interface InspectionReportDetail {
   createdAt?: string | null;
   updatedAt?: string | null;
   deletedAt?: string | null;
-  inspectionReport: InspectionReport;
   materialPackage?: MaterialPackage | null;
   productSize?: ProductSize | null;
 }
