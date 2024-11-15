@@ -16,6 +16,7 @@ import Theme from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { convertDate } from '@/helpers/converDate';
 import StatusBadge from '@/components/common/StatusBadge';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
 
 interface RouteProps {
   inspectedMaterialList: InspectionRequest[];
@@ -147,7 +148,7 @@ const InspectingRoute: React.FC<RouteProps> = ({ inspectedMaterialList }) => {
 
 // MaterialPage component remains unchanged
 const MaterialPage: React.FC = () => {
-  const { data, isSuccess } = useGetAllInspectionRequest({
+  const { data, isSuccess, isPending } = useGetAllInspectionRequest({
     pageSize: 10,
     pageIndex: 0,
   });
@@ -206,7 +207,7 @@ const MaterialPage: React.FC = () => {
   );
 
   return (
-    <View className='flex-1'>
+    <View className='flex-1 mb-9'>
       <Text
         style={{ fontWeight: 'bold' }}
         variant='titleLarge'
@@ -214,13 +215,17 @@ const MaterialPage: React.FC = () => {
       >
         Raw Material Statistics
       </Text>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={initialLayout}
-        renderTabBar={renderTabBar}
-      />
+      {isPending ? (
+        <SpinnerLoading />
+      ) : (
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={initialLayout}
+          renderTabBar={renderTabBar}
+        />
+      )}
     </View>
   );
 };

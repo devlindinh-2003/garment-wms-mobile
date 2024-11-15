@@ -47,11 +47,11 @@ const getContainerStyles = (variant: string) => {
     case 'destructive':
       return 'bg-red-500 border-transparent';
     case 'success':
-      return 'bg-green-500 border-gray-500';
+      return 'bg-green-500 border-transparent';
     case 'outline':
-      return 'bg-transparent border-gray-500';
+      return 'bg-transparent border-transparent';
     case 'type':
-      return 'bg-gray-500 border-gray-500';
+      return 'bg-gray-500 border-transparent';
     default:
       return 'bg-blue-500 border-transparent';
   }
