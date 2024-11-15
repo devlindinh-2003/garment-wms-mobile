@@ -120,7 +120,7 @@ const InspectingRoute: React.FC<RouteProps> = ({ inspectedMaterialList }) => {
               icon='magnify'
               onPress={() =>
                 router.push({
-                  pathname: '/(tabs)/material/inspected/[id]',
+                  pathname: '/(main)/(tabs)/material/create-report/[id]',
                   params: { id: item.id },
                 })
               }

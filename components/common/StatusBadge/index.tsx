@@ -40,6 +40,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
 const getContainerStyles = (variant: string) => {
   switch (variant) {
+    case 'default':
+      return 'bg-blue-500 border-transparent';
     case 'secondary':
       return 'bg-purple-500 border-transparent';
     case 'destructive':
