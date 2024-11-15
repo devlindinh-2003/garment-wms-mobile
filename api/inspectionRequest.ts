@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { get } from './ApiCaller';
+import { get, post } from './ApiCaller';
 import {
   FilterBuilder,
   FilterOperationType,
@@ -7,6 +7,18 @@ import {
 import { InspectionRequestListResponse } from '@/types/InspectionRequestResponse';
 import { ApiResponse } from '@/types/ApiResponse';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
+
+interface InspectionReportDetail {
+  approvedQuantityByPack: number;
+  defectQuantityByPack: number;
+  materialVariantId: string;
+}
+
+export interface CreateInspectionReportParams {
+  inspectionRequestId: string;
+  inspectionDepartmentId: string;
+  inspectionReportDetail: InspectionReportDetail[];
+}
 
 interface GetAllInspectionRequestInput {
   sorting?: { id: string; desc: boolean }[];
@@ -113,6 +125,34 @@ export const getInspectionRequestById = async (
 
     throw new Error(
       'An unexpected error occurred while fetching the import request.'
+    );
+  }
+};
+
+export const createInspectionReport = async (
+  data: CreateInspectionReportParams
+): Promise<ApiResponse> => {
+  const endpoint = '/inspection-report';
+  const config = post(endpoint, data);
+  try {
+    const response = await axios(config);
+    return response.data as ApiResponse;
+  } catch (error: any) {
+    console.error('Failed to create inspection report:', error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        statusCode: error.response.status,
+        data: null,
+        message:
+          error.response.data.message ||
+          'An error occurred while creating the inspection report.',
+        errors: error.response.data.errors || null,
+      } as ApiResponse;
+    }
+
+    throw new Error(
+      'An unexpected error occurred while creating the inspection report.'
     );
   }
 };

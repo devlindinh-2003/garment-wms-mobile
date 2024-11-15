@@ -3,6 +3,7 @@ import MaterialInspectingCard from '@/components/inspecting-process/material/Mat
 import MaterialInspectionRequest from '@/components/inspecting-process/material/MaterialInspectionRequest';
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
 import { ImportRequestDetail } from '@/types/ImportRequestType';
+import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -13,6 +14,7 @@ const CreateMaterialReport = () => {
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
+  const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
 
   // State for report details
   const [reportDetails, setReportDetails] = useState<
@@ -31,27 +33,30 @@ const CreateMaterialReport = () => {
     });
   };
 
-  const handleSendReport = async () => {
-    try {
-      // Replace with your API endpoint and request logic
-      const response = await fetch('/api/send-inspection-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reportDetails }),
-      });
-      if (response.ok) {
-        console.log('Report submitted successfully');
+  const handleSendReport = () => {
+    // Create the request body format for the API
+    const requestBody = {
+      inspectionRequestId: id as string,
+      inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',
+      inspectionReportDetail: reportDetails.map((detail) => ({
+        approvedQuantityByPack: detail.pass,
+        defectQuantityByPack: detail.fail,
+        materialVariantId: detail.id, // Assuming `id` is materialVariantId in this case
+      })),
+    };
+
+    console.log('Inspection Report Request Body:');
+    console.log(JSON.stringify(requestBody, null, 2));
+
+    mutate(requestBody, {
+      onSuccess: () => {
         alert('Report submitted successfully!');
-      } else {
-        console.error('Failed to submit the report');
+      },
+      onError: (error) => {
+        console.error('Error submitting report:', error);
         alert('Failed to submit the report.');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred while submitting the report.');
-    }
+      },
+    });
   };
 
   if (isPending) {
@@ -114,6 +119,7 @@ const CreateMaterialReport = () => {
             onPress={handleSendReport}
             className='bg-primaryLight'
             labelStyle={{ color: 'white', fontWeight: 'bold' }}
+            disabled={isCreatingReport}
           >
             Send Report
           </Button>
