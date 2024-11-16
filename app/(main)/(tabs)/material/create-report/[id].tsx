@@ -15,8 +15,6 @@ const CreateMaterialReport = () => {
     id as string
   );
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
-
-  // State for report details
   const [reportDetails, setReportDetails] = useState<
     { id: string; pass: number; fail: number }[]
   >([]);
@@ -34,14 +32,13 @@ const CreateMaterialReport = () => {
   };
 
   const handleSendReport = () => {
-    // Create the request body format for the API
     const requestBody = {
       inspectionRequestId: id as string,
       inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',
       inspectionReportDetail: reportDetails.map((detail) => ({
         approvedQuantityByPack: detail.pass,
         defectQuantityByPack: detail.fail,
-        materialVariantId: detail.id, // Assuming `id` is materialVariantId in this case
+        materialVariantId: detail.id,
       })),
     };
 

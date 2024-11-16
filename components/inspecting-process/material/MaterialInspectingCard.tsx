@@ -1,7 +1,8 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
-import { Card, TextInput } from 'react-native-paper';
+import { Card } from 'react-native-paper';
+import { Input } from '@ui-kitten/components';
 
 interface MaterialDetailCardProps {
   image: string;
@@ -30,14 +31,19 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   fail,
   onUpdate,
 }) => {
-  const [passQuantity, setPassQuantity] = useState(pass);
-  const [failQuantity, setFailQuantity] = useState(total - pass);
+  const [passQuantity, setPassQuantity] = useState<string>(
+    pass > 0 ? pass.toString() : ''
+  );
+  const [failQuantity, setFailQuantity] = useState<string>(
+    fail > 0 ? fail.toString() : ''
+  );
 
   const handlePassChange = (value: string) => {
     const passValue = Math.min(parseInt(value, 10) || 0, total);
     const failValue = total - passValue;
-    setPassQuantity(passValue);
-    setFailQuantity(failValue);
+
+    setPassQuantity(value); // Directly set the input value
+    setFailQuantity(failValue > 0 ? failValue.toString() : ''); // Calculate fail dynamically
     onUpdate(passValue, failValue);
   };
 
@@ -93,10 +99,9 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
         {/* PASS Materials */}
         <View className='bg-green-100 p-3 my-4 rounded-md'>
           <Text className='text-green-600 font-bold mb-2'>PASS Materials</Text>
-          <TextInput
-            mode='outlined'
+          <Input
             placeholder='Enter number of PASS materials'
-            value={passQuantity.toString()}
+            value={passQuantity || undefined}
             onChangeText={handlePassChange}
             keyboardType='numeric'
             style={{ backgroundColor: 'white' }}
@@ -106,11 +111,10 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
         {/* FAILED Materials */}
         <View className='bg-red-100 p-3 my-2 rounded-md'>
           <Text className='text-red-600 font-bold mb-2'>FAILED Materials</Text>
-          <TextInput
-            mode='outlined'
-            placeholder='Automatically calculated'
-            value={failQuantity.toString()}
-            editable={false}
+          <Input
+            placeholder='Calculated automatically'
+            value={failQuantity || undefined}
+            disabled
             style={{ backgroundColor: '#f5f5f5' }}
           />
         </View>
