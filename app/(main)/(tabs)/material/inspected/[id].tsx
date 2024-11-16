@@ -6,6 +6,7 @@ import MaterialInspectionRequestInfo from '@/components/inspected-detail/materia
 import MaterialInspectionReport from '@/components/inspected-detail/material/MaterialInspectionReport';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import Theme from '@/constants/Theme';
+import { Text } from 'react-native-paper';
 
 const InspectedDetails = () => {
   const { id } = useLocalSearchParams();
@@ -61,11 +62,35 @@ const InspectedDetails = () => {
         value: parseFloat(failPercentage),
         frontColor: Theme.red[500],
         label: 'Fail',
+        topLabelComponent: () => (
+          <Text
+            style={{
+              color: Theme.red[500],
+              fontSize: 18,
+              marginBottom: 6,
+              fontWeight: 'bold',
+            }}
+          >
+            {failCount}
+          </Text>
+        ),
       },
       {
         value: parseFloat(passPercentage),
         frontColor: Theme.green[500],
         label: 'Pass',
+        topLabelComponent: () => (
+          <Text
+            style={{
+              color: Theme.green[500],
+              fontSize: 18,
+              marginBottom: 6,
+              fontWeight: 'bold',
+            }}
+          >
+            {failCount}
+          </Text>
+        ),
       },
     ];
 

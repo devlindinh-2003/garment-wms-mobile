@@ -37,14 +37,25 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   const [failQuantity, setFailQuantity] = useState<string>(
     fail > 0 ? fail.toString() : ''
   );
+  const [status, setStatus] = useState<'basic' | 'danger'>('basic');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handlePassChange = (value: string) => {
-    const passValue = Math.min(parseInt(value, 10) || 0, total);
-    const failValue = total - passValue;
+    const passValue = parseInt(value, 10) || 0;
 
-    setPassQuantity(value); // Directly set the input value
-    setFailQuantity(failValue > 0 ? failValue.toString() : ''); // Calculate fail dynamically
-    onUpdate(passValue, failValue);
+    if (passValue > total) {
+      setStatus('danger');
+      setErrorMessage(`PASS materials cannot exceed the total (${total}).`);
+      setPassQuantity(value); // Keep showing the invalid value for user feedback
+    } else {
+      const failValue = total - passValue;
+
+      setStatus('basic');
+      setErrorMessage('');
+      setPassQuantity(value); // Update the valid value
+      setFailQuantity(failValue > 0 ? failValue.toString() : '');
+      onUpdate(passValue, failValue);
+    }
   };
 
   return (
@@ -105,6 +116,8 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
             onChangeText={handlePassChange}
             keyboardType='numeric'
             style={{ backgroundColor: 'white' }}
+            status={status} // Use the status prop
+            caption={errorMessage} // Show the error message if present
           />
         </View>
 
