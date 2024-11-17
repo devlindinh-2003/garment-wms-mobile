@@ -67,17 +67,6 @@ const DashboardPage: FC = () => {
           Finished Product Statistics
         </Text>
         <MaterialStatistic statistic={productData?.data} />
-
-        <SectionHeader
-          title='Notifications'
-          total={11}
-          onPress={() => router.push('/notification')}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard count={6} status='Read' color='bg-green-500' />
-          <StatusCard count={2} status='Unread' color='bg-gray-400' />
-          <View className='flex-1 mx-1' />
-        </View>
       </ScrollView>
     </SafeAreaLayout>
   );

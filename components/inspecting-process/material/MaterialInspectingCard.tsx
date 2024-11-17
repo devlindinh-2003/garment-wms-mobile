@@ -1,4 +1,3 @@
-import StatusBadge from '@/components/common/StatusBadge';
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Card } from 'react-native-paper';
@@ -15,7 +14,7 @@ interface MaterialDetailCardProps {
   total: number;
   pass: number;
   fail: number;
-  onUpdate: (pass: number, fail: number) => void;
+  onUpdate: (pass: number, fail: number, isValid: boolean) => void;
 }
 
 const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
@@ -31,30 +30,33 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   fail,
   onUpdate,
 }) => {
-  const [passQuantity, setPassQuantity] = useState<string>(
-    pass > 0 ? pass.toString() : ''
-  );
-  const [failQuantity, setFailQuantity] = useState<string>(
-    fail > 0 ? fail.toString() : ''
-  );
+  const [passQuantity, setPassQuantity] = useState<string>('');
+  const [failQuantity, setFailQuantity] = useState<string>('');
   const [status, setStatus] = useState<'basic' | 'danger'>('basic');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handlePassChange = (value: string) => {
-    const passValue = parseInt(value, 10) || 0;
+    const sanitizedValue = value.replace(/[^0-9]/g, ''); // Allow only numeric characters
+    const passValue = parseInt(sanitizedValue, 10) || 0;
+
+    if (sanitizedValue !== value) {
+      setStatus('danger');
+      setErrorMessage('Invalid input: only numbers are allowed.');
+      onUpdate(0, 0, false); // Mark as invalid
+      return;
+    }
 
     if (passValue > total) {
       setStatus('danger');
       setErrorMessage(`PASS materials cannot exceed the total (${total}).`);
-      setPassQuantity(value); // Keep showing the invalid value for user feedback
+      onUpdate(passValue, total - passValue, false); // Mark as invalid
     } else {
       const failValue = total - passValue;
-
       setStatus('basic');
       setErrorMessage('');
-      setPassQuantity(value); // Update the valid value
-      setFailQuantity(failValue > 0 ? failValue.toString() : '');
-      onUpdate(passValue, failValue);
+      setPassQuantity(sanitizedValue);
+      setFailQuantity(failValue > 0 ? failValue.toString() : '0'); // Automatically set `fail` to `0` when `pass` equals `total`
+      onUpdate(passValue, failValue, true); // Mark as valid
     }
   };
 
@@ -77,9 +79,7 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
           <Text className='text-lg font-bold text-black flex-1 mr-2'>
             {name}
           </Text>
-          <StatusBadge variant='type' className='text-gray-500 text-sm'>
-            {code}
-          </StatusBadge>
+          <Text className='text-gray-500 text-sm'>{code}</Text>
         </View>
 
         {/* Specification Section */}

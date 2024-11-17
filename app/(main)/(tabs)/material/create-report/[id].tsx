@@ -6,8 +6,9 @@ import { ImportRequestDetail } from '@/types/ImportRequestType';
 import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, Text } from 'react-native';
 import { Button } from 'react-native-paper';
+import Theme from '@/constants/Theme';
 
 const CreateMaterialReport = () => {
   const { id } = useLocalSearchParams();
@@ -16,22 +17,45 @@ const CreateMaterialReport = () => {
   );
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
-    { id: string; pass: number; fail: number }[]
+    { id: string; pass: number; fail: number; isValid: boolean }[]
   >([]);
+  const [specialCharacterError, setSpecialCharacterError] = useState(false);
 
-  const handleReportUpdate = (id: string, pass: number, fail: number) => {
+  const handleReportUpdate = (
+    id: string,
+    pass: number,
+    fail: number,
+    isValid: boolean
+  ) => {
     setReportDetails((prevDetails) => {
       const existingDetail = prevDetails.find((detail) => detail.id === id);
       if (existingDetail) {
         return prevDetails.map((detail) =>
-          detail.id === id ? { id, pass, fail } : detail
+          detail.id === id ? { id, pass, fail, isValid } : detail
         );
       }
-      return [...prevDetails, { id, pass, fail }];
+      return [...prevDetails, { id, pass, fail, isValid }];
     });
   };
 
+  const handlePhoneValidation = (phone: string) => {
+    const hasSpecialCharacter = /[^\w\s]/.test(phone); // Regex to detect special characters
+    setSpecialCharacterError(hasSpecialCharacter);
+  };
+
+  const allInputsValid = data?.data.importRequest.importRequestDetail.every(
+    (detail: ImportRequestDetail) => {
+      const reportDetail = reportDetails.find((d) => d.id === detail.id);
+      return reportDetail && reportDetail.isValid;
+    }
+  );
+
   const handleSendReport = () => {
+    if (!allInputsValid) {
+      alert('Please fill in all inputs and fix errors before submitting.');
+      return;
+    }
+
     const requestBody = {
       inspectionRequestId: id as string,
       inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',
@@ -41,9 +65,6 @@ const CreateMaterialReport = () => {
         materialVariantId: detail.id,
       })),
     };
-
-    console.log('Inspection Report Request Body:');
-    console.log(JSON.stringify(requestBody, null, 2));
 
     mutate(requestBody, {
       onSuccess: () => {
@@ -79,7 +100,11 @@ const CreateMaterialReport = () => {
 
     return (
       <ScrollView className='p-4 bg-white'>
-        {/* Material Inspection Request Info */}
+        {specialCharacterError && (
+          <Text className='text-red-600 font-bold mb-2'>
+            Phone number contains invalid characters. Please use only numbers.
+          </Text>
+        )}
         <MaterialInspectionRequest
           inspectionRequestCode={inspectionRequestCode}
           inspectionRequestStatus={inspectionRequestStatus}
@@ -90,7 +115,6 @@ const CreateMaterialReport = () => {
           managerName={managerName}
         />
 
-        {/* Inspecting Material List */}
         {importRequestDetail.map((detail: ImportRequestDetail) => (
           <MaterialInspectingCard
             key={detail.id}
@@ -104,21 +128,25 @@ const CreateMaterialReport = () => {
             total={detail.quantityByPack}
             pass={0}
             fail={0}
-            onUpdate={(pass, fail) => handleReportUpdate(detail.id, pass, fail)}
+            onUpdate={(pass, fail, isValid) =>
+              handleReportUpdate(detail.id, pass, fail, isValid)
+            }
           />
         ))}
 
-        {/* Send Report Button */}
         <View className='mt-4 mb-20'>
           <Button
             icon='send'
             mode='contained'
             onPress={handleSendReport}
-            className='bg-primaryLight'
-            labelStyle={{ color: 'white', fontWeight: 'bold' }}
-            disabled={isCreatingReport}
+            buttonColor={Theme.primaryLightBackgroundColor}
+            disabled={!allInputsValid || isCreatingReport}
+            labelStyle={{
+              color: 'white',
+              fontWeight: 'bold',
+            }}
           >
-            Send Report
+            {isCreatingReport ? 'Submitting...' : 'Send Report'}
           </Button>
         </View>
       </ScrollView>
