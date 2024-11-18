@@ -13,7 +13,7 @@ const InspectedDetails = () => {
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
-
+  console.log(JSON.stringify(data, null, 2));
   if (isPending) {
     return <SpinnerLoading />;
   }

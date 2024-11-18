@@ -59,7 +59,7 @@ export const getAllInspectionReport = async ({
     order,
   });
 
-  const fullUrl = `/inspection-request${queryString}`;
+  const fullUrl = `/inspection-report${queryString}`;
 
   try {
     const config = get(fullUrl);
@@ -95,6 +95,33 @@ export const createInspectionReport = async (
 
     throw new Error(
       'An unexpected error occurred while creating the inspection report.'
+    );
+  }
+};
+
+export const getInspectionReportById = async (
+  id: string
+): Promise<ApiResponse> => {
+  try {
+    const config = get(`/inspection-report/${id}`);
+    const response = await axios(config);
+    return response.data as ApiResponse;
+  } catch (error: any) {
+    console.error('Failed to fetch import request by ID:', error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        statusCode: error.response.status,
+        data: null,
+        message:
+          error.response.data.message ||
+          'An error occurred while fetching the import report.',
+        errors: error.response.data.errors || null,
+      } as ApiResponse;
+    }
+
+    throw new Error(
+      'An unexpected error occurred while fetching the import request.'
     );
   }
 };
