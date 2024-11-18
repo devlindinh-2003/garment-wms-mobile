@@ -1,4 +1,3 @@
-import { InspectionReport } from './InspectionReport';
 import { MaterialPackage } from './MaterialTypes';
 
 export interface InspectionReportDetail {

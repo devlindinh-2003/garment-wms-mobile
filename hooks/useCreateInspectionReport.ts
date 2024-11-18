@@ -1,7 +1,7 @@
 import {
   createInspectionReport,
   CreateInspectionReportParams,
-} from '@/api/inspectionRequest';
+} from '@/api/inspectionReport';
 import { ApiResponse } from '@/types/ApiResponse';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
