@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import MaterialInspectingCard from '@/components/inspecting-process/material/MaterialInspectingCard';
 import MaterialInspectionRequest from '@/components/inspecting-process/material/MaterialInspectionRequest';
@@ -11,13 +12,19 @@ import { Button, Snackbar } from 'react-native-paper';
 import Theme from '@/constants/Theme';
 
 const CreateMaterialReport = () => {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
-    { id: string; pass: number; fail: number; isValid: boolean }[]
+    {
+      id: string;
+      pass: number;
+      fail: number;
+      isValid: boolean;
+    }[]
   >([]);
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
@@ -84,17 +91,22 @@ const CreateMaterialReport = () => {
     };
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-    // mutate(requestBody, {
-    //   onSuccess: () => {
-    //     setSnackbarMessage('Report submitted successfully!');
-    //     setSnackbarVisibleSuccess(true);
-    //   },
-    //   onError: (error) => {
-    //     console.error('Error submitting report:', error.message);
-    //     setSnackbarMessage('Failed to submit the report.');
-    //     setSnackbarVisibleError(true);
-    //   },
-    // });
+
+    mutate(requestBody, {
+      onSuccess: (response) => {
+        setSnackbarMessage('Report submitted successfully!');
+        setSnackbarVisibleSuccess(true);
+        router.push({
+          pathname: '/(main)/(tabs)/material/inspected/[id]',
+          params: { id: response.data?.inspectionReport?.id || '' },
+        });
+      },
+      onError: (error) => {
+        console.error('Error submitting report:', error.message);
+        setSnackbarMessage('Failed to submit the report.');
+        setSnackbarVisibleError(true);
+      },
+    });
   };
 
   if (isPending) {
@@ -173,7 +185,7 @@ const CreateMaterialReport = () => {
           onDismiss={() => setSnackbarVisibleSuccess(false)}
           duration={3000}
           style={{
-            backgroundColor: 'rgb(34, 197, 94)', // Green for success
+            backgroundColor: Theme.success,
             borderRadius: 6,
           }}
         >
@@ -186,7 +198,7 @@ const CreateMaterialReport = () => {
           onDismiss={() => setSnackbarVisibleError(false)}
           duration={3000}
           style={{
-            backgroundColor: 'rgb(239, 68, 68)', // Red for error
+            backgroundColor: Theme.error,
             borderRadius: 6,
           }}
         >

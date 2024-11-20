@@ -69,7 +69,7 @@ const InspectedDetails = () => {
 
     const chartData = [
       {
-        value: parseFloat(failPercentage),
+        value: failCount,
         frontColor: Theme.red[500],
         label: 'Fail',
         topLabelComponent: () => (
@@ -86,7 +86,7 @@ const InspectedDetails = () => {
         ),
       },
       {
-        value: parseFloat(passPercentage),
+        value: passCount,
         frontColor: Theme.green[500],
         label: 'Pass',
         topLabelComponent: () => (
@@ -103,9 +103,8 @@ const InspectedDetails = () => {
         ),
       },
     ];
-
     return (
-      <ScrollView className='bg-white px-2 py-4'>
+      <ScrollView className='bg-white px-2 py-4 mb-3'>
         {/* Inspection Request Info */}
         <MaterialInspectionRequestInfo
           inspectionRequestCode={inspectionRequestCode}

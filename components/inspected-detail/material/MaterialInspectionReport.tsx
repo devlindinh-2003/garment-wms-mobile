@@ -27,7 +27,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   return (
     <View>
       {/* Inspection Report */}
-      <View className='flex-row items-center mt-4'>
+      <View className='flex-row items-center mt-4 px-3'>
         <Text className='text-slate-500 font-semibold'>
           Inspection Report:{' '}
         </Text>
@@ -37,8 +37,10 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
       </View>
 
       {/* Total Materials */}
-      <Text className='text-lg font-bold mt-4'>Total Materials</Text>
-      <Text className='text-4xl font-bold mb-3'>{totalMaterials}</Text>
+      <View className='px-3'>
+        <Text className='text-lg font-bold mt-4'>Total Materials</Text>
+        <Text className='text-4xl font-bold mb-3'>{totalMaterials}</Text>
+      </View>
 
       {/* Bar Chart */}
       <View className='mt-3 my-4 w-full items-center'>
