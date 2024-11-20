@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import AppbarHeader from '@/components/common/AppBarHeader';
 import { ScrollView } from 'react-native-gesture-handler';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { InspectionRequest } from '@/types/InspectionRequest';
 import IncomingRequestItem from '@/components/common/IncomingRequestItem.tsx';
-import materialImg from '@/assets/images/materialSample.png';
 
 const IncomingRequest = () => {
+  const { inspectingRequestsList } = useLocalSearchParams();
+  const [inspectingRequests, setInspectingRequests] = useState<
+    InspectionRequest[]
+  >([]);
+
+  useEffect(() => {
+    if (inspectingRequestsList) {
+      try {
+        const parsedData = JSON.parse(inspectingRequestsList as string);
+        setInspectingRequests(parsedData);
+      } catch (error) {
+        console.error('Failed to parse inspecting requests:', error);
+      }
+    }
+  }, [inspectingRequestsList]);
+
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedDropdownValue, setSelectedDropdownValue] = useState<
     string | null
@@ -23,29 +39,30 @@ const IncomingRequest = () => {
     router.back();
   };
 
-  // Mock data for 20 incoming requests
-  const mockRequests = Array.from({ length: 20 }, (_, index) => ({
-    id: `INS-REQ-${String(index + 1).padStart(6, '0')}`,
-    materialType: index % 2 === 0 ? 'Fabric' : 'Metal',
-    requestDate: `May ${16 + index}, 2022`,
-    imageSrc: materialImg,
-  }));
-
   return (
-    <View className='flex-1 bg-white'>
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
       <AppbarHeader title='Incoming Request' onPress={handleBackPress} />
 
-      {/* Title + Sort Date */}
-      <View className='flex-row items-center justify-between mb-4 px-4'>
-        <View className='space-y-2 items-center px-5'>
-          <Text variant='titleSmall' className='font-bold'>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+          paddingHorizontal: 16,
+        }}
+      >
+        <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
+          <Text variant='titleSmall' style={{ fontWeight: 'bold' }}>
             Total Request
           </Text>
-          <Text variant='titleLarge' className='font-bold text-primaryLight'>
-            {mockRequests.length}
+          <Text
+            variant='titleLarge'
+            style={{ fontWeight: 'bold', color: '#1F2937' }}
+          >
+            {inspectingRequests.length}
           </Text>
         </View>
-        <View className='flex-1 px-4'>
+        <View style={{ flex: 1, paddingHorizontal: 8 }}>
           <DropDownPicker
             open={openDropdown}
             value={selectedDropdownValue}
@@ -54,10 +71,7 @@ const IncomingRequest = () => {
             setValue={setSelectedDropdownValue}
             setItems={setItems}
             placeholder='Date'
-            placeholderStyle={{
-              color: '#9CA3AF',
-              fontWeight: 'bold',
-            }}
+            placeholderStyle={{ color: '#9CA3AF', fontWeight: 'bold' }}
             dropDownContainerStyle={{
               backgroundColor: '#f9fafb',
               borderColor: '#E5E7EB',
@@ -67,37 +81,34 @@ const IncomingRequest = () => {
               borderRadius: 10,
               borderColor: '#D1D5DB',
             }}
-            labelStyle={{
-              fontSize: 16,
-              color: '#111827',
-            }}
-            listItemLabelStyle={{
-              color: '#4B5563',
-            }}
-            selectedItemLabelStyle={{
-              fontWeight: 'bold',
-              color: '#1F2937',
-            }}
-            arrowIconStyle={{
-              width: 20,
-              height: 20,
-            }}
+            labelStyle={{ fontSize: 16, color: '#111827' }}
+            listItemLabelStyle={{ color: '#4B5563' }}
+            selectedItemLabelStyle={{ fontWeight: 'bold', color: '#1F2937' }}
+            arrowIconStyle={{ width: 20, height: 20 }}
           />
         </View>
       </View>
 
-      {/* List request */}
-      <ScrollView className='px-3 py-2'>
-        {mockRequests.map((request) => (
-          <IncomingRequestItem
-            key={request.id}
-            id={request.id}
-            materialType={request.materialType}
-            requestDate={request.requestDate}
-            imageSrc={request.imageSrc}
-            onInspectPress={() => console.log(`Inspect ${request.id}`)}
-          />
-        ))}
+      <ScrollView style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+        {inspectingRequests.map((request) => {
+          const materialPackage =
+            request.importRequest?.importRequestDetail?.[0]?.materialPackage;
+          const materialVariant = materialPackage?.materialVariant;
+          const imageUri =
+            materialVariant?.image ||
+            'https://example.com/default-placeholder.png';
+
+          return (
+            <IncomingRequestItem
+              key={request.id}
+              id={request.code}
+              materialType={materialVariant?.name || 'Unknown Material'}
+              requestDate={request.createdAt || ''}
+              imageUri={imageUri}
+              onInspectPress={() => console.log(`Inspect ${request.id}`)}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );

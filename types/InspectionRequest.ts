@@ -1,4 +1,5 @@
 import { InspectionRequestStatus } from '@/enums/inspectionRequestStatus';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import { ImportRequest } from './ImportRequestType';
 import { PurchasingStaff } from './PurchasingStaff';
 import { WarehouseManager } from './WarehouseManager';
@@ -13,9 +14,10 @@ export interface InspectionRequest {
   productionDeparmentId?: string | null;
   inspectionDepartmentId: string;
   status: InspectionRequestStatus;
+  type: InspectionRequestType;
   createdAt?: string | null;
-  updatedAt?: string | null;
-  deletedAt?: string | null;
+  updatedAt?: string | null; // Matches DateTime? with @updatedAt
+  deletedAt?: string | null; // Matches DateTime?
   importRequestId?: string | null;
   note?: string | null;
   inspectionReport?: InspectionReport | null;
@@ -25,6 +27,7 @@ export interface InspectionRequest {
   productionDeparment?: ProductionDepartment | null;
   warehouseManager?: WarehouseManager | null;
 }
+
 
 export interface ProductionDepartment {
   id: string;

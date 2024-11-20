@@ -1,4 +1,3 @@
-import { InspectionReport } from './InspectionReport';
 import { MaterialPackage } from './MaterialTypes';
 
 export interface InspectionReportDetail {
@@ -12,7 +11,6 @@ export interface InspectionReportDetail {
   createdAt?: string | null;
   updatedAt?: string | null;
   deletedAt?: string | null;
-  inspectionReport: InspectionReport;
   materialPackage?: MaterialPackage | null;
   productSize?: ProductSize | null;
 }

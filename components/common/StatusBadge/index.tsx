@@ -3,7 +3,13 @@ import { Text, View, ViewProps } from 'react-native';
 import { styled } from 'nativewind';
 
 interface StatusBadgeProps extends ViewProps {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
+  variant?:
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | 'success'
+    | 'type';
   children: React.ReactNode;
 }
 
@@ -34,14 +40,18 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
 const getContainerStyles = (variant: string) => {
   switch (variant) {
+    case 'default':
+      return 'bg-blue-500 border-transparent';
     case 'secondary':
       return 'bg-purple-500 border-transparent';
     case 'destructive':
       return 'bg-red-500 border-transparent';
     case 'success':
-      return 'bg-green-500 border-gray-500';
+      return 'bg-green-500 border-transparent';
     case 'outline':
-      return 'bg-transparent border-gray-500';
+      return 'bg-transparent border-transparent';
+    case 'type':
+      return 'bg-gray-500 border-transparent';
     default:
       return 'bg-blue-500 border-transparent';
   }

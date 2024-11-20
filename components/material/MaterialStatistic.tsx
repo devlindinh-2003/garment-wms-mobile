@@ -3,26 +3,54 @@ import React from 'react';
 import { View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 import { Card, Text } from 'react-native-paper';
+import EmptyData from '@/components/common/EmptyData';
 
-const MaterialStatistic = () => {
+type MaterialStatisticProps = {
+  statistic: {
+    total: number;
+    inspecting: number;
+    inspected: number;
+  };
+};
+
+const MaterialStatistic: React.FC<MaterialStatisticProps> = ({ statistic }) => {
+  if (statistic?.total === 0) {
+    return <EmptyData />;
+  }
   const pieData1 = [
-    { value: 2, color: Theme.primaryLightBackgroundColor, text: 'Inspecting' },
-    { value: 3, color: Theme.green[500], text: 'Inspected' },
+    {
+      value: statistic?.inspecting || 0,
+      color: Theme.primaryLightBackgroundColor,
+      text: 'Inspecting',
+    },
+    {
+      value: statistic?.inspected || 0,
+      color: Theme.green[500],
+      text: 'Inspected',
+    },
   ];
+
+  const total = statistic?.total || 1; // Prevent division by zero
+  const inspectingPercentage = ((statistic?.inspecting || 0) / total) * 100;
+  const inspectedPercentage = ((statistic?.inspected || 0) / total) * 100;
+
   const pieDataInspecting = [
-    { value: 66, color: Theme.primaryLightBackgroundColor },
-    { value: 30, color: 'lightgray' },
+    { value: inspectingPercentage, color: Theme.primaryLightBackgroundColor },
+    { value: 100 - inspectingPercentage, color: 'lightgray' },
   ];
   const pieDataInspected = [
-    { value: 30, color: Theme.green[500] },
-    { value: 70, color: 'lightgray' },
+    { value: inspectedPercentage, color: Theme.green[500] },
+    { value: 100 - inspectedPercentage, color: 'lightgray' },
   ];
+
   return (
     <View>
       <Card className='rounded-lg shadow-lg p-4 bg-white items-center'>
         <Text className='text-gray-500 text-sm mb-1'>Total Request</Text>
-        <Text className='text-3xl font-bold text-gray-900 mb-5'>8</Text>
-        {/* Sumamry Chart */}
+        <Text className='text-3xl font-bold text-gray-900 mb-5'>
+          {statistic?.total || 0}
+        </Text>
+        {/* Summary Chart */}
         <View>
           <View className='flex-row justify-center'>
             <PieChart
@@ -63,9 +91,9 @@ const MaterialStatistic = () => {
               innerRadius={50}
               radius={65}
               data={pieDataInspecting}
-              centerLabelComponent={() => {
-                return <Text variant='titleLarge'>70%</Text>;
-              }}
+              centerLabelComponent={() => (
+                <Text variant='titleLarge'>{`${Math.round(inspectingPercentage)}%`}</Text>
+              )}
             />
             <Text
               variant='titleMedium'
@@ -82,9 +110,9 @@ const MaterialStatistic = () => {
               innerRadius={50}
               radius={65}
               data={pieDataInspected}
-              centerLabelComponent={() => {
-                return <Text variant='titleLarge'>31%</Text>;
-              }}
+              centerLabelComponent={() => (
+                <Text variant='titleLarge'>{`${Math.round(inspectedPercentage)}%`}</Text>
+              )}
             />
             <Text
               variant='titleMedium'

@@ -23,7 +23,6 @@ const IncomingRequest = () => {
     router.back();
   };
 
-  // Mock data for 20 incoming requests
   const mockRequests = Array.from({ length: 20 }, (_, index) => ({
     id: `INS-REQ-${String(index + 1).padStart(6, '0')}`,
     materialType: index % 2 === 0 ? 'Fabric' : 'Metal',

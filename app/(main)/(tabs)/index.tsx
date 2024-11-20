@@ -3,6 +3,9 @@ import SafeAreaLayout from '@/components/common/SafeAreaLayout';
 import { Text, Card, TouchableRipple } from 'react-native-paper';
 import { FC } from 'react';
 import { router } from 'expo-router';
+import { useGetInspectionStatisticByType } from '@/hooks/useGetImportRequestStatistic';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
+import MaterialStatistic from '@/components/material/MaterialStatistic';
 
 type StatusCardProps = {
   count: number;
@@ -45,47 +48,25 @@ const SectionHeader: FC<SectionHeaderProps> = ({ title, total, onPress }) => (
 );
 
 const DashboardPage: FC = () => {
+  const { data: materialData } = useGetInspectionStatisticByType(
+    InspectionRequestType.MATERIAL
+  );
+  const { data: productData } = useGetInspectionStatisticByType(
+    InspectionRequestType.PRODUCT
+  );
+
   return (
     <SafeAreaLayout className='px-4 py-2'>
       <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
-        <SectionHeader
-          title='Raw Material'
-          total={8}
-          onPress={() => {
-            router.push('/material');
-          }}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard count={2} status='Inspected' color='bg-green-500' />
-          <StatusCard count={3} status='Inspecting' color='bg-blue-500' />
-          <StatusCard count={3} status='Cancelled' color='bg-red-500' />
-        </View>
+        <Text variant='titleLarge' className='font-bold text-center mt-4 mb-2'>
+          Raw Material Statistics
+        </Text>
+        <MaterialStatistic statistic={materialData?.data} />
 
-        <SectionHeader
-          title='Finished Product'
-          total={11}
-          onPress={() => {
-            router.push('/product');
-          }}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard count={6} status='Inspected' color='bg-green-500' />
-          <StatusCard count={3} status='Inspecting' color='bg-blue-500' />
-          <StatusCard count={2} status='Cancelled' color='bg-red-500' />
-        </View>
-
-        <SectionHeader
-          title='Notifications'
-          total={11}
-          onPress={() => {
-            router.push('/notification');
-          }}
-        />
-        <View className='flex-row space-x-2'>
-          <StatusCard count={6} status='Read' color='bg-green-500' />
-          <StatusCard count={2} status='Unread' color='bg-gray-400' />
-          <View className='flex-1 mx-1' />
-        </View>
+        <Text variant='titleLarge' className='font-bold text-center mt-6 mb-2'>
+          Finished Product Statistics
+        </Text>
+        <MaterialStatistic statistic={productData?.data} />
       </ScrollView>
     </SafeAreaLayout>
   );
