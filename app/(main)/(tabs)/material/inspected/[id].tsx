@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
+import { useGetInspectionReportById } from '@/hooks/useGetInspectionReportById';
 import MaterialInspectionRequestInfo from '@/components/inspected-detail/material/MaterialInspectionRequest';
 import MaterialInspectionReport from '@/components/inspected-detail/material/MaterialInspectionReport';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
@@ -10,52 +10,62 @@ import { Text } from 'react-native-paper';
 
 const InspectedDetails = () => {
   const { id } = useLocalSearchParams();
-  const { data, isSuccess, isPending } = useGetInspectionRequestById(
+  const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
-  console.log(JSON.stringify(data, null, 2));
+
   if (isPending) {
     return <SpinnerLoading />;
   }
 
   if (isSuccess && data) {
     const {
-      code: inspectionRequestCode,
-      status: inspectionRequestStatus,
+      code: inspectionReportCode,
       createdAt: inspectionReportCreatedAt,
-      note: inspectionRequestNote,
-      inspectionDepartment,
-      inspectionReport,
+      inspectionRequest,
+      inspectionReportDetail,
     } = data.data;
 
-    const inspectionDeptFirstName =
-      inspectionDepartment?.account?.firstName || 'N/A';
-    const inspectionDeptLastName =
-      inspectionDepartment?.account?.lastName || 'N/A';
+    const inspectionRequestCode = inspectionRequest?.code || 'N/A';
+    const inspectionRequestNote = inspectionRequest?.note || 'N/A';
+    const inspectionDeptName =
+      inspectionRequest?.inspectionDepartment?.account?.firstName &&
+      inspectionRequest?.inspectionDepartment?.account?.lastName
+        ? `${inspectionRequest.inspectionDepartment.account.firstName} ${inspectionRequest.inspectionDepartment.account.lastName}`
+        : 'N/A';
+    const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
 
+    // Calculate totals
     const totalMaterials =
-      inspectionReport?.inspectionReportDetail.reduce(
-        (acc: number, item: { quantityByPack: number }) =>
-          acc + item.quantityByPack,
-        0
-      ) || 0;
+      inspectionReportDetail?.reduce((acc: number, item: any) => {
+        if (item.quantityByPack !== null) {
+          return acc + item.quantityByPack;
+        }
+        return (
+          acc +
+          (item.approvedQuantityByPack || 0) +
+          (item.defectQuantityByPack || 0)
+        );
+      }, 0) || 0;
 
     const passCount =
-      inspectionReport?.inspectionReportDetail.reduce(
-        (acc: number, item: { approvedQuantityByPack: number }) =>
-          acc + item.approvedQuantityByPack,
+      inspectionReportDetail?.reduce(
+        (acc: number, item: any) => acc + (item.approvedQuantityByPack || 0),
         0
       ) || 0;
 
     const failCount =
-      inspectionReport?.inspectionReportDetail.reduce(
-        (acc: number, item: { defectQuantityByPack: number }) =>
-          acc + item.defectQuantityByPack,
+      inspectionReportDetail?.reduce(
+        (acc: number, item: any) => acc + (item.defectQuantityByPack || 0),
         0
       ) || 0;
 
-    const passPercentage = ((passCount / totalMaterials) * 100).toFixed(0);
-    const failPercentage = ((failCount / totalMaterials) * 100).toFixed(0);
+    const passPercentage = totalMaterials
+      ? ((passCount / totalMaterials) * 100).toFixed(0)
+      : '0';
+    const failPercentage = totalMaterials
+      ? ((failCount / totalMaterials) * 100).toFixed(0)
+      : '0';
 
     const chartData = [
       {
@@ -88,7 +98,7 @@ const InspectedDetails = () => {
               fontWeight: 'bold',
             }}
           >
-            {failCount}
+            {passCount}
           </Text>
         ),
       },
@@ -96,23 +106,23 @@ const InspectedDetails = () => {
 
     return (
       <ScrollView className='bg-white px-2 py-4'>
-        {/* Inspect Request Info */}
+        {/* Inspection Request Info */}
         <MaterialInspectionRequestInfo
           inspectionRequestCode={inspectionRequestCode}
           inspectionRequestStatus={inspectionRequestStatus}
           inspectionReportCreatedAt={inspectionReportCreatedAt}
-          inspectionDeptFirstName={inspectionDeptFirstName}
-          inspectionDeptLastName={inspectionDeptLastName}
+          inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
         />
         {/* Inspection Report */}
         <MaterialInspectionReport
-          inspectionReport={inspectionReport}
-          inspectionReportCode={inspectionReport?.code || 'N/A'}
+          inspectionReportCode={inspectionReportCode}
           totalMaterials={totalMaterials}
           chartData={chartData}
           failPercentage={failPercentage}
           passPercentage={passPercentage}
+          inspectionReportDetails={inspectionReportDetail}
+          importRequest={inspectionRequest?.importRequest}
         />
       </ScrollView>
     );

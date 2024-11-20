@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import MaterialDetailCard from './MaterialDetailCard';
-import { InspectionReport } from '@/types/InspectionReport';
+import { InspectionReportDetail } from '@/types/InspectionReportDetail';
+import { ImportRequest } from '@/types/ImportRequestType';
 
 interface MaterialInspectionReportProps {
   inspectionReportCode: string;
@@ -10,7 +11,8 @@ interface MaterialInspectionReportProps {
   chartData: { value: number; frontColor: string; label: string }[];
   failPercentage: string;
   passPercentage: string;
-  inspectionReport: InspectionReport;
+  inspectionReportDetails: InspectionReportDetail[];
+  importRequest: ImportRequest;
 }
 
 const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
@@ -19,7 +21,8 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   chartData,
   failPercentage,
   passPercentage,
-  inspectionReport,
+  inspectionReportDetails,
+  importRequest,
 }) => {
   return (
     <View>
@@ -46,8 +49,6 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
           barWidth={50}
           maxValue={totalMaterials}
           noOfSections={4}
-          roundedTop={false}
-          roundedBottom={false}
           isAnimated
           spacing={80}
         />
@@ -73,7 +74,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
         <Text className='text-blue-500 mt-7 text-center text-2xl font-semibold mb-3 uppercase'>
           Inspection Report Details
         </Text>
-        {inspectionReport.inspectionReportDetail.map((detail) => (
+        {inspectionReportDetails.map((detail) => (
           <MaterialDetailCard
             key={detail.id}
             image={detail.materialPackage?.materialVariant?.image || ''}
@@ -84,8 +85,8 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
             weight={`${detail.materialPackage?.packedWeight || 0}kg`}
             length={`${detail.materialPackage?.packedLength || 0}m`}
             total={detail.quantityByPack || 0}
-            pass={detail.approvedQuantityByPack}
-            fail={detail.defectQuantityByPack}
+            pass={detail.approvedQuantityByPack || 0}
+            fail={detail.defectQuantityByPack || 0}
           />
         ))}
       </View>

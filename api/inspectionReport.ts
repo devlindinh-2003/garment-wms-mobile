@@ -7,6 +7,8 @@ import { get, post } from './ApiCaller';
 import axios from 'axios';
 import { InspectionReportDetail } from '@/types/InspectionReportDetail';
 import { ApiResponse } from '@/types/ApiResponse';
+import { ImportRequestType } from '@/enums/importRequestType';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 
 interface GetAllInspectionReportInput {
   sorting?: { id: string; desc: boolean }[];
@@ -18,7 +20,12 @@ interface GetAllInspectionReportInput {
 export interface CreateInspectionReportParams {
   inspectionRequestId: string;
   inspectionDepartmentId: string;
-  inspectionReportDetail: InspectionReportDetail[];
+  type: InspectionRequestType;
+  inspectionReportDetail: {
+    approvedQuantityByPack: number;
+    defectQuantityByPack: number;
+    materialPackageId: string; // Changed to materialPackageId
+  }[];
 }
 
 export const getAllInspectionReport = async ({

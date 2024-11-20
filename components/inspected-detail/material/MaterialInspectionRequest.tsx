@@ -10,8 +10,7 @@ interface MaterialInspectionRequestInfoProps {
   inspectionRequestCode: string;
   inspectionRequestStatus: string;
   inspectionReportCreatedAt: string | null;
-  inspectionDeptFirstName: string;
-  inspectionDeptLastName: string;
+  inspectionDeptName: string | null;
   inspectionRequestNote: string | null;
 }
 
@@ -21,14 +20,13 @@ const MaterialInspectionRequestInfo: React.FC<
   inspectionRequestCode,
   inspectionRequestStatus,
   inspectionReportCreatedAt,
-  inspectionDeptFirstName,
-  inspectionDeptLastName,
+  inspectionDeptName,
   inspectionRequestNote,
 }) => {
   return (
     <View>
       <View className='flex-row items-center justify-between'>
-        <View className='flex-row items-center '>
+        <View className='flex-row items-center'>
           <Text className='text-slate-500 font-semibold'>
             Inspection Request:{' '}
           </Text>
@@ -62,7 +60,9 @@ const MaterialInspectionRequestInfo: React.FC<
             <Text className='text-gray-700 font-medium'>
               Inspector:{' '}
               <Text className='text-black font-bold'>
-                {inspectionDeptFirstName} {inspectionDeptLastName}
+                {/* update this later */}
+                {'Tung Trong'}
+                {/* {inspectionDeptName || 'Tung Trong'} */}
               </Text>
             </Text>
           </View>
@@ -74,7 +74,7 @@ const MaterialInspectionRequestInfo: React.FC<
             <Notebook color={Theme.greyText} size={18} className='mr-2' />
             <Text className='text-gray-700 font-semibold'>Note</Text>
           </View>
-          <Card className='bg-gray-100 p-3 rounded-md h-44'>
+          <Card className='bg-gray-100 p-3 rounded-md'>
             <Text className='text-gray-600'>
               {inspectionRequestNote || 'No notes available'}
             </Text>
