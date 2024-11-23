@@ -19,7 +19,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-      router.replace('/(main)/(tabs)');
+      // router.replace('/(main)/(tabs)');
     }
   }, [loaded]);
 
@@ -39,6 +39,10 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name='(auth)/login'
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name='(warehouse)/(tabs)'
                 options={{ headerShown: false }}
               />
               <Stack.Screen name='+not-found' />
