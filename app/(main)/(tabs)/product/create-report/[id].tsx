@@ -5,14 +5,13 @@ import Theme from '@/constants/Theme';
 import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
 import { ImportRequestDetail } from '@/types/ImportRequestType';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Button, Snackbar, Text } from 'react-native-paper';
 
 const CreateProductReport = () => {
-  const router = useRouter();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
@@ -77,7 +76,6 @@ const CreateProductReport = () => {
           return null;
         }
 
-        // Dynamically set productSizeId or materialPackageId based on the inspection type
         const detailObject: any = {
           approvedQuantityByPack: detail.pass,
           defectQuantityByPack: detail.fail,

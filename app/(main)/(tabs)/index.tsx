@@ -1,31 +1,37 @@
-import { ScrollView, ActivityIndicator } from 'react-native';
+import { ScrollView } from 'react-native';
 import SafeAreaLayout from '@/components/common/SafeAreaLayout';
-import { Text, Card } from 'react-native-paper';
-import { FC } from 'react';
+import { Text } from 'react-native-paper';
+import { FC, useState } from 'react';
 import { useGetInspectionStatisticByType } from '@/hooks/useGetImportRequestStatistic';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import MaterialStatistic from '@/components/material/MaterialStatistic';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import PullToRefresh from '@/components/common/PullToRefresh';
 
-type StatusCardProps = {
-  count: number;
-  status: string;
-  color: string;
-};
-
-const StatusCard: FC<StatusCardProps> = ({ count, status, color }) => (
-  <Card className={`flex-1 mx-1 py-4 items-center ${color}`}>
-    <Text className='text-2xl font-bold text-white'>{count}</Text>
-    <Text className='text-xs mt-1 text-white uppercase'>{status}</Text>
-  </Card>
-);
-
 const DashboardPage: FC = () => {
-  const { data: materialData, isPending: isPendingMaterial } =
-    useGetInspectionStatisticByType(InspectionRequestType.MATERIAL);
-  const { data: productData, isPending: isPendingProduct } =
-    useGetInspectionStatisticByType(InspectionRequestType.PRODUCT);
+  const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: materialData,
+    isPending: isPendingMaterial,
+    refetch: refetchMaterial,
+  } = useGetInspectionStatisticByType(InspectionRequestType.MATERIAL);
+  const {
+    data: productData,
+    isPending: isPendingProduct,
+    refetch: refetchProduct,
+  } = useGetInspectionStatisticByType(InspectionRequestType.PRODUCT);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchMaterial(), refetchProduct()]);
+      console.log('Refresh ok');
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (isPendingMaterial || isPendingProduct) {
     return (
@@ -36,7 +42,7 @@ const DashboardPage: FC = () => {
   }
 
   return (
-    <PullToRefresh>
+    <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
       <SafeAreaLayout className='px-4 py-2'>
         <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
           <Text

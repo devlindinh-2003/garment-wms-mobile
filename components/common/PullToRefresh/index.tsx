@@ -1,30 +1,24 @@
-import React, { FC, ReactNode, useState, useEffect } from 'react';
+import React, { FC, ReactNode } from 'react';
 import {
   RefreshControl,
   ScrollView,
   StyleSheet,
   ViewStyle,
-  Text,
 } from 'react-native';
 
 type PullToRefreshProps = {
-  children: ReactNode; // Children components
-  contentContainerStyle?: ViewStyle; // Optional styling for content
+  children: ReactNode;
+  onRefresh: () => Promise<void> | void;
+  refreshing: boolean;
+  contentContainerStyle?: ViewStyle;
 };
 
 const PullToRefresh: FC<PullToRefreshProps> = ({
   children,
+  onRefresh,
+  refreshing,
   contentContainerStyle,
 }) => {
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
-  }, []);
-
   return (
     <ScrollView
       contentContainerStyle={[styles.container, contentContainerStyle]}
