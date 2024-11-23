@@ -62,20 +62,11 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
 
   return (
     <Card className='m-4 rounded-lg shadow-md'>
-      {/* Total Quantity Display */}
-      <View className='p-4 bg-primaryLight rounded-t-lg items-center'>
-        <Text className='text-xl font-bold text-white'>
-          Total Quantity: {total}
-        </Text>
-      </View>
-
-      {/* Image */}
       <Card.Cover source={{ uri: image }} resizeMode='contain' />
 
-      {/* Content */}
       <Card.Content className='p-4'>
         {/* Title Section */}
-        <View className='flex-row justify-between items-center flex-wrap'>
+        <View className='flex-row justify-between items-center flex-wrap mb-4'>
           <Text className='text-lg font-bold text-black flex-1 mr-2'>
             {name}
           </Text>
@@ -83,10 +74,10 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
         </View>
 
         {/* Specification Section */}
-        <Text className='text-lg font-semibold text-gray-700 mt-4'>
+        <Text className='text-lg font-semibold text-gray-700 mb-2'>
           Specification
         </Text>
-        <View className='flex-row flex-wrap justify-between mt-2'>
+        <View className='flex-row flex-wrap justify-between mb-4'>
           <View className='flex-1 mr-4'>
             <Text className='text-gray-500 text-sm'>Package Height:</Text>
             <Text className='text-black font-semibold'>{height}</Text>
@@ -96,7 +87,7 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
             <Text className='text-black font-semibold'>{width}</Text>
           </View>
         </View>
-        <View className='flex-row flex-wrap justify-between mt-2'>
+        <View className='flex-row flex-wrap justify-between mb-4'>
           <View className='flex-1 mr-4'>
             <Text className='text-gray-500 text-sm'>Package Weight:</Text>
             <Text className='text-black font-semibold'>{weight}</Text>
@@ -107,28 +98,36 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
           </View>
         </View>
 
+        {/* Total Quantity Display */}
+        <View className='bg-blue-100 p-3 mb-4 rounded-md'>
+          <Text className='text-blue-600 font-bold text-center'>
+            Total Quantity: {total}
+          </Text>
+        </View>
+
         {/* PASS Materials */}
-        <View className='bg-green-100 p-3 my-4 rounded-md'>
+        <View className='bg-green-100 p-3 mb-4 rounded-md'>
           <Text className='text-green-600 font-bold mb-2'>PASS Materials</Text>
           <Input
             placeholder='Enter number of PASS materials'
-            value={passQuantity || undefined}
+            value={passQuantity}
             onChangeText={handlePassChange}
             keyboardType='numeric'
-            style={{ backgroundColor: 'white' }}
-            status={status} // Use the status prop
-            caption={errorMessage} // Show the error message if present
+            className='bg-white'
           />
+          {errorMessage ? (
+            <Text className='text-red-500 text-sm mt-1'>{errorMessage}</Text>
+          ) : null}
         </View>
 
         {/* FAILED Materials */}
-        <View className='bg-red-100 p-3 my-2 rounded-md'>
+        <View className='bg-red-100 p-3 rounded-md'>
           <Text className='text-red-600 font-bold mb-2'>FAILED Materials</Text>
           <Input
             placeholder='Calculated automatically'
-            value={failQuantity || undefined}
+            value={failQuantity}
             disabled
-            style={{ backgroundColor: '#f5f5f5' }}
+            className='bg-gray-100'
           />
         </View>
       </Card.Content>

@@ -58,14 +58,13 @@ const InspectedRoute: React.FC<RouteProps> = ({ inspectedMaterialList }) => {
             <Button
               mode='contained'
               icon='open-in-app'
-              onPress={
-                // () => console.log(JSON.stringify(item, null, 2))
-                () =>
-                  router.push({
-                    pathname: '/(main)/(tabs)/material/inspected/[id]',
-                    params: { id: item?.inspectionReport?.id || '' },
-                  })
-              }
+              onPress={() => {
+                console.log(item?.inspectionReport?.id);
+                router.push({
+                  pathname: '/(main)/(tabs)/material/inspected/[id]',
+                  params: { id: item?.inspectionReport?.id || '' },
+                });
+              }}
               className='rounded-lg'
               labelStyle={{
                 color: 'white',
