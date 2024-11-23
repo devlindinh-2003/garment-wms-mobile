@@ -14,7 +14,6 @@ const InspectedProductDetails = () => {
   const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
-  console.log(JSON.stringify(data?.data, null, 2));
   if (isPending) {
     return <SpinnerLoading />;
   }

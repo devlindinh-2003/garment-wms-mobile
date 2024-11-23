@@ -154,7 +154,7 @@ const ProductPage = () => {
                 icon='magnify'
                 onPress={() =>
                   router.push({
-                    pathname: '/(main)/(tabs)/material/create-report/[id]',
+                    pathname: '/(main)/(tabs)/product/create-report/[id]',
                     params: { id: item.id },
                   })
                 }

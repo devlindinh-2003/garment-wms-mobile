@@ -69,19 +69,46 @@ const CreateMaterialReport = () => {
           data?.data.importRequest.importRequestDetail.find(
             (importDetail: ImportRequestDetail) => importDetail.id === detail.id
           );
-
         if (!correspondingImportDetail) {
           console.error(`No matching import detail found for id: ${detail.id}`);
           return null;
         }
-
-        return {
+        const detailObject: any = {
           approvedQuantityByPack: detail.pass,
           defectQuantityByPack: detail.fail,
-          materialPackageId: correspondingImportDetail.materialPackage.id,
         };
+
+        if (data?.data.type === 'PRODUCT') {
+          detailObject.productSizeId =
+            correspondingImportDetail.productSize?.id || null;
+        } else if (data?.data.type === 'MATERIAL') {
+          detailObject.materialPackageId =
+            correspondingImportDetail.materialPackage?.id || null;
+        }
+
+        return detailObject;
       })
       .filter((reportDetail) => reportDetail !== null);
+
+    // const inspectionReportDetail = reportDetails
+    //   .map((detail) => {
+    //     const correspondingImportDetail =
+    //       data?.data.importRequest.importRequestDetail.find(
+    //         (importDetail: ImportRequestDetail) => importDetail.id === detail.id
+    //       );
+
+    //     if (!correspondingImportDetail) {
+    //       console.error(`No matching import detail found for id: ${detail.id}`);
+    //       return null;
+    //     }
+
+    //     return {
+    //       approvedQuantityByPack: detail.pass,
+    //       defectQuantityByPack: detail.fail,
+    //       materialPackageId: correspondingImportDetail.materialPackage.id,
+    //     };
+    //   })
+    //   .filter((reportDetail) => reportDetail !== null);
 
     const requestBody = {
       inspectionRequestId: id as string,

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text } from 'react-native';
-import { Card } from 'react-native-paper';
 import { Input } from '@ui-kitten/components';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Card, Text } from 'react-native-paper';
 
-interface MaterialDetailCardProps {
+interface ProductDetailCardProps {
   image: string;
   name: string;
   code: string;
@@ -17,7 +17,7 @@ interface MaterialDetailCardProps {
   onUpdate: (pass: number, fail: number, isValid: boolean) => void;
 }
 
-const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
+const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
   image,
   name,
   code,
@@ -34,22 +34,21 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   const [failQuantity, setFailQuantity] = useState<string>('');
   const [status, setStatus] = useState<'basic' | 'danger'>('basic');
   const [errorMessage, setErrorMessage] = useState<string>('');
-
   const handlePassChange = (value: string) => {
-    const sanitizedValue = value.replace(/[^0-9]/g, ''); // Allow only numeric characters
+    const sanitizedValue = value.replace(/[^0-9]/g, '');
     const passValue = parseInt(sanitizedValue, 10) || 0;
 
     if (sanitizedValue !== value) {
       setStatus('danger');
       setErrorMessage('Invalid input: only numbers are allowed.');
-      onUpdate(0, 0, false); // Mark as invalid
+      onUpdate(0, 0, false);
       return;
     }
 
     if (passValue > total) {
       setStatus('danger');
       setErrorMessage(`PASS materials cannot exceed the total (${total}).`);
-      onUpdate(passValue, total - passValue, false); // Mark as invalid
+      onUpdate(passValue, total - passValue, false);
     } else {
       const failValue = total - passValue;
       setStatus('basic');
@@ -59,7 +58,6 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
       onUpdate(passValue, failValue, true);
     }
   };
-
   return (
     <Card className='m-4 rounded-lg shadow-md'>
       <Card.Cover source={{ uri: image }} resizeMode='contain' />
@@ -135,4 +133,4 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   );
 };
 
-export default MaterialInspectingCard;
+export default ProductInspectingCard;
