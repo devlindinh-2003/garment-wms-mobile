@@ -90,26 +90,6 @@ const CreateMaterialReport = () => {
       })
       .filter((reportDetail) => reportDetail !== null);
 
-    // const inspectionReportDetail = reportDetails
-    //   .map((detail) => {
-    //     const correspondingImportDetail =
-    //       data?.data.importRequest.importRequestDetail.find(
-    //         (importDetail: ImportRequestDetail) => importDetail.id === detail.id
-    //       );
-
-    //     if (!correspondingImportDetail) {
-    //       console.error(`No matching import detail found for id: ${detail.id}`);
-    //       return null;
-    //     }
-
-    //     return {
-    //       approvedQuantityByPack: detail.pass,
-    //       defectQuantityByPack: detail.fail,
-    //       materialPackageId: correspondingImportDetail.materialPackage.id,
-    //     };
-    //   })
-    //   .filter((reportDetail) => reportDetail !== null);
-
     const requestBody = {
       inspectionRequestId: id as string,
       inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',

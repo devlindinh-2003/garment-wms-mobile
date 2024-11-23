@@ -19,6 +19,7 @@ import {
 } from 'react-native-tab-view';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import PullToRefresh from '@/components/common/PullToRefresh';
+import EmptyDataComponent from '@/components/common/EmptyData';
 
 interface RouteProps {
   inspectedProductList: InspectionRequest[];
@@ -47,6 +48,7 @@ const ProductPage = () => {
           request.status === InspectionRequestStatus.INSPECTING
       ) || []
     : [];
+
   const [index, setIndex] = useState(0);
   const routes = [
     {
@@ -61,6 +63,9 @@ const ProductPage = () => {
 
   const InspectedRoute: React.FC<RouteProps> = ({ inspectedProductList }) => {
     const router = useRouter();
+    if (!inspectedProductList.length) {
+      return <EmptyDataComponent />;
+    }
     return (
       <ScrollView className='p-4'>
         {inspectedProductList.map((item) => (
@@ -93,7 +98,6 @@ const ProductPage = () => {
                 mode='contained'
                 icon='open-in-app'
                 onPress={() => {
-                  console.log(item?.inspectionReport?.id);
                   router.push({
                     pathname: '/(main)/(tabs)/product/inspected/[id]',
                     params: { id: item?.inspectionReport?.id || '' },
@@ -122,6 +126,9 @@ const ProductPage = () => {
 
   const InspectingRoute: React.FC<RouteProps> = ({ inspectedProductList }) => {
     const router = useRouter();
+    if (!inspectedProductList.length) {
+      return <EmptyDataComponent />;
+    }
     return (
       <ScrollView className='p-4'>
         {inspectedProductList.map((item) => (
@@ -213,7 +220,7 @@ const ProductPage = () => {
           variant='titleLarge'
           className='text-primaryLight capitalize mb-2 text-center mt-4'
         >
-          Raw Material Statistics
+          Finished Product Statistics
         </Text>
         {isPending ? (
           <SpinnerLoading />
