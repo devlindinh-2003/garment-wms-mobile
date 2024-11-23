@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { convertDate } from '@/helpers/converDate';
 import StatusBadge from '@/components/common/StatusBadge';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
+import PullToRefresh from '@/components/common/PullToRefresh';
 
 interface RouteProps {
   inspectedMaterialList: InspectionRequest[];
@@ -207,26 +208,28 @@ const MaterialPage: React.FC = () => {
   );
 
   return (
-    <View className='flex-1 mb-9'>
-      <Text
-        style={{ fontWeight: 'bold' }}
-        variant='titleLarge'
-        className='text-primaryLight capitalize mb-2 text-center mt-4'
-      >
-        Raw Material Statistics
-      </Text>
-      {isPending ? (
-        <SpinnerLoading />
-      ) : (
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={initialLayout}
-          renderTabBar={renderTabBar}
-        />
-      )}
-    </View>
+    <PullToRefresh>
+      <View className='flex-1 mb-9'>
+        <Text
+          style={{ fontWeight: 'bold' }}
+          variant='titleLarge'
+          className='text-primaryLight capitalize mb-2 text-center mt-4'
+        >
+          Raw Material Statistics
+        </Text>
+        {isPending ? (
+          <SpinnerLoading />
+        ) : (
+          <TabView
+            navigationState={{ index, routes }}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={initialLayout}
+            renderTabBar={renderTabBar}
+          />
+        )}
+      </View>
+    </PullToRefresh>
   );
 };
 

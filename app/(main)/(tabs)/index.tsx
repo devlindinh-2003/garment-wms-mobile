@@ -6,6 +6,7 @@ import { useGetInspectionStatisticByType } from '@/hooks/useGetImportRequestStat
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import MaterialStatistic from '@/components/material/MaterialStatistic';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
+import PullToRefresh from '@/components/common/PullToRefresh';
 
 type StatusCardProps = {
   count: number;
@@ -26,7 +27,6 @@ const DashboardPage: FC = () => {
   const { data: productData, isPending: isPendingProduct } =
     useGetInspectionStatisticByType(InspectionRequestType.PRODUCT);
 
-  // Show loading spinner when either data is pending
   if (isPendingMaterial || isPendingProduct) {
     return (
       <SafeAreaLayout className='flex-1 justify-center items-center'>
@@ -36,19 +36,27 @@ const DashboardPage: FC = () => {
   }
 
   return (
-    <SafeAreaLayout className='px-4 py-2'>
-      <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
-        <Text variant='titleLarge' className='font-bold text-center mt-4 mb-2'>
-          Raw Material Statistics
-        </Text>
-        <MaterialStatistic statistic={materialData?.data} />
+    <PullToRefresh>
+      <SafeAreaLayout className='px-4 py-2'>
+        <ScrollView showsVerticalScrollIndicator={false} className='space-y-6'>
+          <Text
+            variant='titleLarge'
+            className='font-bold text-center mt-4 mb-2'
+          >
+            Raw Material Statistics
+          </Text>
+          <MaterialStatistic statistic={materialData?.data} />
 
-        <Text variant='titleLarge' className='font-bold text-center mt-6 mb-2'>
-          Finished Product Statistics
-        </Text>
-        <MaterialStatistic statistic={productData?.data} />
-      </ScrollView>
-    </SafeAreaLayout>
+          <Text
+            variant='titleLarge'
+            className='font-bold text-center mt-6 mb-2'
+          >
+            Finished Product Statistics
+          </Text>
+          <MaterialStatistic statistic={productData?.data} />
+        </ScrollView>
+      </SafeAreaLayout>
+    </PullToRefresh>
   );
 };
 
