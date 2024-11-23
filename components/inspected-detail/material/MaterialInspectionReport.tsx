@@ -47,7 +47,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
         <BarChart
           data={chartData}
           width={300}
-          height={300}
+          height={500}
           barWidth={50}
           maxValue={totalMaterials}
           noOfSections={4}

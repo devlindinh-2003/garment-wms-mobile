@@ -29,7 +29,11 @@ const PullToRefresh: FC<PullToRefreshProps> = ({
     <ScrollView
       contentContainerStyle={[styles.container, contentContainerStyle]}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#ff0000', '#00ff00', '#0000ff']}
+        />
       }
     >
       {children}
