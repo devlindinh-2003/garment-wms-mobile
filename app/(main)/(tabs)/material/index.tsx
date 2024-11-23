@@ -147,7 +147,6 @@ const InspectingRoute: React.FC<RouteProps> = ({ inspectedMaterialList }) => {
   );
 };
 
-// MaterialPage component remains unchanged
 const MaterialPage: React.FC = () => {
   const { data, isSuccess, isPending } = useGetAllInspectionRequest({
     pageSize: 10,

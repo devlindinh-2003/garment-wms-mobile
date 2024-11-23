@@ -17,9 +17,16 @@ export interface InspectionReportDetail {
 
 export interface ProductSize {
   id: string;
-  sizeName: string;
-  sizeDescription?: string | null;
+  productVariantId: string;
+  name: string;
+  code: string;
+  width: number;
+  height: number;
+  length: number;
+  weight: number;
+  size: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
+  productVariant?: any | null; // Nested ProductVariant
 }
