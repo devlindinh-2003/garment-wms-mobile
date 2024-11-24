@@ -168,6 +168,7 @@ const MaterialPage: React.FC = () => {
           request.status === InspectionRequestStatus.INSPECTING
       ) || []
     : [];
+  console.log(JSON.stringify(inspectingMaterialList, null, 2));
 
   const [index, setIndex] = useState(0);
   const routes = [
