@@ -19,7 +19,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    const checkLogin = async () => {
+    /*  const checkLogin = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('accessToken');
         if (accessToken) {
@@ -41,7 +41,8 @@ export default function RootLayout() {
 
     if (loaded) {
       checkLogin();
-    }
+    } */
+    router.replace('/(main)/(tabs)');
   }, [loaded]);
 
   if (!loaded) {

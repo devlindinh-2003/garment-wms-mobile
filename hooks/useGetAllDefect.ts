@@ -11,5 +11,6 @@ export const useGetAllDefect = () => {
     queryKey: ['inspectionRequest'],
     queryFn: () => getAllDefects(),
   });
-  return { data, error, isPending, isError, isSuccess, refetch };
+  const defectsList = data?.data || [];
+  return { data, error, isPending, isError, isSuccess, refetch, defectsList };
 };

@@ -7,12 +7,14 @@ import MaterialInspectionReport from '@/components/inspected-detail/material/Mat
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import Theme from '@/constants/Theme';
 import { Text } from 'react-native-paper';
+import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 
 const InspectedDetails = () => {
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
+  const { defectsList } = useGetAllDefect();
 
   if (isPending) {
     return <SpinnerLoading />;
