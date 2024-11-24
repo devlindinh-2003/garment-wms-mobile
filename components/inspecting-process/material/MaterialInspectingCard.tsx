@@ -12,15 +12,13 @@ interface MaterialDetailCardProps {
   weight: string;
   length: string;
   total: number;
-  pass: number;
-  fail: number;
-  onUpdate: (pass: number, fail: number, isValid: boolean) => void;
-}
-
-interface DefectType {
-  id: string;
-  name: string;
-  quantity: number;
+  defects: { id: string; description: string }[]; // Defects dynamically passed from API
+  onUpdate: (
+    pass: number,
+    fail: number,
+    isValid: boolean,
+    defects: { defectId: string; quantityByPack: number }[]
+  ) => void;
 }
 
 const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
@@ -32,20 +30,16 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
   weight,
   length,
   total,
-  pass,
-  fail,
+  defects,
   onUpdate,
 }) => {
-  const [defects, setDefects] = useState<DefectType[]>([
-    { id: '1', name: 'Tear', quantity: 0 },
-    { id: '2', name: 'Color Mismatch', quantity: 0 },
-    { id: '3', name: 'Size Inconsistency', quantity: 0 },
-    { id: '4', name: 'Foreign Material', quantity: 0 },
-  ]);
+  const [defectQuantities, setDefectQuantities] = useState(
+    defects.map((defect) => ({ ...defect, quantity: 0 }))
+  );
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isValid, setIsValid] = useState<boolean>(true);
 
-  const totalDefectQuantity = defects.reduce(
+  const totalDefectQuantity = defectQuantities.reduce(
     (total, defect) => total + defect.quantity,
     0
   );
@@ -54,7 +48,7 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
 
   const handleDefectChange = (id: string, quantity: string) => {
     const sanitizedValue = quantity.replace(/[^0-9]/g, '');
-    setDefects((prevDefects) =>
+    setDefectQuantities((prevDefects) =>
       prevDefects.map((defect) =>
         defect.id === id
           ? { ...defect, quantity: parseInt(sanitizedValue, 10) || 0 }
@@ -69,11 +63,17 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
         `Total defect quantity (${totalDefectQuantity}) cannot exceed the total quantity (${total}).`
       );
       setIsValid(false);
-      onUpdate(0, total, false);
+      onUpdate(0, total, false, []);
     } else {
+      const validDefects = defectQuantities
+        .filter((defect) => defect.quantity > 0)
+        .map((defect) => ({
+          defectId: defect.id,
+          quantityByPack: defect.quantity,
+        }));
       setErrorMessage('');
       setIsValid(true);
-      onUpdate(passQuantity, totalDefectQuantity, true);
+      onUpdate(passQuantity, totalDefectQuantity, true, validDefects);
     }
   };
 
@@ -132,13 +132,13 @@ const MaterialInspectingCard: React.FC<MaterialDetailCardProps> = ({
             <Text className='text-red-600 font-bold mb-2'>
               Defect Materials
             </Text>
-            {defects.map((defect) => (
+            {defectQuantities.map((defect) => (
               <View key={defect.id} className='mb-4'>
                 <Text className='text-gray-700 font-medium mb-1'>
-                  {defect.name}
+                  {defect.description}
                 </Text>
                 <Input
-                  placeholder={`Enter quantity for ${defect.name}`}
+                  placeholder={`Enter quantity for ${defect.description}`}
                   value={defect.quantity.toString()}
                   onChangeText={(value) => handleDefectChange(defect.id, value)}
                   keyboardType='numeric'

@@ -14,7 +14,7 @@ interface MaterialDetailCardProps {
   total: number;
   pass: number;
   fail: number;
-  defects: { id: string; description: string; quantity: number }[]; // Pass defect data
+  defects: { id: string; description: string; quantity: number }[];
 }
 
 const MaterialDetailCard: React.FC<MaterialDetailCardProps> = ({
@@ -28,7 +28,7 @@ const MaterialDetailCard: React.FC<MaterialDetailCardProps> = ({
   total,
   pass,
   fail,
-  defects = [], // Pass defects dynamically
+  defects = [],
 }) => {
   return (
     <Card className='m-4 rounded-lg shadow-md'>
@@ -110,7 +110,7 @@ const MaterialDetailCard: React.FC<MaterialDetailCardProps> = ({
                   {defect.description}
                 </Text>
                 <Text className='text-red-800 font-bold'>
-                  {defect.quantity || 5}
+                  {defect.quantity}
                 </Text>
               </View>
             ))}

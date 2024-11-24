@@ -14,7 +14,7 @@ const InspectedDetails = () => {
   const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
-  const { defectsList } = useGetAllDefect();
+  const { defectsList = [] } = useGetAllDefect(); // Default to an empty array if undefined
 
   if (isPending) {
     return <SpinnerLoading />;
@@ -124,6 +124,7 @@ const InspectedDetails = () => {
           passPercentage={passPercentage}
           inspectionReportDetails={inspectionReportDetail}
           importRequest={inspectionRequest?.importRequest}
+          allDefects={defectsList} // Pass defectsList to MaterialInspectionReport
         />
       </ScrollView>
     );
