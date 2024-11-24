@@ -49,7 +49,8 @@ export interface ImportRequestDetail {
   updatedAt: string;
   deletedAt: string | null;
   quantityByPack: number;
-  materialPackage: MaterialPackage;
+  materialPackage: any;
+  productSize: any;
 }
 
 export interface PODelivery {

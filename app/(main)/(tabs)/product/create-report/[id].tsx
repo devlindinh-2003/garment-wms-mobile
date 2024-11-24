@@ -1,22 +1,23 @@
-import { useRouter } from 'expo-router';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
-import MaterialInspectingCard from '@/components/inspecting-process/material/MaterialInspectingCard';
-import MaterialInspectionRequest from '@/components/inspecting-process/material/MaterialInspectionRequest';
+import ProductInspectingCard from '@/components/inspecting-process/product/ProductInspectingCard';
+import ProductInspectionRequest from '@/components/inspecting-process/product/ProductInspectionRequest';
+import Theme from '@/constants/Theme';
+import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
 import { ImportRequestDetail } from '@/types/ImportRequestType';
-import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, View, Text } from 'react-native';
-import { Button, Snackbar } from 'react-native-paper';
-import Theme from '@/constants/Theme';
+import { View } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Button, Snackbar, Text } from 'react-native-paper';
 
-const CreateMaterialReport = () => {
-  const router = useRouter();
+const CreateProductReport = () => {
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
+  console.log(JSON.stringify(data?.data, null, 2));
+
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
     {
@@ -69,10 +70,12 @@ const CreateMaterialReport = () => {
           data?.data.importRequest.importRequestDetail.find(
             (importDetail: ImportRequestDetail) => importDetail.id === detail.id
           );
+
         if (!correspondingImportDetail) {
           console.error(`No matching import detail found for id: ${detail.id}`);
           return null;
         }
+
         const detailObject: any = {
           approvedQuantityByPack: detail.pass,
           defectQuantityByPack: detail.fail,
@@ -99,21 +102,22 @@ const CreateMaterialReport = () => {
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
-    mutate(requestBody, {
-      onSuccess: (response) => {
-        setSnackbarMessage('Report submitted successfully!');
-        setSnackbarVisibleSuccess(true);
-        router.push({
-          pathname: '/(main)/(tabs)/material/inspected/[id]',
-          params: { id: response.data?.inspectionReport?.id || '' },
-        });
-      },
-      onError: (error) => {
-        console.error('Error submitting report:', error.message);
-        setSnackbarMessage('Failed to submit the report.');
-        setSnackbarVisibleError(true);
-      },
-    });
+    // Call the API to submit the report
+    // mutate(requestBody, {
+    //   onSuccess: (response) => {
+    //     setSnackbarMessage('Report submitted successfully!');
+    //     setSnackbarVisibleSuccess(true);
+    //     router.push({
+    //       pathname: '/(main)/(tabs)/material/inspected/[id]',
+    //       params: { id: response.data?.inspectionReport?.id || '' },
+    //     });
+    //   },
+    //   onError: (error) => {
+    //     console.error('Error submitting report:', error.message);
+    //     setSnackbarMessage('Failed to submit the report.');
+    //     setSnackbarVisibleError(true);
+    //   },
+    // });
   };
 
   if (isPending) {
@@ -142,7 +146,7 @@ const CreateMaterialReport = () => {
     return (
       <>
         <ScrollView className='p-4 bg-white'>
-          <MaterialInspectionRequest
+          <ProductInspectionRequest
             inspectionRequestCode={inspectionRequestCode}
             inspectionRequestStatus={inspectionRequestStatus}
             inspectionRequestCreatedAt={inspectionRequestCreatedAt}
@@ -153,15 +157,15 @@ const CreateMaterialReport = () => {
           />
 
           {importRequestDetail.map((detail: ImportRequestDetail) => (
-            <MaterialInspectingCard
+            <ProductInspectingCard
               key={detail.id}
-              image={detail.materialPackage.materialVariant.image}
-              name={detail.materialPackage.name}
-              code={detail.materialPackage.code}
-              height={`${detail.materialPackage.packedHeight}m`}
-              width={`${detail.materialPackage.packedWidth}m`}
-              weight={`${detail.materialPackage.packedWeight}kg`}
-              length={`${detail.materialPackage.packedLength}m`}
+              image={detail.productSize.productVariant.image}
+              name={detail.productSize.name}
+              code={detail.productSize.code}
+              height={`${detail.productSize.height}m`}
+              width={`${detail.productSize.width}m`}
+              weight={`${detail.productSize.weight}kg`}
+              length={`${detail.productSize.length}m`}
               total={detail.quantityByPack}
               pass={0}
               fail={0}
@@ -220,4 +224,4 @@ const CreateMaterialReport = () => {
   return null;
 };
 
-export default CreateMaterialReport;
+export default CreateProductReport;

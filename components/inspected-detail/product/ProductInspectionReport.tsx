@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
-import MaterialDetailCard from './MaterialDetailCard';
-import { InspectionReportDetail } from '@/types/InspectionReportDetail';
 import { ImportRequest } from '@/types/ImportRequestType';
+import { InspectionReportDetail } from '@/types/InspectionReportDetail';
+import React from 'react';
+import { View } from 'react-native';
+import { BarChart } from 'react-native-gifted-charts';
+import { Text } from 'react-native-paper';
+import ProductDetailCard from './ProductDetailCard';
 
-interface MaterialInspectionReportProps {
+interface ProductInspectionReportProps {
   inspectionReportCode: string;
   totalMaterials: number;
   chartData: { value: number; frontColor: string; label: string }[];
@@ -15,7 +16,7 @@ interface MaterialInspectionReportProps {
   importRequest: ImportRequest;
 }
 
-const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
+const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
   inspectionReportCode,
   totalMaterials,
   chartData,
@@ -47,7 +48,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
         <BarChart
           data={chartData}
           width={300}
-          height={500}
+          height={300}
           barWidth={50}
           maxValue={totalMaterials}
           noOfSections={4}
@@ -77,16 +78,16 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
           Inspection Report Details
         </Text>
         {inspectionReportDetails.map((detail) => (
-          <MaterialDetailCard
+          <ProductDetailCard
             key={detail.id}
-            image={detail.materialPackage?.materialVariant?.image || ''}
-            name={detail.materialPackage?.name || 'N/A'}
-            code={detail.materialPackage?.code || 'N/A'}
-            height={`${detail.materialPackage?.packedHeight || 0}m`}
-            width={`${detail.materialPackage?.packedWidth || 0}m`}
-            weight={`${detail.materialPackage?.packedWeight || 0}kg`}
-            length={`${detail.materialPackage?.packedLength || 0}m`}
-            total={detail?.quantityByPack || 0}
+            image={detail.productSize?.productVariant?.image || ''}
+            name={detail.productSize?.name || 'N/A'}
+            code={detail.productSize?.code || 'N/A'}
+            height={`${detail.productSize?.height || 0}m`}
+            width={`${detail.productSize?.width || 0}m`}
+            weight={`${detail.productSize?.weight || 0}kg`}
+            length={`${detail.productSize?.length || 0}m`}
+            total={detail.quantityByPack || 0}
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
           />
@@ -96,4 +97,4 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   );
 };
 
-export default MaterialInspectionReport;
+export default ProductInspectionReport;

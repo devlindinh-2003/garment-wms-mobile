@@ -1,12 +1,12 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Text, Card } from 'react-native-paper';
-import { Calendar, Notebook, UserRoundSearch } from 'lucide-react-native';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
+import { Calendar, Notebook, UserRoundSearch } from 'lucide-react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Card, Text } from 'react-native-paper';
 
-interface MaterialInspectionRequestInfoProps {
+interface ProductInspectionRequestInfoProps {
   inspectionRequestCode: string;
   inspectionRequestStatus: string;
   inspectionReportCreatedAt: string | null;
@@ -14,8 +14,8 @@ interface MaterialInspectionRequestInfoProps {
   inspectionRequestNote: string | null;
 }
 
-const MaterialInspectionRequestInfo: React.FC<
-  MaterialInspectionRequestInfoProps
+const ProductInspectionRequestInfo: React.FC<
+  ProductInspectionRequestInfoProps
 > = ({
   inspectionRequestCode,
   inspectionRequestStatus,
@@ -84,4 +84,4 @@ const MaterialInspectionRequestInfo: React.FC<
   );
 };
 
-export default MaterialInspectionRequestInfo;
+export default ProductInspectionRequestInfo;
