@@ -90,6 +90,17 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
             total={detail.quantityByPack || 0}
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
+            defects={[
+              { description: 'Drop stitches', quantity: 5 },
+              { description: 'Crease marks', quantity: 3 },
+              { description: 'Holes in the fabric', quantity: 2 },
+              { description: 'Uneven dyeing/printing/dye marks', quantity: 4 },
+              {
+                description: 'Misprinting, off printing or absence of printing',
+                quantity: 1,
+              },
+              { description: 'Wrong color', quantity: 2 },
+            ]}
           />
         ))}
       </View>
