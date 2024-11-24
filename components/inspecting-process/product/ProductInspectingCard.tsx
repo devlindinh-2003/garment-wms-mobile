@@ -12,9 +12,13 @@ interface ProductDetailCardProps {
   weight: string;
   length: string;
   total: number;
-  pass: number;
-  fail: number;
-  onUpdate: (pass: number, fail: number, isValid: boolean) => void;
+  defects: { id: string; name: string }[]; // Dynamic defects
+  onUpdate: (
+    pass: number,
+    fail: number,
+    isValid: boolean,
+    defects: { defectId: string; quantityByPack: number }[]
+  ) => void;
 }
 
 interface DefectType {
@@ -32,26 +36,26 @@ const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
   weight,
   length,
   total,
+  defects,
   onUpdate,
 }) => {
-  const [defects, setDefects] = useState<DefectType[]>([
-    { id: '1', name: 'Scratch', quantity: 0 },
-    { id: '2', name: 'Color Issue', quantity: 0 },
-    { id: '3', name: 'Size Inconsistency', quantity: 0 },
-    { id: '4', name: 'Material Defect', quantity: 0 },
-  ]);
+  const [defectQuantities, setDefectQuantities] = useState<DefectType[]>(
+    defects.map((defect) => ({ ...defect, quantity: 0 }))
+  );
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isValid, setIsValid] = useState<boolean>(true);
 
-  const totalDefectQuantity = defects.reduce(
+  // Calculate the total defects and pass quantity
+  const totalDefectQuantity = defectQuantities.reduce(
     (total, defect) => total + defect.quantity,
     0
   );
   const passQuantity = total - totalDefectQuantity;
 
+  // Update defect quantities based on input
   const handleDefectChange = (id: string, quantity: string) => {
-    const sanitizedValue = quantity.replace(/[^0-9]/g, '');
-    setDefects((prevDefects) =>
+    const sanitizedValue = quantity.replace(/[^0-9]/g, ''); // Ensure numeric input
+    setDefectQuantities((prevDefects) =>
       prevDefects.map((defect) =>
         defect.id === id
           ? { ...defect, quantity: parseInt(sanitizedValue, 10) || 0 }
@@ -60,28 +64,40 @@ const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
     );
   };
 
+  // Validate the quantities
   const validateQuantities = () => {
-    if (passQuantity < 0 || totalDefectQuantity > total) {
+    if (totalDefectQuantity > total) {
       setErrorMessage(
         `Total defect quantity (${totalDefectQuantity}) cannot exceed the total quantity (${total}).`
       );
       setIsValid(false);
-      onUpdate(0, total, false);
+      onUpdate(0, total, false, []);
     } else {
       setErrorMessage('');
       setIsValid(true);
-      onUpdate(passQuantity, totalDefectQuantity, true);
+
+      // Filter defects with quantity > 0
+      const validDefects = defectQuantities
+        .filter((defect) => defect.quantity > 0)
+        .map((defect) => ({
+          defectId: defect.id,
+          quantityByPack: defect.quantity,
+        }));
+
+      onUpdate(passQuantity, totalDefectQuantity, true, validDefects);
     }
   };
 
+  // Revalidate whenever the defect quantities change
   useEffect(() => {
     validateQuantities();
-  }, [totalDefectQuantity]);
+  }, [defectQuantities]);
 
   return (
     <Card className='m-4 rounded-lg shadow-md'>
       <Card.Cover source={{ uri: image }} resizeMode='contain' />
       <Card.Content className='p-4'>
+        {/* Header */}
         <View className='flex-row justify-between items-center flex-wrap mb-4'>
           <Text className='text-lg font-bold text-black flex-1 mr-2'>
             {name}
@@ -89,6 +105,7 @@ const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
           <Text className='text-gray-500 text-sm'>{code}</Text>
         </View>
 
+        {/* Specification */}
         <Text className='text-lg font-semibold text-gray-700 mb-2'>
           Specification
         </Text>
@@ -113,18 +130,20 @@ const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
           </View>
         </View>
 
+        {/* Total Quantity */}
         <View className='bg-blue-100 p-3 mb-4 rounded-md'>
           <Text className='text-blue-600 font-bold text-center'>
             Total Quantity: {total}
           </Text>
         </View>
 
+        {/* Defects */}
         <View className='bg-red-100 p-3 mb-4 rounded-md'>
           <Text className='text-red-600 font-bold mb-2'>Defect Materials</Text>
-          {defects.map((defect) => (
+          {defectQuantities.map((defect) => (
             <View key={defect.id} className='mb-4'>
               <Text className='text-gray-700 font-medium mb-1'>
-                {defect.name}
+                {defect?.description}
               </Text>
               <Input
                 placeholder={`Enter quantity for ${defect.name}`}
@@ -142,6 +161,7 @@ const ProductInspectingCard: React.FC<ProductDetailCardProps> = ({
           )}
         </View>
 
+        {/* Pass Quantity */}
         <View className='bg-green-100 p-3 mb-4 rounded-md'>
           <Text className='text-green-600 font-bold mb-2'>PASS Materials</Text>
           <Input

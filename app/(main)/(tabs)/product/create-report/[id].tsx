@@ -1,22 +1,23 @@
+import { router, useRouter } from 'expo-router';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import ProductInspectingCard from '@/components/inspecting-process/product/ProductInspectingCard';
 import ProductInspectionRequest from '@/components/inspecting-process/product/ProductInspectionRequest';
-import Theme from '@/constants/Theme';
-import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
+import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
+import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 import { ImportRequestDetail } from '@/types/ImportRequestType';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Button, Snackbar, Text } from 'react-native-paper';
+import Theme from '@/constants/Theme';
 
 const CreateProductReport = () => {
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
-  console.log(JSON.stringify(data?.data, null, 2));
+  const { defectsList = [] } = useGetAllDefect();
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
     {
@@ -24,35 +25,44 @@ const CreateProductReport = () => {
       pass: number;
       fail: number;
       isValid: boolean;
+      defects: { defectId: string; quantityByPack: number }[];
     }[]
   >([]);
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  const handleReportUpdate = (
-    id: string,
-    pass: number,
-    fail: number,
-    isValid: boolean
-  ) => {
-    setReportDetails((prevDetails) => {
-      const existingDetail = prevDetails.find((detail) => detail.id === id);
-      if (existingDetail) {
-        return prevDetails.map((detail) =>
-          detail.id === id ? { id, pass, fail, isValid } : detail
-        );
-      }
-      return [...prevDetails, { id, pass, fail, isValid }];
-    });
-  };
-
   const allInputsValid = data?.data.importRequest.importRequestDetail.every(
     (detail: ImportRequestDetail) => {
       const reportDetail = reportDetails.find((d) => d.id === detail.id);
       return reportDetail && reportDetail.isValid;
     }
   );
+
+  const handleReportUpdate = (
+    id: string,
+    pass: number,
+    fail: number,
+    isValid: boolean,
+    defects: { defectId: string; quantityByPack: number }[]
+  ) => {
+    const filteredDefects = defects.filter(
+      (defect) => defect.quantityByPack > 0
+    ); // Filter out defects with quantityByPack = 0
+    setReportDetails((prevDetails) => {
+      const existingDetail = prevDetails.find((detail) => detail.id === id);
+      if (existingDetail) {
+        return prevDetails.map((detail) =>
+          detail.id === id
+            ? { id, pass, fail, isValid, defects: filteredDefects }
+            : detail
+        );
+      }
+      return [
+        ...prevDetails,
+        { id, pass, fail, isValid, defects: filteredDefects },
+      ];
+    });
+  };
 
   const handleSendReport = () => {
     if (!allInputsValid) {
@@ -63,60 +73,55 @@ const CreateProductReport = () => {
       return;
     }
 
-    const inspectionReportDetail = reportDetails
-      .map((detail) => {
-        const correspondingImportDetail =
-          data?.data.importRequest.importRequestDetail.find(
-            (importDetail: ImportRequestDetail) => importDetail.id === detail.id
-          );
+    const inspectionReportDetail = reportDetails.map((detail) => {
+      const correspondingImportDetail =
+        data?.data.importRequest.importRequestDetail.find(
+          (importDetail: ImportRequestDetail) => importDetail.id === detail.id
+        );
 
-        if (!correspondingImportDetail) {
-          console.error(`No matching import detail found for id: ${detail.id}`);
-          return null;
-        }
+      if (!correspondingImportDetail) {
+        console.error(`No matching import detail found for id: ${detail.id}`);
+        return null;
+      }
 
-        const detailObject: any = {
-          approvedQuantityByPack: detail.pass,
-          defectQuantityByPack: detail.fail,
-        };
+      const detailObject: any = {
+        approvedQuantityByPack: detail.pass,
+        defectQuantityByPack: detail.fail,
+        productSizeId: correspondingImportDetail.productSize?.id || null,
+        inspectionReportDetailDefect: detail.defects,
+      };
 
-        if (data?.data.type === 'PRODUCT') {
-          detailObject.productSizeId =
-            correspondingImportDetail.productSize?.id || null;
-        } else if (data?.data.type === 'MATERIAL') {
-          detailObject.materialPackageId =
-            correspondingImportDetail.materialPackage?.id || null;
-        }
+      return detailObject;
+    });
 
-        return detailObject;
-      })
-      .filter((reportDetail) => reportDetail !== null);
+    const filteredInspectionReportDetail = inspectionReportDetail.filter(
+      (reportDetail) => reportDetail !== null
+    );
 
     const requestBody = {
       inspectionRequestId: id as string,
       inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',
-      type: data?.data.type,
-      inspectionReportDetail,
+      type: 'PRODUCT',
+      inspectionReportDetail: filteredInspectionReportDetail,
     };
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
-    // Call the API to submit the report
-    // mutate(requestBody, {
-    //   onSuccess: (response) => {
-    //     setSnackbarMessage('Report submitted successfully!');
-    //     setSnackbarVisibleSuccess(true);
-    //     router.push({
-    //       pathname: '/(main)/(tabs)/material/inspected/[id]',
-    //       params: { id: response.data?.inspectionReport?.id || '' },
-    //     });
-    //   },
-    //   onError: (error) => {
-    //     console.error('Error submitting report:', error.message);
-    //     setSnackbarMessage('Failed to submit the report.');
-    //     setSnackbarVisibleError(true);
-    //   },
-    // });
+    mutate(requestBody, {
+      onSuccess: (response) => {
+        setSnackbarMessage('Report submitted successfully!');
+        setSnackbarVisibleSuccess(true);
+        router.replace({
+          pathname: '/(main)/(tabs)/product/inspected/[id]',
+          params: { id: response.data?.inspectionReport?.id || '' },
+        });
+      },
+      onError: (error) => {
+        console.error('Error submitting report:', error.message);
+        setSnackbarMessage('Failed to submit the report.');
+        setSnackbarVisibleError(true);
+      },
+    });
   };
 
   if (isPending) {
@@ -166,10 +171,9 @@ const CreateProductReport = () => {
               weight={`${detail.productSize.weight}kg`}
               length={`${detail.productSize.length}m`}
               total={detail.quantityByPack}
-              pass={0}
-              fail={0}
-              onUpdate={(pass, fail, isValid) =>
-                handleReportUpdate(detail.id, pass, fail, isValid)
+              defects={defectsList} // Pass dynamically fetched defects
+              onUpdate={(pass, fail, isValid, defects) =>
+                handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }
             />
           ))}

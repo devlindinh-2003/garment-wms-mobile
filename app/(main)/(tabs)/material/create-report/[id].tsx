@@ -118,7 +118,7 @@ const CreateMaterialReport = () => {
       onSuccess: (response) => {
         setSnackbarMessage('Report submitted successfully!');
         setSnackbarVisibleSuccess(true);
-        router.push({
+        router.replace({
           pathname: '/(main)/(tabs)/material/inspected/[id]',
           params: { id: response.data?.inspectionReport?.id || '' },
         });

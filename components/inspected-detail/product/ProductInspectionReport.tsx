@@ -1,10 +1,9 @@
-import { ImportRequest } from '@/types/ImportRequestType';
-import { InspectionReportDetail } from '@/types/InspectionReportDetail';
 import React from 'react';
 import { View } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Text } from 'react-native-paper';
 import ProductDetailCard from './ProductDetailCard';
+import { InspectionReportDetail } from '@/types/InspectionReportDetail';
 
 interface ProductInspectionReportProps {
   inspectionReportCode: string;
@@ -13,7 +12,7 @@ interface ProductInspectionReportProps {
   failPercentage: string;
   passPercentage: string;
   inspectionReportDetails: InspectionReportDetail[];
-  importRequest: ImportRequest;
+  allDefects: { id: string; description: string }[];
 }
 
 const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
@@ -23,15 +22,25 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
   failPercentage,
   passPercentage,
   inspectionReportDetails,
-  importRequest,
+  allDefects,
 }) => {
+  const mapDefects = (detailDefects: any[]) => {
+    // Map all defects and set missing ones to quantity 0
+    return allDefects.map((defect) => {
+      const matchedDefect = detailDefects.find((d) => d.defectId === defect.id);
+      return {
+        id: defect.id,
+        description: defect.description,
+        quantity: matchedDefect?.quantityByPack || 0,
+      };
+    });
+  };
+
   return (
     <View>
       {/* Inspection Report */}
       <View className='flex-row items-center mt-4 px-3'>
-        <Text className='text-slate-500 font-semibold'>
-          Inspection Report:{' '}
-        </Text>
+        <Text className='text-slate-500 font-semibold'>Inspection Report:</Text>
         <Text className='text-primaryLight font-bold'>
           {inspectionReportCode || 'N/A'}
         </Text>
@@ -57,22 +66,6 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
         />
       </View>
 
-      {/* Legend */}
-      <View className='flex-row justify-between mt-4 items-center w-40 mx-auto'>
-        <View className='flex-row items-center'>
-          <View className='w-3 h-3 bg-red-500 mr-2 rounded-full' />
-          <Text>Fail</Text>
-        </View>
-        <Text className='font-bold'>{failPercentage}%</Text>
-      </View>
-      <View className='flex-row justify-between mt-2 items-center w-40 mx-auto'>
-        <View className='flex-row items-center'>
-          <View className='w-3 h-3 bg-green-500 mr-2 rounded-full' />
-          <Text>Pass</Text>
-        </View>
-        <Text className='font-bold'>{passPercentage}%</Text>
-      </View>
-
       <View>
         <Text className='text-blue-500 mt-7 text-center text-2xl font-semibold mb-3 uppercase'>
           Inspection Report Details
@@ -90,17 +83,7 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
             total={detail.quantityByPack || 0}
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
-            defects={[
-              { description: 'Drop stitches', quantity: 5 },
-              { description: 'Crease marks', quantity: 3 },
-              { description: 'Holes in the fabric', quantity: 2 },
-              { description: 'Uneven dyeing/printing/dye marks', quantity: 4 },
-              {
-                description: 'Misprinting, off printing or absence of printing',
-                quantity: 1,
-              },
-              { description: 'Wrong color', quantity: 2 },
-            ]}
+            defects={mapDefects(detail.inspectionReportDetailDefect || [])}
           />
         ))}
       </View>

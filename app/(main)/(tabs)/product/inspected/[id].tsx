@@ -3,6 +3,7 @@ import ProductDetailCard from '@/components/inspected-detail/product/ProductDeta
 import ProductInspectionReport from '@/components/inspected-detail/product/ProductInspectionReport';
 import ProductInspectionRequestInfo from '@/components/inspected-detail/product/ProductInspectionRequest';
 import Theme from '@/constants/Theme';
+import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 import { useGetInspectionReportById } from '@/hooks/useGetInspectionReportById';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -14,9 +15,12 @@ const InspectedProductDetails = () => {
   const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
+  const { defectsList = [] } = useGetAllDefect();
+
   if (isPending) {
     return <SpinnerLoading />;
   }
+
   if (isSuccess && data) {
     const {
       code: inspectionReportCode,
@@ -24,7 +28,7 @@ const InspectedProductDetails = () => {
       inspectionRequest,
       inspectionReportDetail,
     } = data.data;
-    console.log('Code', inspectionReportCode);
+
     const inspectionRequestCode = inspectionRequest?.code || 'N/A';
     const inspectionRequestNote = inspectionRequest?.note || 'N/A';
     const inspectionDeptName =
@@ -33,17 +37,10 @@ const InspectedProductDetails = () => {
         ? `${inspectionRequest.inspectionDepartment.account.firstName} ${inspectionRequest.inspectionDepartment.account.lastName}`
         : 'N/A';
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
-    // Calculate totals
+
     const totalMaterials =
       inspectionReportDetail?.reduce((acc: number, item: any) => {
-        if (item.quantityByPack !== null) {
-          return acc + item.quantityByPack;
-        }
-        return (
-          acc +
-          (item.approvedQuantityByPack || 0) +
-          (item.defectQuantityByPack || 0)
-        );
+        return acc + (item.quantityByPack || 0);
       }, 0) || 0;
 
     const passCount =
@@ -120,11 +117,13 @@ const InspectedProductDetails = () => {
           failPercentage={failPercentage}
           passPercentage={passPercentage}
           inspectionReportDetails={inspectionReportDetail}
-          importRequest={inspectionRequest?.importRequest}
+          allDefects={defectsList}
         />
       </ScrollView>
     );
   }
+
+  return null;
 };
 
 export default InspectedProductDetails;
