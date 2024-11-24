@@ -85,18 +85,6 @@ const WarehouseStaffDashboard = () => {
                   {InventoryReportStatusLabels[report.status]}
                 </StatusBadge>
               </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>From</Text>
-                <Text className='font-semibold'>
-                  {report.from ? convertDate(report.from) : 'N/A'}
-                </Text>
-              </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>To</Text>
-                <Text className='font-semibold'>
-                  {report.to ? convertDate(report.to) : 'Not Yett'}
-                </Text>
-              </View>
             </Card.Content>
             <View className='items-end px-4 py-3'>
               <Button
@@ -166,63 +154,6 @@ const WarehouseStaffDashboard = () => {
                   {InventoryReportStatusLabels[report.status]}
                 </StatusBadge>
               </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>From</Text>
-                <Text className='font-semibold'>
-                  {report.from ? convertDate(report.from) : 'N/A'}
-                </Text>
-              </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>To</Text>
-                <Text className='font-semibold'>
-                  {report.to ? convertDate(report.to) : 'Not Yet'}
-                </Text>
-              </View>
-
-              {/* Map through Inventory Report Details */}
-              {report.inventoryReportDetail?.map((detail: any) => (
-                <View key={detail.materialVariant?.id} className='mt-4'>
-                  <Text className='text-lg font-bold'>
-                    {detail.materialVariant?.name}
-                  </Text>
-                  <Text className='text-sm text-gray-600'>
-                    Code: {detail.materialVariant?.code}
-                  </Text>
-
-                  {detail.materialPackages?.map((materialPackage: any) => (
-                    <View
-                      key={materialPackage.materialPackage?.id}
-                      className='ml-4 mt-2'
-                    >
-                      <Text className='text-sm font-medium'>
-                        Package: {materialPackage.materialPackage?.name} (
-                        {materialPackage.materialPackage?.packUnit})
-                      </Text>
-                      <Text className='text-sm text-gray-600'>
-                        Total Expected: {materialPackage.totalExpectedQuantity},
-                        Actual: {materialPackage.totalActualQuantity}
-                      </Text>
-
-                      {materialPackage.inventoryReportDetails?.map(
-                        (reportDetail: any) => (
-                          <View key={reportDetail.id} className='ml-4 mt-2'>
-                            <Text className='text-sm text-gray-600'>
-                              Expected Quantity: {reportDetail.expectedQuantity}
-                            </Text>
-                            <Text className='text-sm text-gray-600'>
-                              Actual Quantity: {reportDetail.actualQuantity}
-                            </Text>
-                            <Text className='text-sm text-gray-600'>
-                              Receipt Code:{' '}
-                              {reportDetail.materialReceipt?.code || 'N/A'}
-                            </Text>
-                          </View>
-                        )
-                      )}
-                    </View>
-                  ))}
-                </View>
-              ))}
             </Card.Content>
             <View className='items-end px-4 py-3'>
               <Button
