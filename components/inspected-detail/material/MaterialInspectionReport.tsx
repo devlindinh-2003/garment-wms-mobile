@@ -86,7 +86,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
             width={`${detail.materialPackage?.packedWidth || 0}m`}
             weight={`${detail.materialPackage?.packedWeight || 0}kg`}
             length={`${detail.materialPackage?.packedLength || 0}m`}
-            total={detail.quantityByPack || 0}
+            total={detail?.quantityByPack || 0}
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
           />
