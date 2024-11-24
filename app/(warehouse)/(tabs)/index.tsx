@@ -151,43 +151,93 @@ const WarehouseStaffDashboard = () => {
           >
             <Card.Content>
               <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>Title</Text>
-                <Text className='font-semibold text-primaryLight'>
-                  {report.title}
-                </Text>
-              </View>
-              <View className='flex-row justify-between mb-2'>
                 <Text className='text-gray-500 font-medium'>Code</Text>
                 <Text className='font-semibold'>{report.code}</Text>
               </View>
               <View className='flex-row justify-between mb-2'>
                 <Text className='text-gray-500 font-medium'>Status</Text>
-                <StatusBadge variant='success'>
+                <StatusBadge
+                  variant={
+                    report.status === InventoryReportStatus.REPORTED
+                      ? 'success'
+                      : 'default'
+                  }
+                >
                   {InventoryReportStatusLabels[report.status]}
                 </StatusBadge>
               </View>
               <View className='flex-row justify-between mb-2'>
                 <Text className='text-gray-500 font-medium'>From</Text>
                 <Text className='font-semibold'>
-                  {report.from
-                    ? new Date(report.from).toLocaleDateString()
-                    : 'N/A'}
+                  {report.from ? convertDate(report.from) : 'N/A'}
                 </Text>
               </View>
               <View className='flex-row justify-between mb-2'>
                 <Text className='text-gray-500 font-medium'>To</Text>
                 <Text className='font-semibold'>
-                  {report.to ? new Date(report.to).toLocaleDateString() : 'N/A'}
+                  {report.to ? convertDate(report.to) : 'Not Yet'}
                 </Text>
               </View>
+
+              {/* Map through Inventory Report Details */}
+              {report.inventoryReportDetail?.map((detail: any) => (
+                <View key={detail.materialVariant?.id} className='mt-4'>
+                  <Text className='text-lg font-bold'>
+                    {detail.materialVariant?.name}
+                  </Text>
+                  <Text className='text-sm text-gray-600'>
+                    Code: {detail.materialVariant?.code}
+                  </Text>
+
+                  {detail.materialPackages?.map((materialPackage: any) => (
+                    <View
+                      key={materialPackage.materialPackage?.id}
+                      className='ml-4 mt-2'
+                    >
+                      <Text className='text-sm font-medium'>
+                        Package: {materialPackage.materialPackage?.name} (
+                        {materialPackage.materialPackage?.packUnit})
+                      </Text>
+                      <Text className='text-sm text-gray-600'>
+                        Total Expected: {materialPackage.totalExpectedQuantity},
+                        Actual: {materialPackage.totalActualQuantity}
+                      </Text>
+
+                      {materialPackage.inventoryReportDetails?.map(
+                        (reportDetail: any) => (
+                          <View key={reportDetail.id} className='ml-4 mt-2'>
+                            <Text className='text-sm text-gray-600'>
+                              Expected Quantity: {reportDetail.expectedQuantity}
+                            </Text>
+                            <Text className='text-sm text-gray-600'>
+                              Actual Quantity: {reportDetail.actualQuantity}
+                            </Text>
+                            <Text className='text-sm text-gray-600'>
+                              Receipt Code:{' '}
+                              {reportDetail.materialReceipt?.code || 'N/A'}
+                            </Text>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
             </Card.Content>
             <View className='items-end px-4 py-3'>
               <Button
                 mode='contained'
-                icon='open-in-app'
+                icon={
+                  report.status === InventoryReportStatus.IN_PROGRESS
+                    ? 'progress-clock'
+                    : 'open-in-app'
+                }
                 onPress={() => {
                   router.push({
-                    pathname: '/(main)/(tabs)/inventory/report/[id]',
+                    pathname:
+                      report.status === InventoryReportStatus.IN_PROGRESS
+                        ? '/(warehouse)/(tabs)/create-report/[id]'
+                        : '/(warehouse)/(tabs)/reported/[id]',
                     params: { id: report.id },
                   });
                 }}
@@ -197,13 +247,18 @@ const WarehouseStaffDashboard = () => {
                   fontWeight: '600',
                 }}
                 style={{
-                  backgroundColor: Theme.primaryLightBackgroundColor,
+                  backgroundColor:
+                    report.status === InventoryReportStatus.IN_PROGRESS
+                      ? Theme.green[500]
+                      : Theme.primaryLightBackgroundColor,
                   minWidth: 100,
                   elevation: 2,
                 }}
                 contentStyle={{ paddingVertical: 4 }}
               >
-                View
+                {report.status === InventoryReportStatus.IN_PROGRESS
+                  ? 'Start'
+                  : 'View'}
               </Button>
             </View>
           </Card>
