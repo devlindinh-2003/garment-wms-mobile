@@ -10,7 +10,7 @@ import {
 } from '@/enums/inventoryReportPlanStatus';
 
 interface InventoryReportListProps {
-  inventoryReportPlans: any[]; // Replace `any[]` with `InventoryReportPlan[]` if type is defined
+  inventoryReportPlans: any[];
 }
 
 const InventoryReportPlanList: React.FC<InventoryReportListProps> = ({
@@ -19,11 +19,10 @@ const InventoryReportPlanList: React.FC<InventoryReportListProps> = ({
   const navigation = useNavigation();
 
   const renderPlan = ({ item }: any) => {
-    const status = item?.status as InventoryReportPlanStatus; // Ensure status is typed
+    const status = item?.status as InventoryReportPlanStatus;
 
     const handlePress = () => {
-      // Navigate to details screen with item data
-      // navigation.navigate('InventoryReportPlanDetails', { id: item?.id });
+      // Navigation logic here
     };
 
     return (

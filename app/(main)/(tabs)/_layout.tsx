@@ -1,13 +1,20 @@
 import { router, Tabs } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Box, Shirt, Warehouse } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
 import AppBarHeaderLayout from '@/components/common/AppBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Drawer } from 'react-native-drawer-layout';
 import avatar from '@/assets/images/avatar.png';
-import { Button } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TabLayout: React.FC = () => {
   return (
@@ -18,7 +25,6 @@ const TabLayout: React.FC = () => {
         headerShown: false,
       }}
     >
-      {/* Your tabs */}
       <Tabs.Screen
         name='index'
         options={{
@@ -85,24 +91,50 @@ const TabLayout: React.FC = () => {
 
 const Layout: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   const toggleDrawer = () => {
     setOpen((prevOpen) => !prevOpen);
   };
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      Alert.alert('Logged Out', 'You have been logged out successfully.', [
+        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+      ]);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          setUser(JSON.parse(userData));
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const renderDrawerContent = () => (
     <SafeAreaView className='flex-1 bg-white p-6'>
-      {/* Profile Header */}
       <View className='items-center mb-6'>
         <Image source={avatar} className='w-20 h-20 rounded-full mb-3' />
         <Text className='text-2xl font-bold'>Staff Profile</Text>
       </View>
 
-      {/* Profile Information Fields */}
       <View className='mb-4'>
         <Text className='text-gray-700 font-semibold mb-1'>Name</Text>
         <TextInput
-          value='Nguyen Huy Long'
+          value={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
           editable={false}
           className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
         />
@@ -110,7 +142,7 @@ const Layout: React.FC = () => {
       <View className='mb-4'>
         <Text className='text-gray-700 font-semibold mb-1'>Email</Text>
         <TextInput
-          value='huylong2003@gmail.com'
+          value={user?.email ?? 'N/A'}
           editable={false}
           className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
         />
@@ -118,7 +150,11 @@ const Layout: React.FC = () => {
       <View className='mb-4'>
         <Text className='text-gray-700 font-semibold mb-1'>Date of Birth</Text>
         <TextInput
-          value='19/04/2003'
+          value={
+            user?.dateOfBirth
+              ? new Date(user.dateOfBirth).toLocaleDateString()
+              : 'N/A'
+          }
           editable={false}
           className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
         />
@@ -126,7 +162,7 @@ const Layout: React.FC = () => {
       <View className='mb-4'>
         <Text className='text-gray-700 font-semibold mb-1'>Phone Number</Text>
         <TextInput
-          value='01662255761'
+          value={user?.phoneNumber ?? 'N/A'}
           editable={false}
           className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
         />
@@ -134,27 +170,17 @@ const Layout: React.FC = () => {
       <View className='mb-6'>
         <Text className='text-gray-700 font-semibold mb-1'>Staff Role</Text>
         <TextInput
-          value='Inspection Staff'
+          value={user?.role ?? 'Inspection Staff'}
           editable={false}
           className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
         />
       </View>
-
-      {/* Sign Out Button */}
       <TouchableOpacity
-        onPress={toggleDrawer}
+        onPress={handleLogout}
         className='bg-red-600 p-3 rounded-md'
       >
         <Text className='text-white text-center font-semibold'>Sign out</Text>
       </TouchableOpacity>
-      <Button
-        buttonColor={Theme.primaryLightBackgroundColor}
-        textColor='white'
-        className='mt-9'
-        onPress={() => router.push('/(auth)/login')}
-      >
-        Test login
-      </Button>
     </SafeAreaView>
   );
 

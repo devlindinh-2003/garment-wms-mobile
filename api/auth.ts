@@ -6,7 +6,6 @@ export const authApi = {
   login: (email: string, password: string, role: string) => {
     return post(loginUrl, { email, password, role });
   },
-
   refreshToken: (header: any) => {
     return get(refreshTokenUrl, {}, header);
   },

@@ -1,14 +1,38 @@
-import SpinnerLoading from '@/components/common/SpinnerLoading';
-import InventoryReportList from '@/components/warehouse-staff/inventory-report-plan/InventoryReportPlanList';
-import { useGetAllInventoryReportPlan } from '@/hooks/useGetAllInventoryReportPlan';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
+import InventoryReportPlanList from '@/components/warehouse-staff/inventory-report-plan/InventoryReportPlanList';
+import { getWarehouseStaffInventoryReport } from '@/api/inventoryReportPlan';
 
 const WarehouseStaffDashboard = () => {
-  const { data, isPending, isError } = useGetAllInventoryReportPlan();
+  const [inventoryData, setInventoryData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  console.log(inventoryData.length);
 
-  if (isPending) {
+  useEffect(() => {
+    const fetchInventoryReports = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getWarehouseStaffInventoryReport({
+          pageSize: 5,
+          pageIndex: 0,
+        });
+        setInventoryData(data?.data?.data ?? []);
+        setError(null);
+      } catch (err: any) {
+        console.error('Error fetching inventory data:', err.message);
+        setError(err.message || 'Failed to fetch data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInventoryReports();
+  }, []);
+
+  if (isLoading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <SpinnerLoading />
@@ -16,10 +40,10 @@ const WarehouseStaffDashboard = () => {
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
       <View className='flex-1 justify-center items-center'>
-        <Text>Error fetching inventory report plans. Please try again.</Text>
+        <Text>Error: {error}</Text>
       </View>
     );
   }
@@ -29,7 +53,7 @@ const WarehouseStaffDashboard = () => {
       <Text className='text-2xl font-bold mb-4 text-center text-primaryLight'>
         Inventory Report Plans
       </Text>
-      <InventoryReportList inventoryReportPlans={data?.data ?? []} />
+      <InventoryReportPlanList inventoryReportPlans={inventoryData} />
     </View>
   );
 };

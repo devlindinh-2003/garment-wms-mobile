@@ -69,9 +69,9 @@ const Login = () => {
       Alert.alert('Success', 'Login successful!');
 
       if (role === 'WAREHOUSE_STAFF') {
-        router.push('/warehouse/dashboard');
+        router.push('/(warehouse)/(tabs)');
       } else if (role === 'INSPECTION_DEPARTMENT') {
-        router.push('/inspection/dashboard');
+        router.push('/(main)/(tabs)');
       }
     } catch (error: any) {
       const message = ``;
