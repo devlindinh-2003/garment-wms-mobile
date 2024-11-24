@@ -8,6 +8,7 @@ import {
   InventoryReportPlanStatusColors,
   InventoryReportPlanStatusLabels,
 } from '@/enums/inventoryReportPlanStatus';
+import { router } from 'expo-router';
 
 interface InventoryReportListProps {
   inventoryReportPlans: any[];
@@ -17,12 +18,13 @@ const InventoryReportPlanList: React.FC<InventoryReportListProps> = ({
   inventoryReportPlans,
 }) => {
   const navigation = useNavigation();
-
   const renderPlan = ({ item }: any) => {
     const status = item?.status as InventoryReportPlanStatus;
-
     const handlePress = () => {
-      // Navigation logic here
+      router.push({
+        pathname: '/(warehouse)/(tabs)/inventory-report-detail/[id]',
+        params: { id: item?.id || '' },
+      });
     };
 
     return (
