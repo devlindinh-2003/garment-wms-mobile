@@ -50,32 +50,25 @@ const Login = () => {
       };
       console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
-      // Await the API call
       const response = await axios(authApi.login(email, password, role));
 
-      // Extract necessary data
       const { accessToken, user } = response.data.data;
 
-      // Save to AsyncStorage
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
-      // Log the API response and stored data
       console.log('API Response:', JSON.stringify(response.data, null, 2));
-      console.log('Access Token Saved:', accessToken);
-      console.log('User Saved:', user);
 
-      // Handle successful login
       Alert.alert('Success', 'Login successful!');
 
       if (role === 'WAREHOUSE_STAFF') {
-        router.push('/(warehouse)/(tabs)');
+        router.replace('/(warehouse)/(tabs)'); // Replaces the login page in the stack
       } else if (role === 'INSPECTION_DEPARTMENT') {
-        router.push('/(main)/(tabs)');
+        router.replace('/(main)/(tabs)'); // Replaces the login page in the stack
       }
     } catch (error: any) {
-      const message = ``;
-      error?.message || error.response?.data?.message || 'Login failed.';
+      const message =
+        error?.message || error.response?.data?.message || 'Login failed.';
       console.error(
         'Login Error:',
         JSON.stringify(error.response?.data || error, null, 2)
