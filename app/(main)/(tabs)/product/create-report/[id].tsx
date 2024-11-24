@@ -17,7 +17,6 @@ const CreateProductReport = () => {
     id as string
   );
   console.log(JSON.stringify(data?.data, null, 2));
-
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
     {

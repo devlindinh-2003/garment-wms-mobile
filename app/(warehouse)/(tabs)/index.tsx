@@ -17,6 +17,7 @@ import Theme from '@/constants/Theme';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyDataComponent from '@/components/common/EmptyData';
 import { convertDate } from '@/helpers/converDate';
+import { router } from 'expo-router';
 
 const initialLayout = { width: Dimensions.get('window').width };
 
@@ -103,7 +104,7 @@ const WarehouseStaffDashboard = () => {
                 icon='progress-clock'
                 onPress={() => {
                   router.push({
-                    pathname: '/(main)/(tabs)/inventory/in-progress/[id]',
+                    pathname: '/(warehouse)/(tabs)/create-report/[id]',
                     params: { id: report.id },
                   });
                 }}
