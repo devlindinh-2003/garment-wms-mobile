@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Image } from 'react-native';
-import { Text, Card, Button, TextInput } from 'react-native-paper';
+import { Text, Card, Button, TextInput, Snackbar } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { createInventoryReport } from '@/api/inventoryReport';
+import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
@@ -15,6 +15,9 @@ const CreateInventoryReport = () => {
   );
 
   const [inputs, setInputs] = useState<any>({});
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isSuccess && data?.data?.inventoryReportDetail) {
@@ -26,6 +29,7 @@ const CreateInventoryReport = () => {
               initialInputs[inventoryDetail.id] = {
                 actualQuantity: '',
                 notes: '',
+                isValid: false,
               };
             }
           );
@@ -36,30 +40,40 @@ const CreateInventoryReport = () => {
   }, [isSuccess, data]);
 
   const handleInputChange = (id: string, field: string, value: any) => {
-    setInputs((prevInputs: any) => ({
-      ...prevInputs,
-      [id]: {
-        ...prevInputs[id],
-        [field]: value,
-      },
-    }));
+    setInputs((prevInputs: any) => {
+      const updatedInputs = {
+        ...prevInputs,
+        [id]: {
+          ...prevInputs[id],
+          [field]: value,
+        },
+      };
+      // Check validity
+      const actualQuantity = updatedInputs[id]?.actualQuantity;
+      updatedInputs[id].isValid =
+        actualQuantity !== '' && !isNaN(parseInt(actualQuantity, 10));
+      return updatedInputs;
+    });
   };
 
-  const handleSubmit = async () => {
-    const details = Object.keys(inputs)
-      .filter((key) => inputs[key].actualQuantity || inputs[key].notes)
-      .map((id) => ({
-        inventoryReportDetailId: id,
-        actualQuantity: inputs[id].actualQuantity
-          ? parseInt(inputs[id].actualQuantity, 10)
-          : null,
-        note: inputs[id].notes || null,
-      }));
+  const allInputsValid = Object.values(inputs).every(
+    (input: any) => input.isValid
+  );
 
-    if (!details.length) {
-      alert('Please fill in at least one detail to submit.');
+  const handleSubmit = async () => {
+    if (!allInputsValid) {
+      setSnackbarMessage('Please fill in all fields and fix errors.');
+      setSnackbarVisible(true);
       return;
     }
+
+    setIsSubmitting(true);
+
+    const details = Object.keys(inputs).map((id) => ({
+      inventoryReportDetailId: id,
+      actualQuantity: parseInt(inputs[id].actualQuantity, 10),
+      note: inputs[id].notes || null,
+    }));
 
     const requestBody = { details };
 
@@ -78,11 +92,15 @@ const CreateInventoryReport = () => {
           params: { id: id },
         });
       } else {
-        alert('Submission was successful, but no report ID was returned.');
+        setSnackbarMessage('Submission was successful, but an error occurred.');
+        setSnackbarVisible(true);
       }
     } catch (error: any) {
       console.error('Error submitting report:', error.message);
-      alert('Failed to submit inventory report. Please try again.');
+      setSnackbarMessage('Failed to submit the report.');
+      setSnackbarVisible(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -107,129 +125,172 @@ const CreateInventoryReport = () => {
   const { code, status, inventoryReportDetail } = data.data;
 
   return (
-    <ScrollView className='flex-1 bg-gray-50'>
-      <View className='p-4 space-y-6'>
-        {/* Report Header */}
-        <Card className='bg-white rounded-lg shadow-sm'>
-          <Card.Content className='flex-row justify-between items-center'>
-            <View>
-              <Text className='text-xl font-bold text-gray-800'>
-                Inventory Report:
-              </Text>
-              <Text className='text-xl font-bold text-blue-600'>{code}</Text>
-            </View>
-            <StatusBadge variant={status.toLowerCase()}>{status}</StatusBadge>
-          </Card.Content>
-        </Card>
+    <>
+      <ScrollView className='flex-1 bg-gray-50'>
+        <View className='p-4 space-y-6'>
+          {/* Report Header */}
+          <Card className='bg-white rounded-lg shadow-sm'>
+            <Card.Content className='flex-row justify-between items-center'>
+              <View>
+                <Text className='text-xl font-bold text-gray-800'>
+                  Inventory Report:
+                </Text>
+                <StatusBadge className='text-xl font-bold text-blue-600'>
+                  {code}
+                </StatusBadge>
+              </View>
+              <StatusBadge variant={status.toLowerCase()}>{status}</StatusBadge>
+            </Card.Content>
+          </Card>
 
-        {/* Report Details */}
-        <View>
-          <Text className='text-lg font-bold text-gray-800 mb-3'>
-            Inventory Report Details
-          </Text>
-          {inventoryReportDetail.map((detail: any) =>
-            detail.materialPackages.map((materialPackage: any) =>
-              materialPackage.inventoryReportDetails.map(
-                (inventoryDetail: any) => (
-                  <Card
-                    key={inventoryDetail.id}
-                    className='mb-4 rounded-lg shadow-md overflow-hidden'
-                    style={{
-                      backgroundColor: Theme.cardBackgroundColor,
-                      borderWidth: 1,
-                      borderColor: Theme.borderColor || '#e0e0e0',
-                    }}
-                  >
-                    <Card.Content className='space-y-4 p-4'>
-                      {/* Material Variant */}
-                      <View className='flex-row items-center mb-4'>
-                        <Image
-                          source={{ uri: detail.materialVariant?.image }}
-                          style={{ width: 60, height: 60, borderRadius: 8 }}
-                        />
-                        <View className='ml-4 flex-1'>
-                          <Text className='text-sm text-gray-600 font-medium'>
-                            Material Variant:
+          {/* Report Details */}
+          <View>
+            <Text className='text-lg font-bold text-gray-800 mb-3'>
+              Inventory Report Details
+            </Text>
+            {inventoryReportDetail.map((detail: any) =>
+              detail.materialPackages.map((materialPackage: any) => (
+                <Card
+                  key={materialPackage.materialPackage.id}
+                  className='mb-4 rounded-lg shadow-md overflow-hidden'
+                  style={{
+                    backgroundColor: Theme.secondaryBackgroundColor,
+                    borderWidth: 1,
+                    borderColor: Theme.borderColor || '#e0e0e0',
+                  }}
+                >
+                  <Card.Content className='space-y-4 p-4'>
+                    {/* Material Package Info */}
+                    <View className='flex-row items-center mb-4'>
+                      <Image
+                        source={{ uri: detail.materialVariant?.image }}
+                        style={{ width: 60, height: 60, borderRadius: 8 }}
+                      />
+                      <View className='ml-4 flex-1'>
+                        <Text className='text-sm text-gray-600 font-medium'>
+                          Package Name:
+                        </Text>
+                        <Text className='text-base text-black font-bold'>
+                          {materialPackage.materialPackage.name}
+                        </Text>
+                        <Text className='text-sm text-gray-600'>
+                          Code:{' '}
+                          <Text className='text-primaryLight font-semibold'>
+                            {materialPackage?.materialPackage.code}
                           </Text>
-                          <Text className='text-base text-black font-bold'>
-                            {detail.materialVariant?.name}
-                          </Text>
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Inventory Report Details */}
+                    {materialPackage.inventoryReportDetails.map(
+                      (inventoryDetail: any) => (
+                        <View
+                          key={inventoryDetail.id}
+                          className='p-4 rounded-md bg-white shadow-sm border mb-3'
+                        >
                           <Text className='text-sm text-gray-600'>
-                            Code:{' '}
-                            <Text className='text-black'>
-                              {detail.materialVariant?.code}
+                            Expected Quantity:{' '}
+                            <Text className='font-bold'>
+                              {inventoryDetail.expectedQuantity}
                             </Text>
                           </Text>
+                          <Text className='text-sm text-gray-600'>
+                            Receipt Code:{' '}
+                            <Text className='text-primaryLight font-bold'>
+                              {inventoryDetail.materialReceipt?.code || 'N/A'}
+                            </Text>
+                          </Text>
+                          <View className='mt-2'>
+                            <Text className='text-sm text-gray-600 font-medium mb-1'>
+                              Enter Actual Quantity:
+                            </Text>
+                            <TextInput
+                              outlineColor={Theme.primaryDarkBackgroundColor}
+                              activeOutlineColor={
+                                Theme.primaryLightBackgroundColor
+                              }
+                              mode='outlined'
+                              placeholder='Enter actual quantity'
+                              value={
+                                inputs[inventoryDetail.id]?.actualQuantity || ''
+                              }
+                              onChangeText={(value: string) =>
+                                handleInputChange(
+                                  inventoryDetail.id,
+                                  'actualQuantity',
+                                  value
+                                )
+                              }
+                              keyboardType='numeric'
+                              style={{ backgroundColor: 'white' }}
+                            />
+                          </View>
+                          <View className='mt-2'>
+                            <Text className='text-sm text-gray-600 font-medium mb-1'>
+                              Notes:
+                            </Text>
+                            <TextInput
+                              outlineColor={Theme.primaryDarkBackgroundColor}
+                              activeOutlineColor={
+                                Theme.primaryLightBackgroundColor
+                              }
+                              mode='outlined'
+                              placeholder='Enter notes'
+                              value={inputs[inventoryDetail.id]?.notes || ''}
+                              onChangeText={(value: string) =>
+                                handleInputChange(
+                                  inventoryDetail.id,
+                                  'notes',
+                                  value
+                                )
+                              }
+                              style={{ backgroundColor: 'white' }}
+                            />
+                          </View>
                         </View>
-                      </View>
+                      )
+                    )}
+                  </Card.Content>
+                </Card>
+              ))
+            )}
+          </View>
 
-                      {/* Input Fields */}
-                      <View>
-                        <Text className='text-sm text-gray-600 font-medium mb-1'>
-                          Actual Quantity:
-                        </Text>
-                        <TextInput
-                          mode='outlined'
-                          placeholder='Enter actual quantity'
-                          value={
-                            inputs[inventoryDetail.id]?.actualQuantity || ''
-                          }
-                          onChangeText={(value: string) =>
-                            handleInputChange(
-                              inventoryDetail.id,
-                              'actualQuantity',
-                              value
-                            )
-                          }
-                          keyboardType='numeric'
-                          style={{ backgroundColor: 'white' }}
-                        />
-                      </View>
-                      <View className='mt-4'>
-                        <Text className='text-sm text-gray-600 font-medium mb-1'>
-                          Notes:
-                        </Text>
-                        <TextInput
-                          mode='outlined'
-                          placeholder='Enter notes'
-                          value={inputs[inventoryDetail.id]?.notes || ''}
-                          onChangeText={(value: string) =>
-                            handleInputChange(
-                              inventoryDetail.id,
-                              'notes',
-                              value
-                            )
-                          }
-                          multiline
-                          numberOfLines={3}
-                          style={{ backgroundColor: 'white' }}
-                        />
-                      </View>
-                    </Card.Content>
-                  </Card>
-                )
-              )
-            )
-          )}
+          {/* Submit Button */}
+          <Button
+            icon='send'
+            mode='contained'
+            onPress={handleSubmit}
+            disabled={!allInputsValid || isSubmitting}
+            style={{
+              backgroundColor: !allInputsValid
+                ? Theme.greyText
+                : Theme.primaryLightBackgroundColor,
+              borderRadius: 8,
+              marginTop: 16,
+            }}
+            labelStyle={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}
+            contentStyle={{ height: 50 }}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Report'}
+          </Button>
         </View>
-
-        {/* Submit Button */}
-        <Button
-          icon='send'
-          mode='contained'
-          onPress={handleSubmit}
-          style={{
-            backgroundColor: Theme.primaryLightBackgroundColor,
-            borderRadius: 8,
-            marginTop: 16,
-          }}
-          labelStyle={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}
-          contentStyle={{ height: 50 }}
-        >
-          Submit Report
-        </Button>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        style={{
+          backgroundColor: Theme.error,
+          borderRadius: 6,
+        }}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          {snackbarMessage}
+        </Text>
+      </Snackbar>
+    </>
   );
 };
 

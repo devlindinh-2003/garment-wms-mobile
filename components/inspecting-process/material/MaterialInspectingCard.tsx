@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { Card } from 'react-native-paper';
-import { Input, Button } from '@ui-kitten/components';
+import { Input } from '@ui-kitten/components';
 
 interface MaterialDetailCardProps {
   image: string;
