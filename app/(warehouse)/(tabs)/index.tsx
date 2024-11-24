@@ -16,7 +16,7 @@ const WarehouseStaffDashboard = () => {
       try {
         setIsLoading(true);
         const data = await getWarehouseStaffInventoryReport({
-          pageSize: 5,
+          pageSize: 99,
           pageIndex: 0,
         });
         setInventoryData(data?.data?.data ?? []);
