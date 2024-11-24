@@ -140,7 +140,14 @@ const WarehouseLayout: React.FC = () => {
       <SafeAreaView style={{ flex: 1 }}>
         <AppBarHeaderLayout toggleDrawer={toggleDrawer} />
         <View style={{ flex: 1 }}>
-          <TabLayout />
+          {/* <TabLayout /> */}
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name='index' options={{}} />
+          </Stack>
         </View>
       </SafeAreaView>
     </Drawer>
