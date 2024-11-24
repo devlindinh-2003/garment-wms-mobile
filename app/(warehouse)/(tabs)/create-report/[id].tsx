@@ -145,8 +145,8 @@ const CreateInventoryReport = () => {
 
           {/* Report Details */}
           <View>
-            <Text className='text-lg font-bold text-gray-800 mb-3'>
-              Inventory Report Details
+            <Text className='text-xl uppercase font-bold text-primaryLight text-center mb-3'>
+              Inventory Packages Details
             </Text>
             {inventoryReportDetail.map((detail: any) =>
               detail.materialPackages.map((materialPackage: any) => (
