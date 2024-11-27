@@ -1,28 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
-import { Button, Snackbar, Text } from 'react-native-paper';
+import { ScrollView, View, StyleSheet } from 'react-native';
+import { Button, Divider, Snackbar, Text } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createInventoryReport } from '@/api/inventoryReport';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import AppbarHeader from '@/components/common/AppBarHeader';
 import HeaderCard from '@/components/warehouse-staff/HeaderCard';
 import TeamCard from '@/components/warehouse-staff/TeamCard';
-import SearchCard from '@/components/warehouse-staff/SearchCard';
-import SavedDetailsList from '@/components/warehouse-staff/SavedDetailList';
 import Theme from '@/constants/Theme';
+import PackagesList from '@/components/warehouse-staff/create-report/PackagesList';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
-
   const [inputs, setInputs] = useState<Record<string, any>>({});
-  const [searchQuery, setSearchQuery] = useState('');
   const [savedDetails, setSavedDetails] = useState<any[]>([]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSearchDisabled, setIsSearchDisabled] = useState(true); // New state to control search button
 
   useEffect(() => {
     if (isSuccess && data?.data?.inventoryReportDetail) {
@@ -44,76 +40,6 @@ const CreateInventoryReport = () => {
       setInputs(initialInputs);
     }
   }, [isSuccess, data]);
-
-  useEffect(() => {
-    // Check if the searchQuery exists in the inventory report details
-    const exists = data?.data?.inventoryReportDetail.some((detail: any) =>
-      detail.materialPackages.some((materialPackage: any) =>
-        materialPackage.inventoryReportDetails.some(
-          (reportDetail: any) =>
-            reportDetail.materialReceipt?.code.toLowerCase() ===
-            searchQuery.toLowerCase()
-        )
-      )
-    );
-    setIsSearchDisabled(!exists); // Disable button if `exists` is false
-  }, [searchQuery, data]);
-
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-
-    const results: any[] = [];
-    data?.data?.inventoryReportDetail.forEach((detail: any) => {
-      detail.materialPackages.forEach((materialPackage: any) => {
-        materialPackage.inventoryReportDetails.forEach((reportDetail: any) => {
-          if (
-            reportDetail.materialReceipt?.code
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()) &&
-            !savedDetails.some((saved) => saved.id === reportDetail.id)
-          ) {
-            results.push(reportDetail);
-          }
-        });
-      });
-    });
-
-    setSavedDetails((prev) => [...prev, ...results]);
-    setSearchQuery('');
-  };
-
-  const handleInputChange = (id: string, field: string, value: string) => {
-    setInputs((prevInputs) => ({
-      ...prevInputs,
-      [id]: {
-        ...prevInputs[id],
-        [field]: value,
-        isValid: !isNaN(parseInt(value, 10)) && value.trim() !== '',
-      },
-    }));
-  };
-
-  const handleSaveDetail = (id: string) => {
-    setInputs((prevInputs) => ({
-      ...prevInputs,
-      [id]: {
-        ...prevInputs[id],
-        isSaved: true,
-        isEditable: false,
-      },
-    }));
-  };
-
-  const handleEditDetail = (id: string) => {
-    setInputs((prevInputs) => ({
-      ...prevInputs,
-      [id]: {
-        ...prevInputs[id],
-        isSaved: false,
-        isEditable: true,
-      },
-    }));
-  };
 
   const allInputsValid = savedDetails.every(
     (detail) => inputs[detail.id]?.isValid
@@ -161,49 +87,40 @@ const CreateInventoryReport = () => {
   if (!isSuccess) return null;
 
   return (
-    <ScrollView className='flex-1 bg-white'>
+    <View style={styles.container}>
       <AppbarHeader title='Create Inventory Report' />
-      <HeaderCard
-        code={data?.data.code}
-        status={data?.data.status}
-        createdAt={data?.data.createdAt}
-        warehouseManager={data?.data?.warehouseManager}
-      />
-      <TeamCard warehouseStaff={data?.data.warehouseStaff} />
-      <SearchCard
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        handleSearch={handleSearch}
-        isSearchDisabled={isSearchDisabled} // Pass button state
-      />
-      <SavedDetailsList
-        savedDetails={savedDetails}
-        inputs={inputs}
-        handleInputChange={handleInputChange}
-        handleSaveDetail={handleSaveDetail}
-        handleEditDetail={handleEditDetail}
-      />
-      <Button
-        icon='send'
-        mode='contained'
-        onPress={handleSubmit}
-        buttonColor={Theme.primaryLightBackgroundColor}
-        disabled={!allInputsValid || isSubmitting}
-        labelStyle={{
-          color: 'white',
-          fontWeight: 'bold',
-        }}
-        className={`rounded-lg py-2 px-3 self-center shadow-lg ${
-          !allInputsValid || isSubmitting
-            ? 'bg-gray-300'
-            : 'bg-primaryLight hover:bg-primary-dark'
-        }`}
-      >
-        <Text className='text-white font-semibold text-base'>
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        {/* Header */}
+        <HeaderCard
+          code={data?.data.code}
+          status={data?.data.status}
+          createdAt={data?.data.createdAt}
+          warehouseManager={data?.data?.warehouseManager}
+        />
+        {/* Warehouse information */}
+        <TeamCard warehouseStaff={data?.data.warehouseStaff} />
+        <Divider />
+        {/* Packages List */}
+        <PackagesList
+          inventoryReportDetail={data?.data?.inventoryReportDetail}
+        />
+      </ScrollView>
+      <View style={styles.footer}>
+        <Button
+          icon='send'
+          mode='contained'
+          onPress={handleSubmit}
+          buttonColor={Theme.primaryLightBackgroundColor}
+          disabled={!allInputsValid || isSubmitting}
+          labelStyle={styles.buttonLabel}
+          style={[
+            styles.submitButton,
+            (!allInputsValid || isSubmitting) && styles.disabledButton,
+          ]}
+        >
           {isSubmitting ? 'Submitting...' : 'Submit'}
-        </Text>
-      </Button>
-
+        </Button>
+      </View>
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -212,8 +129,36 @@ const CreateInventoryReport = () => {
       >
         <Text className='text-white font-bold'>{snackbarMessage}</Text>
       </Snackbar>
-    </ScrollView>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  scrollView: {
+    paddingHorizontal: 5,
+    paddingBottom: 5,
+  },
+  footer: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  submitButton: {
+    borderRadius: 8,
+  },
+  buttonLabel: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: '#d3d3d3',
+  },
+});
 
 export default CreateInventoryReport;
