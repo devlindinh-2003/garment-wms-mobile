@@ -5,14 +5,15 @@ import {
   IconElement,
   IconProps,
 } from '@ui-kitten/components';
-import { View, GestureResponderEvent } from 'react-native';
+import { View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MoveLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import Theme from '@/constants/Theme';
 
 interface AppbarHeaderProps {
   title: string;
-  onPress?: (event: GestureResponderEvent) => void;
+  onPress?: () => void; // Optional custom onPress handler
   icon?: (props: IconProps) => IconElement;
   titleSize?: number;
 }
@@ -23,6 +24,9 @@ const AppbarHeader: React.FC<AppbarHeaderProps> = ({
   icon,
   titleSize = 18,
 }) => {
+  const router = useRouter();
+
+  // Default back icon and navigation action
   const BackIcon = icon
     ? icon
     : (props: IconProps): IconElement => (
@@ -33,8 +37,16 @@ const AppbarHeader: React.FC<AppbarHeaderProps> = ({
         />
       );
 
+  const handleBackPress = () => {
+    if (onPress) {
+      onPress(); // Call custom handler if provided
+    } else {
+      router.back(); // Default to router.back()
+    }
+  };
+
   const BackAction = (): React.ReactElement => (
-    <TopNavigationAction icon={BackIcon} onPress={onPress} />
+    <TopNavigationAction icon={BackIcon} onPress={handleBackPress} />
   );
 
   const renderTitle = (): React.ReactElement => (

@@ -5,6 +5,7 @@ import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import { useLocalSearchParams } from 'expo-router';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
+import AppbarHeader from '@/components/common/AppBarHeader';
 
 const ReportedInventoryReport = () => {
   const { id } = useLocalSearchParams();
@@ -42,6 +43,7 @@ const ReportedInventoryReport = () => {
 
   return (
     <ScrollView className='flex-1 bg-gray-50'>
+      <AppbarHeader title='View report details' />
       <View className='p-4 space-y-6'>
         {/* Report Header */}
         <Card className='bg-white rounded-lg shadow-sm'>
