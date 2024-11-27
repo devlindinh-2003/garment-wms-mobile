@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-import { InspectionRequestListResponse } from '../types/InspectionRequestResponse';
-import { getAllnspectionRequest } from '@/api/inspectionRequest';
+import { useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { InspectionRequestListResponse } from "../types/InspectionRequestResponse";
+import { getAllnspectionRequest } from "@/api/inspectionRequest";
 
 interface UseGetAllInspectionRequestParams {
   sorting?: { id: string; desc: boolean }[];
@@ -13,7 +13,7 @@ interface UseGetAllInspectionRequestParams {
 export const useGetAllInspectionRequest = ({
   sorting = [],
   filters = [],
-  pageSize = 10,
+  pageSize = 300,
   pageIndex = 0,
 }: UseGetAllInspectionRequestParams) => {
   const {
@@ -23,8 +23,10 @@ export const useGetAllInspectionRequest = ({
     isError,
     isSuccess,
     isFetching,
+    refetch,
+    
   } = useQuery<InspectionRequestListResponse, AxiosError>({
-    queryKey: ['inspectionRequestList', sorting, filters, pageIndex, pageSize],
+    queryKey: ["inspectionRequestList", sorting, filters, pageIndex, pageSize],
     queryFn: () =>
       getAllnspectionRequest({ sorting, filters, pageSize, pageIndex }),
   });
@@ -41,5 +43,6 @@ export const useGetAllInspectionRequest = ({
     isSuccess,
     pageMeta,
     inspectionRequestList,
+    refetch,
   };
 };

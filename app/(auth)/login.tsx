@@ -11,8 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff } from 'lucide-react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import logo from '@/assets/images/DeliveryNoteIntro.png';
 import Theme from '@/constants/Theme';
+import { authApi } from '@/api/auth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,15 +23,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState(null);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([
-    { label: 'Warehouse Staff', value: 'warehouse' },
-    { label: 'Inspection Staff', value: 'inspection' },
+    { label: 'Warehouse Staff', value: 'WAREHOUSE_STAFF' },
+    { label: 'Inspection Staff', value: 'INSPECTION_DEPARTMENT' },
   ]);
   const router = useRouter();
 
-  const handleLogin = () => {
-    if (email !== 'test' || password !== 'test') {
-      Alert.alert('Error', 'Invalid email or password.');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required.');
       return;
     }
     if (!role) {
@@ -36,12 +40,42 @@ const Login = () => {
       return;
     }
 
-    console.log('Login successful:', { email, password, role });
+    setLoading(true);
 
-    if (role === 'warehouse') {
-      router.push('/(warehouse)/(tabs)');
-    } else if (role === 'inspection') {
-      router.push('/(main)/(tabs)');
+    try {
+      const requestBody = {
+        email,
+        password,
+        role,
+      };
+      console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+
+      const response = await axios(authApi.login(email, password, role));
+
+      const { accessToken, user } = response.data.data;
+
+      await AsyncStorage.setItem('accessToken', accessToken);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+
+      console.log('API Response:', JSON.stringify(response.data, null, 2));
+
+      Alert.alert('Success', 'Login successful!');
+
+      if (role === 'WAREHOUSE_STAFF') {
+        router.replace('/(warehouse)/(tabs)'); // Replaces the login page in the stack
+      } else if (role === 'INSPECTION_DEPARTMENT') {
+        router.replace('/(main)/(tabs)'); // Replaces the login page in the stack
+      }
+    } catch (error: any) {
+      const message =
+        error?.message || error.response?.data?.message || 'Login failed.';
+      console.error(
+        'Login Error:',
+        JSON.stringify(error.response?.data || error, null, 2)
+      );
+      Alert.alert('Error', message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,7 +88,7 @@ const Login = () => {
 
         <Image
           source={logo}
-          className='w-448 h-448 self-center mb-6'
+          className='w-40 h-40 self-center mb-6'
           accessibilityLabel='Warehouse icon'
         />
 
@@ -116,10 +150,15 @@ const Login = () => {
 
           {/* Login Button */}
           <TouchableOpacity
-            className='w-full h-12 bg-blue-600 rounded-lg items-center justify-center'
+            className={`w-full h-12 rounded-lg items-center justify-center ${
+              loading ? 'bg-gray-400' : 'bg-blue-600'
+            }`}
             onPress={handleLogin}
+            disabled={loading}
           >
-            <Text className='text-white font-semibold text-lg'>Login</Text>
+            <Text className='text-white font-semibold text-lg'>
+              {loading ? 'Logging in...' : 'Login'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

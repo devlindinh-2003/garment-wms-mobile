@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
 import Theme from '@/constants/Theme';
+import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 
 const CreateMaterialReport = () => {
   const router = useRouter();
@@ -24,30 +25,33 @@ const CreateMaterialReport = () => {
       pass: number;
       fail: number;
       isValid: boolean;
+      defects: { defectId: string; quantityByPack: number }[];
     }[]
   >([]);
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { defectsList = [] } = useGetAllDefect();
 
   const handleReportUpdate = (
     id: string,
     pass: number,
     fail: number,
-    isValid: boolean
+    isValid: boolean,
+    defects: { defectId: string; quantityByPack: number }[]
   ) => {
     setReportDetails((prevDetails) => {
       const existingDetail = prevDetails.find((detail) => detail.id === id);
       if (existingDetail) {
         return prevDetails.map((detail) =>
-          detail.id === id ? { id, pass, fail, isValid } : detail
+          detail.id === id ? { id, pass, fail, isValid, defects } : detail
         );
       }
-      return [...prevDetails, { id, pass, fail, isValid }];
+      return [...prevDetails, { id, pass, fail, isValid, defects }];
     });
   };
 
-  const allInputsValid = data?.data.importRequest.importRequestDetail.every(
+  const allInputsValid = data?.data.importRequest.importRequestDetail?.every(
     (detail: ImportRequestDetail) => {
       const reportDetail = reportDetails.find((d) => d.id === detail.id);
       return reportDetail && reportDetail.isValid;
@@ -63,38 +67,49 @@ const CreateMaterialReport = () => {
       return;
     }
 
-    const inspectionReportDetail = reportDetails
-      .map((detail) => {
-        const correspondingImportDetail =
-          data?.data.importRequest.importRequestDetail.find(
-            (importDetail: ImportRequestDetail) => importDetail.id === detail.id
-          );
-        if (!correspondingImportDetail) {
-          console.error(`No matching import detail found for id: ${detail.id}`);
-          return null;
-        }
-        const detailObject: any = {
-          approvedQuantityByPack: detail.pass,
-          defectQuantityByPack: detail.fail,
-        };
+    const inspectionReportDetail = reportDetails.map((detail) => {
+      const correspondingImportDetail =
+        data?.data.importRequest.importRequestDetail?.find(
+          (importDetail: ImportRequestDetail) => importDetail.id === detail.id
+        );
 
-        if (data?.data.type === 'PRODUCT') {
-          detailObject.productSizeId =
-            correspondingImportDetail.productSize?.id || null;
-        } else if (data?.data.type === 'MATERIAL') {
-          detailObject.materialPackageId =
-            correspondingImportDetail.materialPackage?.id || null;
-        }
+      if (!correspondingImportDetail) {
+        console.error(`No matching import detail found for id: ${detail.id}`);
+        return null;
+      }
 
-        return detailObject;
-      })
-      .filter((reportDetail) => reportDetail !== null);
+      const detailObject: any = {
+        approvedQuantityByPack: detail.pass,
+        defectQuantityByPack: detail.fail,
+        materialPackageId:
+          correspondingImportDetail.materialPackage?.id || null,
+      };
+
+      const validDefects = detail.defects.filter(
+        (defect) => defect.quantityByPack > 0
+      );
+
+      if (validDefects.length > 0) {
+        detailObject.inspectionReportDetailDefect = validDefects.map(
+          (defect) => ({
+            defectId: defect.defectId,
+            quantityByPack: defect.quantityByPack,
+          })
+        );
+      }
+
+      return detailObject;
+    });
+
+    const filteredInspectionReportDetail = inspectionReportDetail.filter(
+      (reportDetail) => reportDetail !== null
+    );
 
     const requestBody = {
       inspectionRequestId: id as string,
       inspectionDepartmentId: data?.data.inspectionDepartment?.id || '',
       type: data?.data.type,
-      inspectionReportDetail,
+      inspectionReportDetail: filteredInspectionReportDetail,
     };
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
@@ -103,7 +118,7 @@ const CreateMaterialReport = () => {
       onSuccess: (response) => {
         setSnackbarMessage('Report submitted successfully!');
         setSnackbarVisibleSuccess(true);
-        router.push({
+        router.replace({
           pathname: '/(main)/(tabs)/material/inspected/[id]',
           params: { id: response.data?.inspectionReport?.id || '' },
         });
@@ -152,7 +167,7 @@ const CreateMaterialReport = () => {
             managerName={managerName}
           />
 
-          {importRequestDetail.map((detail: ImportRequestDetail) => (
+          {importRequestDetail?.map((detail: ImportRequestDetail) => (
             <MaterialInspectingCard
               key={detail.id}
               image={detail.materialPackage.materialVariant.image}
@@ -163,11 +178,10 @@ const CreateMaterialReport = () => {
               weight={`${detail.materialPackage.packedWeight}kg`}
               length={`${detail.materialPackage.packedLength}m`}
               total={detail.quantityByPack}
-              pass={0}
-              fail={0}
-              onUpdate={(pass, fail, isValid) =>
-                handleReportUpdate(detail.id, pass, fail, isValid)
+              onUpdate={(pass, fail, isValid, defects) =>
+                handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }
+              defects={defectsList} // Pass dynamically fetched defects
             />
           ))}
 

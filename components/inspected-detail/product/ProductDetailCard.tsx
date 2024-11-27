@@ -1,7 +1,7 @@
-import StatusBadge from '@/components/common/StatusBadge';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
+import { View } from 'react-native';
+import StatusBadge from '@/components/common/StatusBadge';
 
 interface ProductDetailCardProps {
   image: string;
@@ -14,6 +14,7 @@ interface ProductDetailCardProps {
   total: number;
   pass: number;
   fail: number;
+  defects: { id: string; description: string; quantity: number }[];
 }
 
 const ProductDetailCard: React.FC<ProductDetailCardProps> = ({
@@ -27,6 +28,7 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({
   total,
   pass,
   fail,
+  defects = [],
 }) => {
   return (
     <Card className='m-4 rounded-lg shadow-md'>
@@ -92,6 +94,15 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({
             </Text>
           </View>
         </View>
+        {defects.map((defect) => (
+          <View
+            key={defect.id}
+            className='flex-row justify-between items-center p-2 rounded-md bg-red-50 mb-1'
+          >
+            <Text className='text-red-600 text-sm'>{defect.description}</Text>
+            <Text className='text-red-800 font-bold'>{defect.quantity}</Text>
+          </View>
+        ))}
       </Card.Content>
     </Card>
   );

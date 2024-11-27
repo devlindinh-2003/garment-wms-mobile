@@ -1,12 +1,12 @@
-import axios from 'axios';
-import { get } from './ApiCaller';
+import axios from "axios";
+import { get } from "./ApiCaller";
 import {
   FilterBuilder,
   FilterOperationType,
-} from '@chax-at/prisma-filter-common';
-import { InspectionRequestListResponse } from '@/types/InspectionRequestResponse';
-import { ApiResponse } from '@/types/ApiResponse';
-import { InspectionRequestType } from '@/enums/inspectionRequestType';
+} from "@chax-at/prisma-filter-common";
+import { InspectionRequestListResponse } from "@/types/InspectionRequestResponse";
+import { ApiResponse } from "@/types/ApiResponse";
+import { InspectionRequestType } from "@/enums/inspectionRequestType";
 
 interface GetAllInspectionRequestInput {
   sorting?: { id: string; desc: boolean }[];
@@ -18,7 +18,7 @@ interface GetAllInspectionRequestInput {
 export const getAllnspectionRequest = async ({
   sorting = [],
   filters = [],
-  pageSize = 10,
+  pageSize = 1000,
   pageIndex = 0,
 }: GetAllInspectionRequestInput): Promise<InspectionRequestListResponse> => {
   const limit = pageSize;
@@ -42,7 +42,7 @@ export const getAllnspectionRequest = async ({
   });
 
   sorting.forEach(({ id, desc }) => {
-    const direction = desc ? 'desc' : 'asc';
+    const direction = desc ? "desc" : "asc";
     order.push({ field: id, dir: direction });
   });
 
@@ -60,8 +60,8 @@ export const getAllnspectionRequest = async ({
     const response = await axios(config);
     return response.data.data as InspectionRequestListResponse;
   } catch (error) {
-    console.error('Error fetching import requests:', error);
-    throw new Error('Failed to fetch import requests');
+    console.error("Error fetching import requests:", error);
+    throw new Error("Failed to fetch import requests");
   }
 };
 
@@ -73,7 +73,7 @@ export const getInspectionStatisticByType = async (
     const response = await axios(config);
     return response.data as ApiResponse;
   } catch (error: any) {
-    console.error('Failed to fetch inspection statistics:', error);
+    console.error("Failed to fetch inspection statistics:", error);
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -81,12 +81,12 @@ export const getInspectionStatisticByType = async (
         data: null,
         message:
           error.response.data.message ||
-          'An error occurred while fetching statistics.',
+          "An error occurred while fetching statistics.",
         errors: error.response.data.errors || null,
       } as ApiResponse;
     }
 
-    throw new Error('An unexpected error occurred while fetching statistics.');
+    throw new Error("An unexpected error occurred while fetching statistics.");
   }
 };
 
@@ -98,7 +98,7 @@ export const getInspectionRequestById = async (
     const response = await axios(config);
     return response.data as ApiResponse;
   } catch (error: any) {
-    console.error('Failed to fetch import request by ID:', error);
+    console.error("Failed to fetch import request by ID:", error);
 
     if (axios.isAxiosError(error) && error.response) {
       return {
@@ -106,13 +106,13 @@ export const getInspectionRequestById = async (
         data: null,
         message:
           error.response.data.message ||
-          'An error occurred while fetching the import request.',
+          "An error occurred while fetching the import request.",
         errors: error.response.data.errors || null,
       } as ApiResponse;
     }
 
     throw new Error(
-      'An unexpected error occurred while fetching the import request.'
+      "An unexpected error occurred while fetching the import request."
     );
   }
 };

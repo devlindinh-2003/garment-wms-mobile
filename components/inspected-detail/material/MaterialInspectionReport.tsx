@@ -13,6 +13,7 @@ interface MaterialInspectionReportProps {
   passPercentage: string;
   inspectionReportDetails: InspectionReportDetail[];
   importRequest: ImportRequest;
+  allDefects: { id: string; description: string }[];
 }
 
 const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
@@ -23,7 +24,20 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   passPercentage,
   inspectionReportDetails,
   importRequest,
+  allDefects,
 }) => {
+  const mapDefects = (detailDefects: any[]) => {
+    // Map all defects and set missing ones to quantity 0
+    return allDefects.map((defect) => {
+      const matchedDefect = detailDefects.find((d) => d.defectId === defect.id);
+      return {
+        id: defect.id,
+        description: defect.description,
+        quantity: matchedDefect?.quantityByPack || 0,
+      };
+    });
+  };
+
   return (
     <View>
       {/* Inspection Report */}
@@ -89,6 +103,7 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
             total={detail?.quantityByPack || 0}
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
+            defects={mapDefects(detail.inspectionReportDetailDefect || [])}
           />
         ))}
       </View>
