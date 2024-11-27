@@ -123,11 +123,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
           const isSaveDisabled =
             !inputs[detail.id]?.quantity || !inputs[detail.id]?.notes;
 
-          const isEditDisabled =
-            inputs[detail.id]?.saved &&
-            inputs[detail.id]?.quantity === '' &&
-            inputs[detail.id]?.notes === '';
-
           return (
             <View key={detail.id} style={{ marginTop: 10 }}>
               <View
@@ -218,13 +213,9 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
                   padding: 10,
                   borderRadius: 5,
                   marginTop: 10,
-                  opacity: isSaveDisabled || isEditDisabled ? 0.6 : 1,
+                  opacity: isSaveDisabled ? 0.6 : 1,
                 }}
-                disabled={
-                  inputs[detail.id]?.isEditable
-                    ? isSaveDisabled
-                    : isEditDisabled
-                }
+                disabled={isSaveDisabled}
               >
                 <Text style={{ color: 'white', textAlign: 'center' }}>
                   {inputs[detail.id]?.isEditable ? 'Save' : 'Edit'}
