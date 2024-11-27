@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, TextInput } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { Search } from 'lucide-react-native';
@@ -39,9 +39,22 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>(
     {}
   );
-  const [filteredPackages, setFilteredPackages] = useState<
-    Record<string, MaterialPackage[]>
-  >({});
+  const [filteredPackages, setFilteredPackages] = useState<{
+    [key: string]: MaterialPackage[];
+  }>({});
+  const [processedCodes, setProcessedCodes] = useState<Set<string>>(new Set());
+  const [allCodes, setAllCodes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const codes = inventoryReportDetail.flatMap((detail) =>
+      detail.materialPackages.flatMap((packageItem) =>
+        packageItem.inventoryReportDetails.map(
+          (report) => report.materialReceipt.code
+        )
+      )
+    );
+    setAllCodes(codes);
+  }, [inventoryReportDetail]);
 
   const handleSearchChange = (id: string, query: string) => {
     setSearchQueries((prev) => ({ ...prev, [id]: query }));
@@ -51,17 +64,19 @@ const PackagesList: React.FC<PackagesListProps> = ({
     const query = searchQueries[id]?.trim();
     if (!query || query.length !== 6 || isNaN(Number(query))) return;
 
+    // Format the query to match `MAT-REC-XXXXXX`
+    const formattedQuery = `MAT-REC-${query}`;
+
     const detail = inventoryReportDetail.find(
       (item) => item.materialVariant.id === id
     );
 
     if (!detail) return;
 
-    // Filter packages based on the last 6 digits of the search query
     const matchingPackages = detail.materialPackages.filter((packageItem) =>
       packageItem.inventoryReportDetails.some((detailItem) => {
         const receiptCode = detailItem?.materialReceipt?.code || '';
-        return receiptCode.endsWith(query);
+        return receiptCode === formattedQuery;
       })
     );
 
@@ -69,27 +84,20 @@ const PackagesList: React.FC<PackagesListProps> = ({
       ...prev,
       [id]: matchingPackages,
     }));
+
+    // Mark the formatted query as processed
+    setProcessedCodes((prev) => new Set(prev).add(formattedQuery));
   };
 
   const isSearchDisabled = (id: string): boolean => {
     const query = searchQueries[id]?.trim();
     if (!query || query.length !== 6 || isNaN(Number(query))) return true;
 
-    const detail = inventoryReportDetail.find(
-      (item) => item.materialVariant.id === id
-    );
-
-    if (!detail) return true;
-
-    return !detail.materialPackages.some((packageItem) =>
-      packageItem.inventoryReportDetails.some((detailItem) => {
-        const receiptCode = detailItem.materialReceipt?.code || '';
-        return receiptCode.endsWith(query);
-      })
-    );
+    // Format the query to match `MAT-REC-XXXXXX` and check if it's already processed
+    const formattedQuery = `MAT-REC-${query}`;
+    return processedCodes.has(formattedQuery);
   };
 
-  // If no data is present at all, show the `EmptyDataComponent`
   if (!inventoryReportDetail || inventoryReportDetail.length === 0) {
     return <EmptyDataComponent />;
   }
@@ -99,7 +107,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
       {inventoryReportDetail?.map((detail) => {
         const id = detail.materialVariant.id;
         const searchQuery = searchQueries[id] || '';
-        const packages = filteredPackages[id] || []; // Get filtered packages for this variant
+        const packages = filteredPackages[id] || [];
 
         return (
           <Card
@@ -160,6 +168,9 @@ const PackagesList: React.FC<PackagesListProps> = ({
                     key={packageItem.materialPackage.id}
                     materialPackage={packageItem}
                     searchQuery={searchQuery}
+                    onCodeProcessed={(code) =>
+                      setProcessedCodes((prev) => new Set(prev).add(code))
+                    }
                   />
                 ))
               ) : (

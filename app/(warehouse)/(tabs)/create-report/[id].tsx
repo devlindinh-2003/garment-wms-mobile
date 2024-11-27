@@ -14,55 +14,42 @@ const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
-  const [inputs, setInputs] = useState<Record<string, any>>({});
-  const [savedDetails, setSavedDetails] = useState<any[]>([]);
+  const [processedCodes, setProcessedCodes] = useState<Set<string>>(new Set());
+  const [allCodes, setAllCodes] = useState<string[]>([]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isSuccess && data?.data?.inventoryReportDetail) {
-      const initialInputs: Record<string, any> = {};
-      data.data.inventoryReportDetail.forEach((detail: any) => {
-        detail.materialPackages.forEach((materialPackage: any) => {
-          materialPackage.inventoryReportDetails.forEach(
-            (inventoryDetail: any) => {
-              initialInputs[inventoryDetail.id] = {
-                actualQuantity: '',
-                notes: '',
-                isSaved: false,
-                isEditable: true,
-              };
-            }
-          );
-        });
-      });
-      setInputs(initialInputs);
+      const codes = data.data.inventoryReportDetail.flatMap((detail: any) =>
+        detail.materialPackages.flatMap((packageItem: any) =>
+          packageItem.inventoryReportDetails.map(
+            (report: any) => report.materialReceipt.code
+          )
+        )
+      );
+      setAllCodes(codes);
     }
   }, [isSuccess, data]);
 
-  const allInputsValid = savedDetails.every(
-    (detail) => inputs[detail.id]?.isValid
-  );
+  const allProcessed =
+    allCodes.length > 0 && allCodes.every((code) => processedCodes.has(code));
 
   const handleSubmit = async () => {
-    if (!allInputsValid) {
-      setSnackbarMessage('Please fill in all fields and fix errors.');
+    if (!allProcessed) {
+      setSnackbarMessage('Please complete all the required fields.');
       setSnackbarVisible(true);
       return;
     }
 
     setIsSubmitting(true);
 
-    const details = savedDetails.map((detail) => ({
-      inventoryReportDetailId: detail.id,
-      actualQuantity: parseInt(inputs[detail.id].actualQuantity, 10),
-      note: inputs[detail.id].notes || null,
+    const details = Array.from(processedCodes).map((code) => ({
+      code,
     }));
 
     const requestBody = { details };
-
-    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
     try {
       const response = await createInventoryReport(id as string, requestBody);
@@ -90,19 +77,19 @@ const CreateInventoryReport = () => {
     <View style={styles.container}>
       <AppbarHeader title='Create Inventory Report' />
       <ScrollView contentContainerStyle={styles.scrollView}>
-        {/* Header */}
         <HeaderCard
           code={data?.data.code}
           status={data?.data.status}
           createdAt={data?.data.createdAt}
           warehouseManager={data?.data?.warehouseManager}
         />
-        {/* Warehouse information */}
         <TeamCard warehouseStaff={data?.data.warehouseStaff} />
         <Divider />
-        {/* Packages List */}
         <PackagesList
           inventoryReportDetail={data?.data?.inventoryReportDetail}
+          onCodeProcessed={(code) =>
+            setProcessedCodes((prev) => new Set(prev).add(code))
+          }
         />
       </ScrollView>
       <View style={styles.footer}>
@@ -111,11 +98,11 @@ const CreateInventoryReport = () => {
           mode='contained'
           onPress={handleSubmit}
           buttonColor={Theme.primaryLightBackgroundColor}
-          disabled={!allInputsValid || isSubmitting}
+          disabled={!allProcessed || isSubmitting}
           labelStyle={styles.buttonLabel}
           style={[
             styles.submitButton,
-            (!allInputsValid || isSubmitting) && styles.disabledButton,
+            (!allProcessed || isSubmitting) && styles.disabledButton,
           ]}
         >
           {isSubmitting ? 'Submitting...' : 'Submit'}
