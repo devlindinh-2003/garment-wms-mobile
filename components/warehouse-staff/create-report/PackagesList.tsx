@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+} from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { Search } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import Theme from '@/constants/Theme';
 import PackagesItem from './PackagesItem';
 import EmptyDataComponent from '@/components/common/EmptyData';
@@ -33,7 +38,7 @@ interface MaterialPackage {
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
-  reportId: string; // Dynamic reportId for API
+  reportId: string;
 }
 
 const createInventoryReport = async (
@@ -50,23 +55,6 @@ const createInventoryReport = async (
   const url = `${baseUrl}/inventory-report/${id}/record`;
 
   console.log('Request Body:', JSON.stringify(body, null, 2));
-
-  /*  try {
-    const accessToken = await AsyncStorage.getItem('accessToken');
-    if (!accessToken) throw new Error('Access token not found. Please log in.');
-
-    const response = await axios.patch(url, body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    console.log('API Response:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error creating inventory report:', error.message);
-    throw new Error('Failed to create inventory report.');
-  } */
 };
 
 const PackagesList: React.FC<PackagesListProps> = ({
@@ -84,7 +72,6 @@ const PackagesList: React.FC<PackagesListProps> = ({
     useState<boolean>(false);
 
   useEffect(() => {
-    // Check if all receipts have been reported
     const totalReceipts = inventoryReportDetail.flatMap((detail) =>
       detail.materialPackages.flatMap((pkg) => pkg.inventoryReportDetails)
     ).length;
@@ -164,37 +151,58 @@ const PackagesList: React.FC<PackagesListProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollView}>
-        <View style={styles.searchRow}>
-          <View style={styles.searchContainer}>
-            <Search color={Theme.primaryLightBackgroundColor} size={20} />
-            <TextInput
-              placeholder='Enter receipt code'
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-              style={styles.searchInput}
-            />
-          </View>
-          <Button
-            mode='contained'
-            onPress={handleSearch}
-            buttonColor={Theme.primaryLightBackgroundColor}
-          >
-            Search
-          </Button>
-        </View>
-
-        {filteredPackages.length > 0 ? (
-          filteredPackages.map(({ query, package: packageItem }) => (
-            <PackagesItem
-              key={`${packageItem.materialPackage.id}-${query}`}
-              materialPackage={packageItem}
-              searchQuery={query}
-              onDetailProcessed={handleDetailProcessed}
-            />
-          ))
-        ) : (
-          <EmptyDataComponent />
-        )}
+        {inventoryReportDetail.map((detail) => (
+          <Card key={detail.materialVariant.id} style={styles.materialCard}>
+            <View style={styles.materialHeader}>
+              <Image
+                source={{ uri: detail.materialVariant.image }}
+                style={styles.materialImage}
+              />
+              <View>
+                <Text style={styles.materialName}>
+                  {detail.materialVariant.name}
+                </Text>
+                <Text style={styles.materialCode}>
+                  Code: {detail.materialVariant.code}
+                </Text>
+                <Text style={styles.reorderLevel}>
+                  Reorder Level: {detail.materialVariant.reorderLevel}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.sectionTitle}>Material Packages</Text>
+            <View style={styles.searchRow}>
+              <View style={styles.searchContainer}>
+                <Search color={Theme.primaryLightBackgroundColor} size={20} />
+                <TextInput
+                  placeholder='Enter receipt code'
+                  value={searchQuery}
+                  onChangeText={handleSearchChange}
+                  style={styles.searchInput}
+                />
+              </View>
+              <Button
+                mode='contained'
+                onPress={handleSearch}
+                buttonColor={Theme.primaryLightBackgroundColor}
+              >
+                Search
+              </Button>
+            </View>
+            {filteredPackages.length > 0 ? (
+              filteredPackages.map(({ query, package: packageItem }) => (
+                <PackagesItem
+                  key={`${packageItem.materialPackage.id}-${query}`}
+                  materialPackage={packageItem}
+                  searchQuery={query}
+                  onDetailProcessed={handleDetailProcessed}
+                />
+              ))
+            ) : (
+              <EmptyDataComponent />
+            )}
+          </Card>
+        ))}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -219,6 +227,41 @@ const styles = StyleSheet.create({
   scrollView: {
     padding: 10,
   },
+  materialCard: {
+    marginBottom: 20,
+    padding: 10,
+    borderRadius: 8,
+    elevation: 2,
+    backgroundColor: 'white',
+  },
+  materialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  materialImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  materialName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  materialCode: {
+    color: 'gray',
+    fontSize: 14,
+  },
+  reorderLevel: {
+    color: Theme.primaryLightBackgroundColor,
+    fontSize: 14,
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginVertical: 10,
+  },
   searchRow: {
     flexDirection: 'row',
     marginBottom: 10,
@@ -237,19 +280,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
-  searchButton: {
-    borderRadius: 8,
-    paddingVertical: 8,
-  },
-  noDataText: {
-    color: 'gray',
-    marginTop: 10,
-    textAlign: 'center',
-  },
   footer: {
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    backgroundColor: 'white',
   },
   submitButton: {
     borderRadius: 8,
