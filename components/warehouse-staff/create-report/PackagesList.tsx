@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { Search } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import Theme from '@/constants/Theme';
 import PackagesItem from './PackagesItem';
 import EmptyDataComponent from '@/components/common/EmptyData';
@@ -31,16 +33,68 @@ interface MaterialPackage {
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
+  reportId: string; // Dynamic reportId for API
 }
+
+const createInventoryReport = async (
+  id: string,
+  body: {
+    details: {
+      inventoryReportDetailId: string;
+      actualQuantity: number;
+      note: string;
+    }[];
+  }
+) => {
+  const baseUrl = 'https://garment-wms-be-1.onrender.com';
+  const url = `${baseUrl}/inventory-report/${id}/record`;
+
+  console.log('Request Body:', JSON.stringify(body, null, 2));
+
+  /*  try {
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    if (!accessToken) throw new Error('Access token not found. Please log in.');
+
+    const response = await axios.patch(url, body, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('API Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating inventory report:', error.message);
+    throw new Error('Failed to create inventory report.');
+  } */
+};
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
+  reportId,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredPackages, setFilteredPackages] = useState<
     { query: string; package: MaterialPackage }[]
   >([]);
-  const [processedCodes, setProcessedCodes] = useState<Set<string>>(new Set());
+  const [processedDetails, setProcessedDetails] = useState<
+    { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
+  >([]);
+  const [allReceiptsReported, setAllReceiptsReported] =
+    useState<boolean>(false);
+
+  useEffect(() => {
+    // Check if all receipts have been reported
+    const totalReceipts = inventoryReportDetail.flatMap((detail) =>
+      detail.materialPackages.flatMap((pkg) => pkg.inventoryReportDetails)
+    ).length;
+
+    const reportedReceipts = new Set(
+      processedDetails.map((detail) => detail.inventoryReportDetailId)
+    );
+
+    setAllReceiptsReported(totalReceipts === reportedReceipts.size);
+  }, [processedDetails, inventoryReportDetail]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -50,12 +104,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
     const query = searchQuery.trim();
     if (!query || query.length !== 6 || isNaN(Number(query))) return;
 
-    // Format the query to match `MAT-REC-XXXXXX`
     const formattedQuery = `MAT-REC-${query}`;
-
-    // Check if the query has already been processed
-    if (processedCodes.has(formattedQuery)) return;
-
     const matchingPackages: MaterialPackage[] = [];
 
     inventoryReportDetail.forEach((detail) => {
@@ -63,9 +112,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
         const hasMatch = packageItem.inventoryReportDetails.some(
           (detailItem) => detailItem.materialReceipt.code === formattedQuery
         );
-        if (hasMatch) {
-          matchingPackages.push(packageItem);
-        }
+        if (hasMatch) matchingPackages.push(packageItem);
       });
     });
 
@@ -77,69 +124,137 @@ const PackagesList: React.FC<PackagesListProps> = ({
           package: pkg,
         })),
       ]);
-      setProcessedCodes((prev) => new Set(prev).add(formattedQuery));
     }
   };
 
-  const isSearchDisabled = (): boolean => {
-    const query = searchQuery.trim();
-    if (!query || query.length !== 6 || isNaN(Number(query))) return true;
-
-    // Format the query to match `MAT-REC-XXXXXX` and check if it's already processed
-    const formattedQuery = `MAT-REC-${query}`;
-    return processedCodes.has(formattedQuery);
+  const handleDetailProcessed = (detail: {
+    inventoryReportDetailId: string;
+    actualQuantity: number;
+    note: string;
+  }) => {
+    setProcessedDetails((prev) => {
+      const exists = prev.some(
+        (item) =>
+          item.inventoryReportDetailId === detail.inventoryReportDetailId
+      );
+      if (!exists) {
+        return [...prev, detail];
+      }
+      return prev;
+    });
   };
 
-  if (!inventoryReportDetail || inventoryReportDetail.length === 0) {
-    return <EmptyDataComponent />;
-  }
+  const handleSubmit = async () => {
+    if (processedDetails.length === 0) {
+      Alert.alert(
+        'Error',
+        'No details processed. Complete entries before submitting.'
+      );
+      return;
+    }
+
+    try {
+      await createInventoryReport(reportId, { details: processedDetails });
+      Alert.alert('Success', 'Inventory report submitted successfully.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit the report.');
+    }
+  };
 
   return (
-    <View className='mt-4 px-2'>
-      <Card className='mb-4 rounded-lg shadow-md bg-white border border-gray-300'>
-        <Card.Content className='p-3'>
-          <View className='flex-row items-center space-x-4 mt-5'>
-            <View className='flex-1 flex-row items-center bg-gray-100 rounded-lg px-3 py-2'>
-              <Search color={Theme.primaryLightBackgroundColor} size={20} />
-              <TextInput
-                placeholder='Enter receipt code'
-                value={searchQuery}
-                onChangeText={(query) => handleSearchChange(query)}
-                className='flex-1 ml-2 text-base'
-              />
-            </View>
-            <Button
-              mode='contained'
-              disabled={isSearchDisabled()}
-              onPress={handleSearch}
-              className={`rounded-lg ${
-                isSearchDisabled() ? 'bg-gray-300' : 'bg-primaryLight'
-              }`}
-            >
-              Search
-            </Button>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollView}>
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Search color={Theme.primaryLightBackgroundColor} size={20} />
+            <TextInput
+              placeholder='Enter receipt code'
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              style={styles.searchInput}
+            />
           </View>
-        </Card.Content>
-      </Card>
-      {/* Render Filtered Packages */}
-      {filteredPackages.length > 0 ? (
-        filteredPackages.map(({ query, package: packageItem }) => (
-          <PackagesItem
-            key={`${packageItem.materialPackage.id}-${query}`} // Ensure unique key
-            materialPackage={packageItem}
-            searchQuery={query}
-            onCodeProcessed={(code) =>
-              setProcessedCodes((prev) => new Set(prev).add(code))
-            }
-          />
-        ))
-      ) : (
-        <Text style={{ color: 'gray', marginTop: 10, textAlign: 'center' }}>
-          No data available. Please use the search bar to find matching data.
-        </Text>
-      )}
+          <Button
+            mode='contained'
+            onPress={handleSearch}
+            buttonColor={Theme.primaryLightBackgroundColor}
+          >
+            Search
+          </Button>
+        </View>
+
+        {filteredPackages.length > 0 ? (
+          filteredPackages.map(({ query, package: packageItem }) => (
+            <PackagesItem
+              key={`${packageItem.materialPackage.id}-${query}`}
+              materialPackage={packageItem}
+              searchQuery={query}
+              onDetailProcessed={handleDetailProcessed}
+            />
+          ))
+        ) : (
+          <EmptyDataComponent />
+        )}
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <Button
+          mode='contained'
+          onPress={handleSubmit}
+          style={styles.submitButton}
+          disabled={!allReceiptsReported}
+        >
+          Submit
+        </Button>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  scrollView: {
+    padding: 10,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  searchButton: {
+    borderRadius: 8,
+    paddingVertical: 8,
+  },
+  noDataText: {
+    color: 'gray',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  submitButton: {
+    borderRadius: 8,
+    width: '100%',
+  },
+});
 
 export default PackagesList;

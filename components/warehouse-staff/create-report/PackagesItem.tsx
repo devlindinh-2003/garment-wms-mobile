@@ -1,9 +1,16 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
+import { Card } from 'react-native-paper';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { Card } from 'react-native-paper';
 
 interface MaterialReceipt {
   code: string;
@@ -35,26 +42,32 @@ interface MaterialPackage {
 interface PackagesItemProps {
   materialPackage: MaterialPackage;
   searchQuery: string;
-  onCodeProcessed: (code: string) => void;
+  onDetailProcessed: (detail: {
+    inventoryReportDetailId: string;
+    actualQuantity: number;
+    note: string;
+  }) => void;
 }
 
 const PackagesItem: React.FC<PackagesItemProps> = ({
   materialPackage,
   searchQuery,
-  onCodeProcessed,
+  onDetailProcessed,
 }) => {
-  const [inputs, setInputs] = useState<
-    Record<
-      string,
-      { quantity: string; notes: string; isEditable: boolean; saved: boolean }
-    >
-  >({});
+  const [inputs, setInputs] = useState<{
+    [key: string]: {
+      quantity: string;
+      notes: string;
+      isEditable: boolean;
+    };
+  }>({});
 
+  // Initialize input state for a specific item
   const initializeInputState = (id: string) => {
     if (!inputs[id]) {
       setInputs((prev) => ({
         ...prev,
-        [id]: { quantity: '', notes: '', isEditable: true, saved: false },
+        [id]: { quantity: '', notes: '', isEditable: true },
       }));
     }
   };
@@ -70,7 +83,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     }));
   };
 
-  const toggleEditSave = (id: string, code: string) => {
+  const toggleEditSave = (id: string) => {
     const inputState = inputs[id];
 
     if (inputState?.isEditable) {
@@ -83,13 +96,17 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         return;
       }
 
+      // Pass the detail to the parent component
+      onDetailProcessed({
+        inventoryReportDetailId: id,
+        actualQuantity: Number(inputState.quantity),
+        note: inputState.notes,
+      });
+
       setInputs((prev) => ({
         ...prev,
-        [id]: { ...prev[id], isEditable: false, saved: true },
+        [id]: { ...prev[id], isEditable: false },
       }));
-
-      // Notify parent that the code has been processed
-      onCodeProcessed(code);
     } else {
       // Edit action
       setInputs((prev) => ({
@@ -99,138 +116,170 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     }
   };
 
+  // Filter the relevant details based on the search query
   const filteredDetails = materialPackage.inventoryReportDetails.filter(
     (detail) =>
       searchQuery && detail.materialReceipt?.code?.endsWith(searchQuery)
   );
 
   return (
-    <Card style={{ marginTop: 10, padding: 10 }}>
-      <View className='flex-row items-center justify-between'>
-        <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+    <Card style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.packageName}>
           {materialPackage.materialPackage.name || 'Unnamed Package'}
         </Text>
-        <StatusBadge className='bg-gray-500'>
+        <StatusBadge className='bg-primaryLight'>
           {materialPackage.materialPackage.code || 'No Code'}
         </StatusBadge>
       </View>
 
       {filteredDetails.length > 0 ? (
         filteredDetails.map((detail) => {
-          // Initialize input state if not already present
           initializeInputState(detail.id);
 
-          const isSaveDisabled =
-            !inputs[detail.id]?.quantity || !inputs[detail.id]?.notes;
+          const inputState = inputs[detail.id];
+          const isSaveDisabled = !inputState?.quantity || !inputState?.notes;
 
           return (
-            <View key={detail.id} style={{ marginTop: 10 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Text style={{ fontWeight: 'bold' }}>Receipt Code:</Text>
-                <StatusBadge className='bg-primaryLight'>
+            <View key={detail.id} style={styles.detailContainer}>
+              <View style={styles.row}>
+                <Text style={styles.label}>Receipt Code:</Text>
+                <StatusBadge style={styles.statusBadge}>
                   {detail.materialReceipt.code || 'N/A'}
                 </StatusBadge>
               </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: 10,
-                }}
-              >
-                <Text style={{ fontWeight: 'bold' }}>Import Date:</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>Import Date:</Text>
                 <Text className='font-bold'>
                   {convertDate(detail.materialReceipt.importDate) || 'N/A'}
                 </Text>
               </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: 10,
-                }}
-              >
-                <Text style={{ fontWeight: 'bold' }}>Quantity By Pack:</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>Quantity By Pack:</Text>
                 <Text className='font-bold text-lg'>
                   {detail.materialReceipt.quantityByPack || 0}
                 </Text>
               </View>
 
-              {/* Inputs for Quantity and Notes */}
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ fontWeight: 'bold' }}>
-                  Enter Actual Quantity:
-                </Text>
+              {/* Input Fields */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Enter Actual Quantity:</Text>
                 <TextInput
                   placeholder='Enter quantity'
-                  value={inputs[detail.id]?.quantity || ''}
+                  value={inputState?.quantity || ''}
                   onChangeText={(value) =>
                     handleInputChange(detail.id, 'quantity', value)
                   }
-                  style={{
-                    borderWidth: 1,
-                    borderColor: 'gray',
-                    borderRadius: 5,
-                    padding: 8,
-                    marginTop: 5,
-                    marginBottom: 10,
-                  }}
+                  style={styles.input}
                   keyboardType='numeric'
-                  editable={inputs[detail.id]?.isEditable ?? true}
+                  editable={inputState?.isEditable ?? true}
                 />
-                <Text style={{ fontWeight: 'bold' }}>Enter Notes:</Text>
+                <Text style={styles.label}>Enter Notes:</Text>
                 <TextInput
                   placeholder='Enter notes'
-                  value={inputs[detail.id]?.notes || ''}
+                  value={inputState?.notes || ''}
                   onChangeText={(value) =>
                     handleInputChange(detail.id, 'notes', value)
                   }
-                  style={{
-                    borderWidth: 1,
-                    borderColor: 'gray',
-                    borderRadius: 5,
-                    padding: 8,
-                    marginTop: 5,
-                  }}
-                  editable={inputs[detail.id]?.isEditable ?? true}
+                  style={styles.input}
+                  editable={inputState?.isEditable ?? true}
                 />
               </View>
 
               {/* Save/Edit Button */}
               <TouchableOpacity
-                onPress={() =>
-                  toggleEditSave(detail.id, detail.materialReceipt.code)
-                }
-                style={{
-                  backgroundColor: inputs[detail.id]?.isEditable
-                    ? Theme.green[500]
-                    : Theme.blue[500],
-                  padding: 10,
-                  borderRadius: 5,
-                  marginTop: 10,
-                  opacity: isSaveDisabled ? 0.6 : 1,
-                }}
-                disabled={isSaveDisabled}
+                onPress={() => toggleEditSave(detail.id)}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: inputState?.isEditable
+                      ? Theme.green[500]
+                      : Theme.blue[500],
+                  },
+                ]}
+                disabled={inputState?.isEditable && isSaveDisabled}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>
-                  {inputs[detail.id]?.isEditable ? 'Save' : 'Edit'}
+                <Text style={styles.buttonText}>
+                  {inputState?.isEditable ? 'Save' : 'Edit'}
                 </Text>
               </TouchableOpacity>
             </View>
           );
         })
       ) : (
-        <Text style={{ color: 'gray', marginTop: 10 }}>
+        <Text style={styles.noDataText}>
           No data available. Please use the search bar to find matching data.
         </Text>
       )}
     </Card>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 8,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  packageName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  statusBadge: {
+    backgroundColor: 'gray',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 5,
+    color: '#fff',
+  },
+  detailContainer: {
+    marginTop: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  value: {
+    fontSize: 14,
+  },
+  inputContainer: {
+    marginTop: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 8,
+    marginBottom: 10,
+  },
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  noDataText: {
+    textAlign: 'center',
+    color: 'gray',
+    marginTop: 10,
+  },
+});
 
 export default PackagesItem;
