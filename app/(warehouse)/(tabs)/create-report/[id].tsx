@@ -1,31 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Image } from 'react-native';
-import { Text, Card, Button, TextInput, Snackbar } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { ScrollView } from 'react-native';
+import { Button, Snackbar, Text } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import StatusBadge from '@/components/common/StatusBadge';
-import Theme from '@/constants/Theme';
 import { createInventoryReport } from '@/api/inventoryReport';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
-import { convertDate } from '../../../../helpers/converDate';
-import { Calendar } from 'lucide-react-native';
-import avatar from '@/assets/images/avatar.png';
 import AppbarHeader from '@/components/common/AppBarHeader';
+import HeaderCard from '@/components/warehouse-staff/HeaderCard';
+import TeamCard from '@/components/warehouse-staff/TeamCard';
+import SearchCard from '@/components/warehouse-staff/SearchCard';
+import SavedDetailsList from '@/components/warehouse-staff/SavedDetailList';
+import Theme from '@/constants/Theme';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { data, isSuccess, isPending } = useGetInventoryReporttById(
-    id as string
-  );
+  const { data, isSuccess } = useGetInventoryReporttById(id as string);
 
-  const [inputs, setInputs] = useState<any>({});
+  const [inputs, setInputs] = useState<Record<string, any>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [savedDetails, setSavedDetails] = useState<any[]>([]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearchDisabled, setIsSearchDisabled] = useState(true); // New state to control search button
 
   useEffect(() => {
     if (isSuccess && data?.data?.inventoryReportDetail) {
-      const initialInputs: any = {};
+      const initialInputs: Record<string, any> = {};
       data.data.inventoryReportDetail.forEach((detail: any) => {
         detail.materialPackages.forEach((materialPackage: any) => {
           materialPackage.inventoryReportDetails.forEach(
@@ -33,7 +34,8 @@ const CreateInventoryReport = () => {
               initialInputs[inventoryDetail.id] = {
                 actualQuantity: '',
                 notes: '',
-                isValid: false,
+                isSaved: false,
+                isEditable: true,
               };
             }
           );
@@ -43,24 +45,78 @@ const CreateInventoryReport = () => {
     }
   }, [isSuccess, data]);
 
-  const handleInputChange = (id: string, field: string, value: any) => {
-    setInputs((prevInputs: any) => {
-      const updatedInputs = {
-        ...prevInputs,
-        [id]: {
-          ...prevInputs[id],
-          [field]: value,
-        },
-      };
-      updatedInputs[id].isValid =
-        updatedInputs[id]?.actualQuantity !== '' &&
-        !isNaN(parseInt(updatedInputs[id].actualQuantity, 10));
-      return updatedInputs;
+  useEffect(() => {
+    // Check if the searchQuery exists in the inventory report details
+    const exists = data?.data?.inventoryReportDetail.some((detail: any) =>
+      detail.materialPackages.some((materialPackage: any) =>
+        materialPackage.inventoryReportDetails.some(
+          (reportDetail: any) =>
+            reportDetail.materialReceipt?.code.toLowerCase() ===
+            searchQuery.toLowerCase()
+        )
+      )
+    );
+    setIsSearchDisabled(!exists); // Disable button if `exists` is false
+  }, [searchQuery, data]);
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+
+    const results: any[] = [];
+    data?.data?.inventoryReportDetail.forEach((detail: any) => {
+      detail.materialPackages.forEach((materialPackage: any) => {
+        materialPackage.inventoryReportDetails.forEach((reportDetail: any) => {
+          if (
+            reportDetail.materialReceipt?.code
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) &&
+            !savedDetails.some((saved) => saved.id === reportDetail.id)
+          ) {
+            results.push(reportDetail);
+          }
+        });
+      });
     });
+
+    setSavedDetails((prev) => [...prev, ...results]);
+    setSearchQuery('');
   };
 
-  const allInputsValid = Object.values(inputs).every(
-    (input: any) => input.isValid
+  const handleInputChange = (id: string, field: string, value: string) => {
+    setInputs((prevInputs) => ({
+      ...prevInputs,
+      [id]: {
+        ...prevInputs[id],
+        [field]: value,
+        isValid: !isNaN(parseInt(value, 10)) && value.trim() !== '',
+      },
+    }));
+  };
+
+  const handleSaveDetail = (id: string) => {
+    setInputs((prevInputs) => ({
+      ...prevInputs,
+      [id]: {
+        ...prevInputs[id],
+        isSaved: true,
+        isEditable: false,
+      },
+    }));
+  };
+
+  const handleEditDetail = (id: string) => {
+    setInputs((prevInputs) => ({
+      ...prevInputs,
+      [id]: {
+        ...prevInputs[id],
+        isSaved: false,
+        isEditable: true,
+      },
+    }));
+  };
+
+  const allInputsValid = savedDetails.every(
+    (detail) => inputs[detail.id]?.isValid
   );
 
   const handleSubmit = async () => {
@@ -72,13 +128,15 @@ const CreateInventoryReport = () => {
 
     setIsSubmitting(true);
 
-    const details = Object.keys(inputs).map((id) => ({
-      inventoryReportDetailId: id,
-      actualQuantity: parseInt(inputs[id].actualQuantity, 10),
-      note: inputs[id].notes || null,
+    const details = savedDetails.map((detail) => ({
+      inventoryReportDetailId: detail.id,
+      actualQuantity: parseInt(inputs[detail.id].actualQuantity, 10),
+      note: inputs[detail.id].notes || null,
     }));
 
     const requestBody = { details };
+
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
     try {
       const response = await createInventoryReport(id as string, requestBody);
@@ -86,13 +144,13 @@ const CreateInventoryReport = () => {
       if (response.statusCode === 200) {
         router.push({
           pathname: '/(warehouse)/(tabs)/reported/[id]',
-          params: { id: id },
+          params: { id },
         });
       } else {
         setSnackbarMessage('Submission was successful, but an error occurred.');
         setSnackbarVisible(true);
       }
-    } catch (error: any) {
+    } catch (error) {
       setSnackbarMessage('Failed to submit the report.');
       setSnackbarVisible(true);
     } finally {
@@ -100,220 +158,57 @@ const CreateInventoryReport = () => {
     }
   };
 
-  if (isPending) {
-    return (
-      <View className='flex-1 justify-center items-center bg-gray-100'>
-        <Text className='text-lg font-semibold text-gray-600'>Loading...</Text>
-      </View>
-    );
-  }
-
-  if (!isSuccess || !data?.data) {
-    return (
-      <View className='flex-1 justify-center items-center bg-gray-100'>
-        <Text className='text-lg font-semibold text-red-500'>
-          Failed to load inventory report data.
-        </Text>
-      </View>
-    );
-  }
-
-  const {
-    code,
-    status,
-    inventoryReportDetail,
-    warehouseManager,
-    warehouseStaff,
-    note,
-    createdAt,
-  } = data.data;
+  if (!isSuccess) return null;
 
   return (
-    <ScrollView className='flex-1 bg-gray-50'>
+    <ScrollView className='flex-1 bg-white'>
       <AppbarHeader title='Create Inventory Report' />
-      <View className='p-4 space-y-6'>
-        {/* Report Header */}
-        <Card className='bg-white rounded-lg shadow-md border border-gray-200'>
-          <Card.Content className='p-4 space-y-4'>
-            {/* Title and Status */}
-            <View className='flex flex-row justify-between items-center'>
-              <Text className='text-xl font-bold text-primaryLight'>
-                Inventory Report
-              </Text>
-              <StatusBadge className='bg-primaryLight'>
-                {status.replace('_', ' ')}
-              </StatusBadge>
-            </View>
+      <HeaderCard
+        code={data?.data.code}
+        status={data?.data.status}
+        createdAt={data?.data.createdAt}
+        warehouseManager={data?.data?.warehouseManager}
+      />
+      <TeamCard warehouseStaff={data?.data.warehouseStaff} />
+      <SearchCard
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleSearch={handleSearch}
+        isSearchDisabled={isSearchDisabled} // Pass button state
+      />
+      <SavedDetailsList
+        savedDetails={savedDetails}
+        inputs={inputs}
+        handleInputChange={handleInputChange}
+        handleSaveDetail={handleSaveDetail}
+        handleEditDetail={handleEditDetail}
+      />
+      <Button
+        icon='send'
+        mode='contained'
+        onPress={handleSubmit}
+        buttonColor={Theme.primaryLightBackgroundColor}
+        disabled={!allInputsValid || isSubmitting}
+        labelStyle={{
+          color: 'white',
+          fontWeight: 'bold',
+        }}
+        className={`rounded-lg py-2 px-3 self-center shadow-lg ${
+          !allInputsValid || isSubmitting
+            ? 'bg-gray-300'
+            : 'bg-primaryLight hover:bg-primary-dark'
+        }`}
+      >
+        <Text className='text-white font-semibold text-base'>
+          {isSubmitting ? 'Submitting...' : 'Submit'}
+        </Text>
+      </Button>
 
-            {/* Code */}
-            <View className='bg-gray-100 rounded-md p-2'>
-              <Text className='text-sm font-semibold text-gray-700'>Code:</Text>
-              <Text className='text-lg font-bold text-gray-800'>{code}</Text>
-            </View>
-
-            {/* Created At */}
-            <View className='flex flex-row items-center space-x-2'>
-              <Calendar color={Theme.greyText} size={17} />
-              <Text className='text-sm text-gray-500'>
-                Created At:{' '}
-                <Text className='font-bold text-gray-700'>
-                  {convertDate(createdAt)}
-                </Text>
-              </Text>
-            </View>
-          </Card.Content>
-        </Card>
-
-        {/* Manager and Staff Info */}
-        <Card className='bg-white rounded-lg shadow-md border border-gray-200'>
-          <Card.Content className='p-4 space-y-4'>
-            <Text className='text-lg font-bold text-gray-800'>
-              Warehouse Team
-            </Text>
-            <View className='flex-row items-center'>
-              <View className='ml-4'>
-                <Text className='text-sm font-bold text-gray-800'>
-                  Manager: {warehouseManager.account.firstName}{' '}
-                  {warehouseManager.account.lastName}
-                </Text>
-                <Text className='text-sm text-gray-600'>
-                  Email: {warehouseManager.account.email}
-                </Text>
-                <Text className='text-sm text-gray-600'>
-                  Phone: {warehouseManager.account.phoneNumber}
-                </Text>
-              </View>
-            </View>
-            <View className='flex-row items-center'>
-              <View className='ml-4'>
-                <Text className='text-sm font-bold text-gray-800'>
-                  Staff: {warehouseStaff.account.firstName}{' '}
-                  {warehouseStaff.account.lastName}
-                </Text>
-                <Text className='text-sm text-gray-600'>
-                  Email: {warehouseStaff.account.email}
-                </Text>
-                <Text className='text-sm text-gray-600'>
-                  Phone: {warehouseStaff.account.phoneNumber}
-                </Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
-
-        {/* Material Variants */}
-        <View>
-          <Text className='text-xl uppercase font-bold text-blue-600 text-center mb-3'>
-            Material Variants and Packages
-          </Text>
-          {inventoryReportDetail.map((detail: any) => (
-            <Card
-              key={detail.materialVariant.id}
-              className='mb-6 rounded-lg shadow-lg bg-blue-50 border border-blue-200'
-            >
-              <Card.Content className='p-4'>
-                {/* Material Variant Info */}
-                <View className='flex-row items-center mb-4'>
-                  <Image
-                    source={{ uri: detail.materialVariant.image }}
-                    className='w-16 h-16 rounded-lg'
-                  />
-                  <View className='ml-4'>
-                    <Text className='text-lg font-bold text-gray-800'>
-                      {detail.materialVariant.name}
-                    </Text>
-                    <Text className='text-sm text-gray-600'>
-                      Code: {detail.materialVariant.code}
-                    </Text>
-                    <Text className='text-sm text-gray-600'>
-                      Reorder Level: {detail.materialVariant.reorderLevel}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Material Packages */}
-                {detail.materialPackages.map((materialPackage: any) => (
-                  <Card
-                    key={materialPackage.materialPackage.id}
-                    className='mb-4 shadow-sm bg-white rounded-lg border border-gray-200'
-                  >
-                    <Card.Content className='p-3 space-y-2'>
-                      <Text className='text-sm font-bold text-gray-700'>
-                        {materialPackage.materialPackage.name}
-                      </Text>
-                      <Text className='text-xs text-gray-500'>
-                        Code: {materialPackage.materialPackage.code}
-                      </Text>
-
-                      {/* Inventory Report Details */}
-                      {materialPackage.inventoryReportDetails.map(
-                        (inventoryDetail: any) => (
-                          <View
-                            key={inventoryDetail.id}
-                            className='mt-2 bg-gray-50 p-3 rounded-lg border border-gray-300'
-                          >
-                            <Text className='text-sm text-gray-600'>
-                              Expected Quantity:{' '}
-                              <Text className='font-bold'>
-                                {inventoryDetail.expectedQuantity}
-                              </Text>
-                            </Text>
-                            <TextInput
-                              mode='outlined'
-                              placeholder='Actual Quantity'
-                              value={
-                                inputs[inventoryDetail.id]?.actualQuantity || ''
-                              }
-                              onChangeText={(value) =>
-                                handleInputChange(
-                                  inventoryDetail.id,
-                                  'actualQuantity',
-                                  value
-                                )
-                              }
-                              className='mt-2'
-                            />
-                            <TextInput
-                              mode='outlined'
-                              placeholder='Notes'
-                              value={inputs[inventoryDetail.id]?.notes || ''}
-                              onChangeText={(value) =>
-                                handleInputChange(
-                                  inventoryDetail.id,
-                                  'notes',
-                                  value
-                                )
-                              }
-                              className='mt-2'
-                            />
-                          </View>
-                        )
-                      )}
-                    </Card.Content>
-                  </Card>
-                ))}
-              </Card.Content>
-            </Card>
-          ))}
-        </View>
-
-        {/* Submit Button */}
-        <Button
-          mode='contained'
-          onPress={handleSubmit}
-          disabled={!allInputsValid || isSubmitting}
-          className={`rounded-lg ${
-            !allInputsValid ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Report'}
-        </Button>
-      </View>
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
         duration={3000}
-        className='bg-red-500 rounded-md'
+        className='bg-red-500 rounded-lg'
       >
         <Text className='text-white font-bold'>{snackbarMessage}</Text>
       </Snackbar>
