@@ -38,38 +38,32 @@ const CreateInventoryReport = () => {
 
     const requestBody = { details: processedDetails };
 
-    // Log the API body
-    console.log('API Body:', JSON.stringify(requestBody, null, 2));
-    console.log('id:', id);
-
     try {
       await createInventoryReport(id as string, requestBody);
       Alert.alert('Success', 'Inventory report submitted successfully.');
       router.replace({
         pathname: '/(warehouse)/(tabs)/reported/[id]',
-        params: { id: id },
+        params: { id },
       });
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to submit the report.');
     }
   };
 
-  // Check if all material receipts are reported
   useEffect(() => {
     if (!data?.data?.inventoryReportDetail) return;
 
-    // Flatten all material receipts into a single array
-    const allMaterialReceipts = data.data.inventoryReportDetail.flatMap(
-      (detail: any) =>
-        detail.materialPackages.flatMap((pkg: any) =>
-          pkg.inventoryReportDetails.map((item: any) => item.id)
-        )
-    );
+    const allMaterialReceipts =
+      data.data.inventoryReportDetail.flatMap(
+        (detail: any) =>
+          detail?.materialPackages?.flatMap((pkg: any) =>
+            pkg?.inventoryReportDetails?.map((item: any) => item?.id)
+          ) || []
+      ) || [];
 
-    // Check if all material receipts exist in processedDetails
     const allReported = allMaterialReceipts.every((receiptId: any) =>
       processedDetails.some(
-        (detail) => detail.inventoryReportDetailId === receiptId
+        (detail) => detail?.inventoryReportDetailId === receiptId
       )
     );
 
@@ -89,15 +83,15 @@ const CreateInventoryReport = () => {
       ) : (
         <ScrollView contentContainerStyle={styles.scrollView}>
           <HeaderCard
-            code={data?.data.code}
-            status={data?.data.status}
-            createdAt={data?.data.createdAt}
+            code={data?.data?.code}
+            status={data?.data?.status}
+            createdAt={data?.data?.createdAt}
             warehouseManager={data?.data?.warehouseManager}
           />
-          <TeamCard warehouseStaff={data?.data.warehouseStaff} />
+          <TeamCard warehouseStaff={data?.data?.warehouseStaff} />
           <Divider />
           <PackagesList
-            inventoryReportDetail={data?.data?.inventoryReportDetail}
+            inventoryReportDetail={data?.data?.inventoryReportDetail || []}
             reportId={id as string}
             scannedData={scannedData}
             onOpenCamera={handleOpenCamera}
@@ -109,7 +103,6 @@ const CreateInventoryReport = () => {
         </ScrollView>
       )}
 
-      {/* Submit Button */}
       <View style={styles.footer}>
         <Button
           mode='contained'

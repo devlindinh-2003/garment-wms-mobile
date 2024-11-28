@@ -19,13 +19,13 @@ const TeamCard: FC<TeamCardProps> = ({ warehouseStaff }) => {
         </Text>
         <View className='flex-row items-center justify-center '>
           <Image
-            source={warehouseStaff.account.avatarUrl || avatar}
+            source={warehouseStaff?.account?.avatarUrl || avatar}
             className='w-16 h-16 rounded-full border-2 border-gray-300'
           />
           <View className='ml-4'>
             <Text className='text-xl font-semibold text-gray-800 mb-1'>
-              {warehouseStaff.account.firstName}{' '}
-              {warehouseStaff.account.lastName}
+              {warehouseStaff.account?.firstName}{' '}
+              {warehouseStaff.account?.lastName}
             </Text>
             <View className='flex-row items-center'>
               <User size={16} className='text-gray-500 mr-2' />
