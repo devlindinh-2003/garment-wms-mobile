@@ -42,7 +42,7 @@ const Login = () => {
     try {
       const response = await axios(authApi.login(email, password, role));
       const { accessToken, user } = response.data.data;
-
+      console.log('Login Success Response:', response.data);
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 

@@ -31,7 +31,7 @@ const CreateMaterialReport = () => {
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const { defectsList = [] } = useGetAllDefect();
+  const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
 
   const handleReportUpdate = (
     id: string,
@@ -131,7 +131,7 @@ const CreateMaterialReport = () => {
     });
   };
 
-  if (isPending) {
+  if (isPending || isPendingDefects) {
     return <SpinnerLoading />;
   }
 

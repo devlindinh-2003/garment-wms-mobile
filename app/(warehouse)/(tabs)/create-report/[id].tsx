@@ -15,9 +15,6 @@ const CreateInventoryReport = () => {
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
-  const [filteredPackages, setFilteredPackages] = useState<
-    { query: string; package: any }[]
-  >([]);
   const [processedDetails, setProcessedDetails] = useState<
     { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
   >([]);
@@ -35,31 +32,44 @@ const CreateInventoryReport = () => {
       Alert.alert('Error', 'No inventory details to submit.');
       return;
     }
-    const requestBody = { details: processedDetails };
-    try {
-      await createInventoryReport(id as string, requestBody);
-      Alert.alert('Success', 'Inventory report submitted successfully.');
-      router.replace({
-        pathname: '/(warehouse)/(tabs)/reported/[id]',
-        params: { id },
-      });
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to submit the report.');
-    }
+
+    const requestBody = {
+      details: processedDetails.map(
+        ({ inventoryReportDetailId, actualQuantity, note }) => ({
+          inventoryReportDetailId,
+          actualQuantity,
+          note,
+        })
+      ),
+    };
+
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+
+    // try {
+    //   await createInventoryReport(id as string, requestBody);
+    //   Alert.alert('Success', 'Inventory report submitted successfully.');
+    //   router.replace({
+    //     pathname: '/(warehouse)/(tabs)/reported/[id]',
+    //     params: { id },
+    //   });
+    // } catch (error: any) {
+    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
+    // }
   };
 
   useEffect(() => {
     if (!data?.data?.inventoryReportDetail) return;
 
-    const allMaterialReceipts =
-      data.data.inventoryReportDetail.flatMap(
-        (detail: any) =>
-          detail?.materialPackages?.flatMap((pkg: any) =>
-            pkg?.inventoryReportDetails?.map((item: any) => item?.id)
-          ) || []
-      ) || [];
+    const allMaterialReceipts = data.data.inventoryReportDetail.flatMap(
+      (detail: any) =>
+        detail.materialPackages?.flatMap((pkg: any) =>
+          pkg.inventoryReportDetails?.map((item: any) => item.id)
+        ) || []
+    );
 
-    const allReported = allMaterialReceipts.every((receiptId: any) =>
+    const allReceipts = [...allMaterialReceipts];
+
+    const allReported = allReceipts.every((receiptId: string) =>
       processedDetails.some(
         (detail) => detail?.inventoryReportDetailId === receiptId
       )
@@ -90,13 +100,9 @@ const CreateInventoryReport = () => {
           <Divider />
           <PackagesList
             inventoryReportDetail={data?.data?.inventoryReportDetail || []}
-            reportId={id as string}
-            scannedData={scannedData}
             onOpenCamera={handleOpenCamera}
-            filteredPackages={filteredPackages}
-            setFilteredPackages={setFilteredPackages}
-            processedDetails={processedDetails}
             setProcessedDetails={setProcessedDetails}
+            scannedData={scannedData}
           />
         </ScrollView>
       )}

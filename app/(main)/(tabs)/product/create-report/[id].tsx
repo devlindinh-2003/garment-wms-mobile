@@ -17,7 +17,7 @@ const CreateProductReport = () => {
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
-  const { defectsList = [] } = useGetAllDefect();
+  const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
   const [reportDetails, setReportDetails] = useState<
     {
@@ -124,7 +124,7 @@ const CreateProductReport = () => {
     });
   };
 
-  if (isPending) {
+  if (isPending || isPendingDefects) {
     return <SpinnerLoading />;
   }
 

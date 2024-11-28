@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TextInput, ScrollView, Image, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { QrCode, Search } from 'lucide-react-native';
 import PackagesItem from './PackagesItem';
@@ -36,7 +36,10 @@ interface MaterialPackage {
     code: string;
     packUnit: string;
   };
-  inventoryReportDetails: InventoryReportDetail[];
+  inventoryReportDetails: {
+    id: string;
+    materialReceipt?: { code: string };
+  }[];
 }
 
 interface ProductSize {
@@ -46,143 +49,129 @@ interface ProductSize {
     code: string;
     size: string;
   };
-  inventoryReportDetails: InventoryReportDetail[];
+  inventoryReportDetails: {
+    id: string;
+    productReceipt?: { code: string };
+  }[];
 }
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
   onOpenCamera: (onScanComplete: (barcode: string) => void) => void;
+  setProcessedDetails: any;
+  scannedData?: string | null;
 }
 
-// Main component
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
   onOpenCamera,
+  setProcessedDetails,
+  scannedData,
 }) => {
   const [searchQueries, setSearchQueries] = useState<{ [id: string]: string }>(
     {}
   );
-  const [searchEnabled, setSearchEnabled] = useState<{ [id: string]: boolean }>(
-    {}
-  );
   const [filteredPackages, setFilteredPackages] = useState<{
-    [id: string]:
-      | { query: string; package: MaterialPackage | ProductSize }[]
-      | undefined;
+    [id: string]: { query: string; package: MaterialPackage | ProductSize }[];
   }>({});
 
-  // Automatically set search input based on barcode scanning
+  // Handle barcode scanning updates
+  useEffect(() => {
+    if (scannedData) {
+      handleBarcodeScan(scannedData);
+    }
+  }, [scannedData]);
+
+  // Handle barcode scanning and update search queries
   const handleBarcodeScan = (barcode: string) => {
     let query = '';
 
+    // Extract relevant query from the scanned barcode
     if (barcode.startsWith('MAT-REC-')) {
       query = barcode.slice(-6); // Extract last 6 digits for material receipts
     } else if (barcode.startsWith('PRO_REC_')) {
       query = barcode.slice(-7); // Extract last 7 digits for product receipts
     }
 
-    if (!query) return;
+    if (!query) {
+      Alert.alert('Error', 'Invalid barcode scanned.');
+      return;
+    }
 
-    // Update all relevant search inputs with the extracted query
+    // Update search query for all matching inventory report details
     inventoryReportDetail.forEach((detail) => {
       const id = detail.materialVariant?.id || detail.productVariant?.id || '';
-      setSearchQueries((prev) => ({ ...prev, [id]: query }));
-      validateSearchQuery(id, query);
+      if (id) {
+        setSearchQueries((prev) => ({ ...prev, [id]: query }));
+        handleSearch(id, query);
+      }
     });
   };
 
-  // Update search query and validate against inventory data
+  // Handle search input changes
   const handleSearchChange = (id: string, query: string) => {
     setSearchQueries((prev) => ({ ...prev, [id]: query }));
-    validateSearchQuery(id, query.trim());
   };
 
-  // Validate the search query and enable/disable the search button
-  const validateSearchQuery = (id: string, query: string) => {
+  // Execute the search and filter the results
+  const handleSearch = (id: string, query: string) => {
+    if (!query.trim()) {
+      Alert.alert('Error', 'Please enter a valid receipt code.');
+      return;
+    }
+
     const detail = inventoryReportDetail.find(
       (detail) =>
         detail.materialVariant?.id === id || detail.productVariant?.id === id
     );
 
     if (!detail) {
-      setSearchEnabled((prev) => ({ ...prev, [id]: false }));
+      Alert.alert('Error', 'No matching inventory report detail found.');
       return;
     }
 
-    const isMatch =
-      detail.materialPackages?.some((pkg) =>
-        pkg.inventoryReportDetails.some(
-          (item) => item.materialReceipt?.code === `MAT-REC-${query}`
-        )
-      ) ||
-      detail.productSizes?.some((size) =>
-        size.inventoryReportDetails.some(
-          (item) => item.productReceipt?.code === `PRO_REC_${query}`
-        )
-      );
-
-    const alreadyExists = filteredPackages[id]?.some(
-      (pkg) => pkg.query === query
-    );
-
-    setSearchEnabled((prev) => ({ ...prev, [id]: isMatch && !alreadyExists }));
-  };
-
-  // Execute search and filter results
-  const handleSearch = (id: string) => {
-    const query = searchQueries[id]?.trim();
-    if (!query) return;
-
-    const detail = inventoryReportDetail.find(
-      (detail) =>
-        detail.materialVariant?.id === id || detail.productVariant?.id === id
-    );
-
-    if (!detail) return;
-
     const matchingPackages = detail.materialPackages?.filter((pkg) =>
       pkg.inventoryReportDetails.some(
-        (item) => item.materialReceipt?.code === `MAT-REC-${query}`
+        (item) =>
+          item.materialReceipt?.code === `MAT-REC-${query}` ||
+          item.materialReceipt?.code === query
       )
     );
 
     const matchingSizes = detail.productSizes?.filter((size) =>
       size.inventoryReportDetails.some(
-        (item) => item.productReceipt?.code === `PRO_REC_${query}`
+        (item) =>
+          item.productReceipt?.code === `PRO_REC_${query}` ||
+          item.productReceipt?.code === query
       )
     );
 
+    // Update the filtered packages state
     setFilteredPackages((prev) => ({
       ...prev,
       [id]: [
-        ...(prev[id] || []),
-        ...(matchingPackages?.map((pkg) => ({
-          query,
-          package: pkg,
-        })) || []),
-        ...(matchingSizes?.map((size) => ({
-          query,
-          package: size,
-        })) || []),
+        ...(matchingPackages?.map((pkg) => ({ query, package: pkg })) || []),
+        ...(matchingSizes?.map((size) => ({ query, package: size })) || []),
       ],
     }));
-
-    setSearchEnabled((prev) => ({ ...prev, [id]: false }));
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+    <View className='flex-1 bg-white'>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
         {inventoryReportDetail.map((detail) => {
           const id =
             detail.materialVariant?.id || detail.productVariant?.id || '';
           const hasFilteredPackages = filteredPackages[id]?.length > 0;
 
           return (
-            <Card key={id} style={styles.card}>
-              {/* Card Header */}
-              <View style={styles.headerContainer}>
-                <View style={styles.header}>
+            <Card
+              key={id}
+              className='mb-5 p-4 rounded-lg border border-gray-300 bg-white'
+            >
+              {/* Header Section */}
+              <View className='flex-row justify-between items-center mb-4'>
+                <View className='flex-row items-center'>
                   <Image
                     source={{
                       uri:
@@ -190,16 +179,16 @@ const PackagesList: React.FC<PackagesListProps> = ({
                         detail.productVariant?.image ||
                         avatar,
                     }}
-                    style={styles.image}
+                    className='w-16 h-16 rounded-full mr-4'
                   />
                   <View>
-                    <Text style={styles.title}>
+                    <Text className='font-bold text-lg'>
                       {detail.materialVariant?.name ||
                         detail.productVariant?.name ||
                         'Unnamed'}
                     </Text>
-                    <View style={styles.codeRow}>
-                      <Text style={styles.codeLabel}>Code:</Text>
+                    <View className='flex-row items-center mt-1'>
+                      <Text className='text-gray-500 mr-2'>Code:</Text>
                       <StatusBadge>
                         {detail.materialVariant?.code ||
                           detail.productVariant?.code ||
@@ -208,39 +197,34 @@ const PackagesList: React.FC<PackagesListProps> = ({
                     </View>
                   </View>
                 </View>
-
-                {/* QR Code Icon */}
-                {/* <View>
-                  <QrCode
-                    size={50}
-                    color={Theme.primaryDarkBackgroundColor}
-                    onPress={() => onOpenCamera(handleBarcodeScan)} // Open camera
-                  />
-                </View> */}
+                <QrCode
+                  size={50}
+                  color={Theme.primaryDarkBackgroundColor}
+                  onPress={() => onOpenCamera(handleBarcodeScan)}
+                />
               </View>
 
               {/* Search Section */}
-              <View style={styles.searchRow}>
-                <View style={styles.searchInputContainer}>
+              <View className='flex-row items-center mb-4'>
+                <View className='flex-1 flex-row items-center bg-gray-100 rounded-lg px-4 py-2 mr-3'>
                   <Search color='gray' size={20} />
                   <TextInput
                     placeholder='Enter receipt code'
                     value={searchQueries[id] || ''}
                     onChangeText={(query) => handleSearchChange(id, query)}
-                    style={styles.searchInput}
+                    className='flex-1 ml-2 text-base'
                   />
                 </View>
                 <Button
                   mode='contained'
+                  onPress={() => handleSearch(id, searchQueries[id] || '')}
                   buttonColor={Theme.primaryLightBackgroundColor}
-                  onPress={() => handleSearch(id)}
-                  disabled={!searchEnabled[id]}
                 >
                   Add
                 </Button>
               </View>
 
-              {/* Filtered Results */}
+              {/* Filtered Results Section */}
               {hasFilteredPackages ? (
                 filteredPackages[id]?.map(({ query, package: packageItem }) => (
                   <PackagesItem
@@ -252,12 +236,12 @@ const PackagesList: React.FC<PackagesListProps> = ({
                     materialPackage={packageItem as MaterialPackage}
                     productSize={packageItem as ProductSize}
                     searchQuery={query}
-                    onDetailProcessed={() => {}}
+                    onDetailProcessed={setProcessedDetails}
                   />
                 ))
               ) : (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
+                <View className='items-center mt-2'>
+                  <Text className='text-gray-500'>
                     No data found. Please search using a valid code.
                   </Text>
                 </View>
@@ -269,80 +253,5 @@ const PackagesList: React.FC<PackagesListProps> = ({
     </View>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  scrollViewContent: {
-    paddingHorizontal: 10,
-  },
-  card: {
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  image: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 10,
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  codeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  codeLabel: {
-    color: 'gray',
-    marginRight: 5,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 5,
-    paddingVertical: 5,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  emptyText: {
-    color: 'gray',
-    fontSize: 14,
-  },
-});
 
 export default PackagesList;

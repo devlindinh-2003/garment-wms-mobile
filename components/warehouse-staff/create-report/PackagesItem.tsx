@@ -11,6 +11,7 @@ import { Card } from 'react-native-paper';
 import StatusBadge from '@/components/common/StatusBadge';
 import { convertDate } from '@/helpers/converDate';
 
+// Interfaces for data structures
 interface MaterialReceipt {
   code?: string;
   importDate?: string;
@@ -87,6 +88,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     materialPackage?.inventoryReportDetails ||
     productSize?.inventoryReportDetails;
 
+  // Initialize input fields
   useEffect(() => {
     inventoryReportDetails?.forEach((detail) => {
       setInputs((prev) => ({
@@ -146,18 +148,15 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
       detail.materialReceipt?.code || detail.productReceipt?.code;
     return searchQuery && receiptCode?.endsWith(searchQuery);
   });
-  console.log('Produc');
-  console.log(JSON.stringify(productSize, null, 2));
 
   return (
     <ScrollView>
       <Card className='mt-3 p-4 rounded-lg border border-gray-300 bg-white'>
-        {/* Header */}
+        {/* Header Section */}
         <View className='flex-row justify-between mb-3'>
           <Text className='font-bold text-lg'>
             {materialPackage?.materialPackage?.name ||
               productSize?.productSize?.name ||
-              productSize?.productVariant?.name ||
               'Unnamed'}
           </Text>
         </View>
@@ -172,6 +171,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
 
             return (
               <View key={detail.id} className='mt-3'>
+                {/* Receipt Details */}
                 <View className='flex-row justify-between mb-2'>
                   <Text className='font-semibold'>Receipt Code:</Text>
                   <StatusBadge>{receipt?.code || 'N/A'}</StatusBadge>

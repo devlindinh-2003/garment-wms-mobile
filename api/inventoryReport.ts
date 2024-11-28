@@ -89,11 +89,10 @@ export const getWarehouseStaffInventoryReport = async ({
     limit: limit.toString(),
     offset: offset.toString(),
   }).toString();
-  const fullUrl = `https://garment-wms-be-1.onrender.com/inventory-report/warehouse-staff?${queryString}`;
+  const fullUrl = `https://garment-wms-be.onrender.com/inventory-report/warehouse-staff?${queryString}`;
   try {
     // Retrieve the access token from AsyncStorage
     const accessToken = await AsyncStorage.getItem('accessToken');
-
     if (!accessToken) {
       throw new Error('Access token not found. Please log in again.');
     }
@@ -151,7 +150,7 @@ export const createInventoryReport = async (
     }[];
   }
 ): Promise<any> => {
-  const baseUrl = 'https://garment-wms-be-1.onrender.com';
+  const baseUrl = 'https://garment-wms-be.onrender.com';
   const url = `${baseUrl}/inventory-report/${id}/record`;
   console.log(url);
 
