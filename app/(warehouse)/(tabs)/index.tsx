@@ -7,7 +7,13 @@ import {
   NavigationState,
   SceneRendererProps,
 } from 'react-native-tab-view';
-import { Card, Text, ActivityIndicator, Button } from 'react-native-paper';
+import {
+  Card,
+  Text,
+  ActivityIndicator,
+  Button,
+  Avatar,
+} from 'react-native-paper';
 import { getWarehouseStaffInventoryReport } from '@/api/inventoryReport';
 import {
   InventoryReportStatus,
@@ -36,7 +42,7 @@ const WarehouseStaffDashboard = () => {
         });
 
         const filteredReports = response?.data?.data?.filter(
-          (report: any) =>
+          (report) =>
             report.status === InventoryReportStatus.IN_PROGRESS ||
             report.status === InventoryReportStatus.REPORTED
         );
@@ -53,9 +59,83 @@ const WarehouseStaffDashboard = () => {
     fetchInventoryReports();
   }, []);
 
+  const renderCard = (report: any) => (
+    <Card
+      key={report.id}
+      className='mb-4 rounded-xl shadow-lg border border-gray-300 bg-white'
+    >
+      <Card.Content>
+        <View className='flex-row justify-between items-center mb-4'>
+          <Text className='text-lg font-semibold text-gray-800'>
+            {report.code}
+          </Text>
+          <StatusBadge
+            variant={
+              report.status === InventoryReportStatus.REPORTED
+                ? 'success'
+                : 'default'
+            }
+          >
+            {InventoryReportStatusLabels[report.status]}
+          </StatusBadge>
+        </View>
+
+        <View className='flex-row items-center mb-2'>
+          <Text className='text-gray-500 font-medium'>Created At:</Text>
+          <Text className='ml-2 text-gray-700'>
+            {convertDate(report.createdAt)}
+          </Text>
+        </View>
+        <View className='flex-row items-center'>
+          <Text className='text-gray-500 font-medium'>Note:</Text>
+          <Text className='ml-2 text-gray-700'>
+            {report.note || 'No note provided'}
+          </Text>
+        </View>
+      </Card.Content>
+      <View className='items-end px-4 py-3'>
+        <Button
+          mode='contained'
+          icon={
+            report.status === InventoryReportStatus.REPORTED
+              ? 'eye'
+              : 'progress-clock'
+          }
+          onPress={() => {
+            router.push({
+              pathname:
+                report.status === InventoryReportStatus.IN_PROGRESS
+                  ? '/(warehouse)/(tabs)/create-report/[id]'
+                  : '/(warehouse)/(tabs)/reported/[id]',
+              params: { id: report.id },
+            });
+          }}
+          className='rounded-lg'
+          labelStyle={{
+            color: 'white',
+            fontWeight: '600',
+          }}
+          style={{
+            backgroundColor:
+              report.status === InventoryReportStatus.IN_PROGRESS
+                ? Theme.green[500]
+                : Theme.primaryLightBackgroundColor,
+            minWidth: 100,
+            elevation: 2,
+          }}
+          contentStyle={{ paddingVertical: 4 }}
+        >
+          {report.status === InventoryReportStatus.IN_PROGRESS
+            ? 'Start'
+            : 'View'}
+        </Button>
+      </View>
+    </Card>
+  );
+
   const InProgressRoute = () => {
     const reports = inventoryReports.filter(
-      (report) => report?.status === InventoryReportStatus.IN_PROGRESS
+      (report) => report.status === InventoryReportStatus.IN_PROGRESS
     );
 
     if (!reports.length) {
@@ -66,60 +146,12 @@ const WarehouseStaffDashboard = () => {
       );
     }
 
-    return (
-      <ScrollView className='p-4'>
-        {reports.map((report) => (
-          <Card
-            key={report.id}
-            className='mb-4 rounded-xl shadow-sm border border-gray-300'
-          >
-            <Card.Content>
-              <View className='flex-row justify-between mb-2'></View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>Code</Text>
-                <Text className='font-semibold'>{report.code}</Text>
-              </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>Status</Text>
-                <StatusBadge variant='default'>
-                  {InventoryReportStatusLabels[report.status]}
-                </StatusBadge>
-              </View>
-            </Card.Content>
-            <View className='items-end px-4 py-3'>
-              <Button
-                mode='contained'
-                icon='progress-clock'
-                onPress={() => {
-                  router.push({
-                    pathname: '/(warehouse)/(tabs)/create-report/[id]',
-                    params: { id: report.id },
-                  });
-                }}
-                className='rounded-lg'
-                labelStyle={{
-                  color: 'white',
-                  fontWeight: '600',
-                }}
-                style={{
-                  backgroundColor: Theme.green[500],
-                  minWidth: 100,
-                  elevation: 2,
-                }}
-                contentStyle={{ paddingVertical: 4 }}
-              >
-                Start
-              </Button>
-            </View>
-          </Card>
-        ))}
-      </ScrollView>
-    );
+    return <ScrollView className='p-4'>{reports.map(renderCard)}</ScrollView>;
   };
 
   const ReportedRoute = () => {
     const reports = inventoryReports.filter(
-      (report) => report.status === InventoryReportStatus.REPORTED
+      (report) => report?.status === InventoryReportStatus.REPORTED
     );
 
     if (!reports.length) {
@@ -130,72 +162,7 @@ const WarehouseStaffDashboard = () => {
       );
     }
 
-    return (
-      <ScrollView className='p-4'>
-        {reports.map((report) => (
-          <Card
-            key={report.id}
-            className='mb-4 rounded-xl shadow-sm border border-gray-300'
-          >
-            <Card.Content>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>Code</Text>
-                <Text className='font-semibold'>{report.code}</Text>
-              </View>
-              <View className='flex-row justify-between mb-2'>
-                <Text className='text-gray-500 font-medium'>Status</Text>
-                <StatusBadge
-                  variant={
-                    report.status === InventoryReportStatus.REPORTED
-                      ? 'success'
-                      : 'default'
-                  }
-                >
-                  {InventoryReportStatusLabels[report.status]}
-                </StatusBadge>
-              </View>
-            </Card.Content>
-            <View className='items-end px-4 py-3'>
-              <Button
-                mode='contained'
-                icon={
-                  report.status === InventoryReportStatus.IN_PROGRESS
-                    ? 'progress-clock'
-                    : 'open-in-app'
-                }
-                onPress={() => {
-                  router.push({
-                    pathname:
-                      report.status === InventoryReportStatus.IN_PROGRESS
-                        ? '/(warehouse)/(tabs)/create-report/[id]'
-                        : '/(warehouse)/(tabs)/reported/[id]',
-                    params: { id: report.id },
-                  });
-                }}
-                className='rounded-lg'
-                labelStyle={{
-                  color: 'white',
-                  fontWeight: '600',
-                }}
-                style={{
-                  backgroundColor:
-                    report.status === InventoryReportStatus.IN_PROGRESS
-                      ? Theme.green[500]
-                      : Theme.primaryLightBackgroundColor,
-                  minWidth: 100,
-                  elevation: 2,
-                }}
-                contentStyle={{ paddingVertical: 4 }}
-              >
-                {report.status === InventoryReportStatus.IN_PROGRESS
-                  ? 'Start'
-                  : 'View'}
-              </Button>
-            </View>
-          </Card>
-        ))}
-      </ScrollView>
-    );
+    return <ScrollView className='p-4'>{reports.map(renderCard)}</ScrollView>;
   };
 
   const renderScene = SceneMap({
@@ -246,8 +213,8 @@ const WarehouseStaffDashboard = () => {
         navigationState={{
           index,
           routes: [
-            { key: 'inProgress', title: 'In Progress' },
             { key: 'reported', title: 'Reported' },
+            { key: 'inProgress', title: 'In Progress' },
           ],
         }}
         renderScene={renderScene}
