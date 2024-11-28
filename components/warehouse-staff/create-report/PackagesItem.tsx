@@ -156,7 +156,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Quantity By Pack:</Text>
-                <Text className='font-bold text-lg'>
+                <Text className='font-bold text-lg text-red-500'>
                   {detail.materialReceipt.quantityByPack || 0}
                 </Text>
               </View>

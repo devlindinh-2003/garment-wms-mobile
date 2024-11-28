@@ -4,6 +4,7 @@ import { Text, Card } from 'react-native-paper';
 import avatar from '@/assets/images/avatar.png';
 import { Image } from 'expo-image';
 import { Mail, Phone, User } from 'lucide-react-native';
+import { convertToVietnamesePhoneNumber } from '../../helpers/convertPhoneNumber';
 
 interface TeamCardProps {
   warehouseStaff: any;
@@ -41,7 +42,10 @@ const TeamCard: FC<TeamCardProps> = ({ warehouseStaff }) => {
             <View className='flex-row items-center mt-1'>
               <Phone size={16} className='text-gray-500 mr-2' />
               <Text className='text-sm text-gray-600'>
-                Phone: {warehouseStaff.account.phoneNumber}
+                Phone:{' '}
+                {convertToVietnamesePhoneNumber(
+                  warehouseStaff.account.phoneNumber
+                )}
               </Text>
             </View>
           </View>
