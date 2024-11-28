@@ -12,6 +12,7 @@ import { Search } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
 import PackagesItem from './PackagesItem';
 import EmptyDataComponent from '@/components/common/EmptyData';
+import StatusBadge from '@/components/common/StatusBadge';
 
 interface MaterialVariant {
   id: string;
@@ -54,23 +55,60 @@ const createInventoryReport = async (
   const baseUrl = 'https://garment-wms-be-1.onrender.com';
   const url = `${baseUrl}/inventory-report/${id}/record`;
 
-  console.log('Request Body:', JSON.stringify(body, null, 2));
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error('Failed to submit inventory report');
+    return response.json();
+  } catch (error) {
+    console.error('Error submitting inventory report:', error);
+    throw error;
+  }
 };
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
   reportId,
 }) => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>(''); // For input text
   const [filteredPackages, setFilteredPackages] = useState<
     { query: string; package: MaterialPackage }[]
   >([]);
   const [processedDetails, setProcessedDetails] = useState<
     { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
   >([]);
+  const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false); // Default is disabled
   const [allReceiptsReported, setAllReceiptsReported] =
     useState<boolean>(false);
 
+  // Check if the searchQuery matches a valid receipt and does not already exist
+  useEffect(() => {
+    const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
+
+    // Check if the material receipt exists in the inventory
+    const existsInInventory = inventoryReportDetail.some((detail) =>
+      detail.materialPackages.some((pkg) =>
+        pkg.inventoryReportDetails.some(
+          (item) => item.materialReceipt?.code === formattedQuery
+        )
+      )
+    );
+
+    // Check if the material receipt already exists in the filtered list
+    const existsInFiltered = filteredPackages.some(
+      (item) => item.query === formattedQuery
+    );
+
+    // Enable button only if it exists in inventory and is not already in filtered list
+    setIsSearchEnabled(existsInInventory && !existsInFiltered);
+  }, [searchQuery, inventoryReportDetail, filteredPackages]);
+
+  // Update the status of all receipts processed
   useEffect(() => {
     const totalReceipts = inventoryReportDetail.flatMap((detail) =>
       detail.materialPackages.flatMap((pkg) => pkg.inventoryReportDetails)
@@ -89,15 +127,22 @@ const PackagesList: React.FC<PackagesListProps> = ({
 
   const handleSearch = () => {
     const query = searchQuery.trim();
-    if (!query || query.length !== 6 || isNaN(Number(query))) return;
-
     const formattedQuery = `MAT-REC-${query}`;
+
+    if (!query || !isSearchEnabled) {
+      Alert.alert(
+        'Invalid Input',
+        'Please enter a valid receipt code or ensure it is not already added.'
+      );
+      return;
+    }
+
     const matchingPackages: MaterialPackage[] = [];
 
     inventoryReportDetail.forEach((detail) => {
       detail.materialPackages.forEach((packageItem) => {
         const hasMatch = packageItem.inventoryReportDetails.some(
-          (detailItem) => detailItem.materialReceipt.code === formattedQuery
+          (detailItem) => detailItem.materialReceipt?.code === formattedQuery
         );
         if (hasMatch) matchingPackages.push(packageItem);
       });
@@ -111,6 +156,8 @@ const PackagesList: React.FC<PackagesListProps> = ({
           package: pkg,
         })),
       ]);
+    } else {
+      Alert.alert('No Matches', 'No matching material receipt found.');
     }
   };
 
@@ -162,12 +209,12 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 <Text style={styles.materialName}>
                   {detail.materialVariant.name}
                 </Text>
-                <Text style={styles.materialCode}>
-                  Code: {detail.materialVariant.code}
-                </Text>
-                <Text style={styles.reorderLevel}>
-                  Reorder Level: {detail.materialVariant.reorderLevel}
-                </Text>
+                <View className='flex-row items-center space-x-1'>
+                  <Text style={styles.materialCode}>Code: </Text>
+                  <StatusBadge className='bg-slate-500 mt-1'>
+                    {detail.materialVariant.code}
+                  </StatusBadge>
+                </View>
               </View>
             </View>
             <Text style={styles.sectionTitle}>Material Packages</Text>
@@ -185,6 +232,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 mode='contained'
                 onPress={handleSearch}
                 buttonColor={Theme.primaryLightBackgroundColor}
+                disabled={!isSearchEnabled} // Default is disabled
               >
                 Search
               </Button>
@@ -240,8 +288,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   materialImage: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 80,
     borderRadius: 25,
     marginRight: 10,
   },
