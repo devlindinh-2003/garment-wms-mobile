@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, ScrollView, Image, StyleSheet } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { QrCode, Search } from 'lucide-react-native';
@@ -52,12 +52,14 @@ interface ProductSize {
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
   onOpenCamera: (onScanComplete: (barcode: string) => void) => void;
+  scannedData: string;
 }
 
 // Main component
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
   onOpenCamera,
+  scannedData,
 }) => {
   const [searchQueries, setSearchQueries] = useState<{ [id: string]: string }>(
     {}
@@ -71,40 +73,63 @@ const PackagesList: React.FC<PackagesListProps> = ({
       | undefined;
   }>({});
 
-  // Automatically set search input based on barcode scanning
-  const handleBarcodeScan = (barcode: string) => {
-    let query = '';
+  // Process scanned data and update the corresponding TextInput
+  useEffect(() => {
+    if (scannedData) {
+      console.log('Scanned Data:', scannedData);
+      let query = '';
+      if (scannedData.startsWith('MAT-PAC-')) {
+        query = scannedData.slice(-6); // Extract last 6 digits for materials
+        console.log('Material Query:', query);
+      } else if (scannedData.startsWith('PRO_REC_')) {
+        query = scannedData.slice(-7); // Extract last 7 digits for products
+        console.log('Product Query:', query);
+      }
 
-    if (barcode.startsWith('MAT-REC-')) {
-      query = barcode.slice(-6); // Extract last 6 digits for material receipts
-    } else if (barcode.startsWith('PRO_REC_')) {
-      query = barcode.slice(-7); // Extract last 7 digits for product receipts
+      if (query) {
+        // Match the scanned barcode with the appropriate card
+        inventoryReportDetail.forEach((detail) => {
+          const id =
+            detail.materialVariant?.id || detail.productVariant?.id || '';
+          const materialMatched = detail.materialPackages?.some((pkg) =>
+            pkg.inventoryReportDetails.some(
+              (item) => item.materialReceipt?.code === `MAT-REC-${query}`
+            )
+          );
+
+          const productMatched = detail.productSizes?.some((size) =>
+            size.inventoryReportDetails.some(
+              (item) => item.productReceipt?.code === `PRO_REC_${query}`
+            )
+          );
+
+          if (materialMatched || productMatched) {
+            console.log('Matched ID:', id);
+            setSearchQueries((prev) => ({ ...prev, [id]: query })); // Update the search query for the specific card
+            validateSearchQuery(id, query);
+          }
+        });
+      }
     }
+  }, [scannedData, inventoryReportDetail]);
 
-    if (!query) return;
-
-    // Update all relevant search inputs with the extracted query
-    inventoryReportDetail.forEach((detail) => {
-      const id = detail.materialVariant?.id || detail.productVariant?.id || '';
-      setSearchQueries((prev) => ({ ...prev, [id]: query }));
-      validateSearchQuery(id, query);
-    });
-  };
-
-  // Update search query and validate against inventory data
+  // Handle search input change and validation
   const handleSearchChange = (id: string, query: string) => {
+    console.log(`Search Change for ID: ${id}, Query: ${query}`);
     setSearchQueries((prev) => ({ ...prev, [id]: query }));
     validateSearchQuery(id, query.trim());
   };
 
   // Validate the search query and enable/disable the search button
   const validateSearchQuery = (id: string, query: string) => {
+    console.log(`Validating Search Query for ID: ${id}, Query: ${query}`);
     const detail = inventoryReportDetail.find(
       (detail) =>
         detail.materialVariant?.id === id || detail.productVariant?.id === id
     );
 
     if (!detail) {
+      console.log('No Detail Found for ID:', id);
       setSearchEnabled((prev) => ({ ...prev, [id]: false }));
       return;
     }
@@ -125,12 +150,17 @@ const PackagesList: React.FC<PackagesListProps> = ({
       (pkg) => pkg.query === query
     );
 
+    console.log(
+      `Validation Result for ID: ${id}, Match: ${isMatch}, Already Exists: ${alreadyExists}`
+    );
+
     setSearchEnabled((prev) => ({ ...prev, [id]: isMatch && !alreadyExists }));
   };
 
   // Execute search and filter results
   const handleSearch = (id: string) => {
     const query = searchQueries[id]?.trim();
+    console.log(`Handling Search for ID: ${id}, Query: ${query}`);
     if (!query) return;
 
     const detail = inventoryReportDetail.find(
@@ -138,7 +168,10 @@ const PackagesList: React.FC<PackagesListProps> = ({
         detail.materialVariant?.id === id || detail.productVariant?.id === id
     );
 
-    if (!detail) return;
+    if (!detail) {
+      console.log('No Detail Found for Search Execution, ID:', id);
+      return;
+    }
 
     const matchingPackages = detail.materialPackages?.filter((pkg) =>
       pkg.inventoryReportDetails.some(
@@ -151,6 +184,9 @@ const PackagesList: React.FC<PackagesListProps> = ({
         (item) => item.productReceipt?.code === `PRO_REC_${query}`
       )
     );
+
+    console.log('Matching Packages:', matchingPackages);
+    console.log('Matching Sizes:', matchingSizes);
 
     setFilteredPackages((prev) => ({
       ...prev,
@@ -210,13 +246,13 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 </View>
 
                 {/* QR Code Icon */}
-                {/* <View>
+                <View>
                   <QrCode
                     size={50}
                     color={Theme.primaryDarkBackgroundColor}
-                    onPress={() => onOpenCamera(handleBarcodeScan)} // Open camera
+                    onPress={() => onOpenCamera((barcode) => {})}
                   />
-                </View> */}
+                </View>
               </View>
 
               {/* Search Section */}

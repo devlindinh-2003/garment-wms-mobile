@@ -36,16 +36,17 @@ const CreateInventoryReport = () => {
       return;
     }
     const requestBody = { details: processedDetails };
-    try {
-      await createInventoryReport(id as string, requestBody);
-      Alert.alert('Success', 'Inventory report submitted successfully.');
-      router.replace({
-        pathname: '/(warehouse)/(tabs)/reported/[id]',
-        params: { id },
-      });
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to submit the report.');
-    }
+    console.log(JSON.stringify(requestBody, null, 2));
+    // try {
+    //   await createInventoryReport(id as string, requestBody);
+    //   Alert.alert('Success', 'Inventory report submitted successfully.');
+    //   router.replace({
+    //     pathname: '/(warehouse)/(tabs)/reported/[id]',
+    //     params: { id },
+    //   });
+    // } catch (error: any) {
+    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
+    // }
   };
 
   useEffect(() => {
@@ -90,13 +91,8 @@ const CreateInventoryReport = () => {
           <Divider />
           <PackagesList
             inventoryReportDetail={data?.data?.inventoryReportDetail || []}
-            reportId={id as string}
-            scannedData={scannedData}
+            scannedData={scannedData || ''}
             onOpenCamera={handleOpenCamera}
-            filteredPackages={filteredPackages}
-            setFilteredPackages={setFilteredPackages}
-            processedDetails={processedDetails}
-            setProcessedDetails={setProcessedDetails}
           />
         </ScrollView>
       )}
