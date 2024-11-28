@@ -65,6 +65,7 @@ const ReportedInventoryReport = () => {
 
         {/* General Information */}
         <Card
+          className='bg-slate-300'
           style={{
             borderColor: Theme.borderColor || '#e0e0e0',
           }}
@@ -127,9 +128,12 @@ const ReportedInventoryReport = () => {
                   key={materialPackage.materialPackage?.id}
                   style={{ marginTop: 16 }}
                 >
-                  <Text className='text-base font-semibold text-blue-600 mb-1'>
+                  <Text className='text-base font-semibold text-gray-600 mb-1'>
                     Package:{' '}
-                    {materialPackage.materialPackage?.name ?? 'Unnamed Package'}
+                    <Text className='text-primaryLight font-bold'>
+                      {materialPackage.materialPackage?.name ??
+                        'Unnamed Package'}
+                    </Text>
                   </Text>
 
                   {materialPackage.inventoryReportDetails?.map(
@@ -144,18 +148,25 @@ const ReportedInventoryReport = () => {
                         }}
                       >
                         <Text className='text-sm text-gray-600'>
+                          <Text className='font-medium'>Receipt Code:</Text>{' '}
+                          <Text className='font-bold text-black'>
+                            {reportDetail?.materialReceipt?.code ?? 'N/A'}
+                          </Text>
+                        </Text>
+                        <Text className='text-sm text-gray-600'>
                           <Text className='font-medium'>
                             Expected Quantity:
                           </Text>{' '}
-                          {reportDetail?.expectedQuantity ?? 'N/A'}
+                          <Text className='font-bold text-red-500'>
+                            {reportDetail?.expectedQuantity ?? 'N/A'}
+                          </Text>
                         </Text>
                         <Text className='text-sm text-gray-600'>
                           <Text className='font-medium'>Actual Quantity:</Text>{' '}
-                          {reportDetail?.actualQuantity ?? 'N/A'}
-                        </Text>
-                        <Text className='text-sm text-gray-600'>
-                          <Text className='font-medium'>Receipt Code:</Text>{' '}
-                          {reportDetail?.materialReceipt?.code ?? 'N/A'}
+                          <Text className='font-bold text-green-500'>
+                            {' '}
+                            {reportDetail?.actualQuantity ?? 'N/A'}
+                          </Text>
                         </Text>
                       </View>
                     )
