@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
@@ -7,29 +7,55 @@ import AppbarHeader from '@/components/common/AppBarHeader';
 import HeaderCard from '@/components/warehouse-staff/HeaderCard';
 import TeamCard from '@/components/warehouse-staff/TeamCard';
 import PackagesList from '@/components/warehouse-staff/create-report/PackagesList';
+import CameraComponent from '@/components/warehouse-staff/create-report/CameraComponent';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
+  const [isCameraOpen, setIsCameraOpen] = useState(false); // Manage camera visibility state
+  const [scannedData, setScannedData] = useState<string | null>(null); // Store scanned QR code data
+
+  const handleOpenCamera = () => {
+    setIsCameraOpen(true);
+  };
+
+  const handleCloseCamera = () => {
+    setIsCameraOpen(false);
+  };
+
+  const handleScanComplete = (data: string) => {
+    setScannedData(data); // Save scanned data
+    setIsCameraOpen(false);
+  };
+
   if (!isSuccess) return null;
 
   return (
     <View style={styles.container}>
-      <AppbarHeader title='Create Inventory Report' />
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <HeaderCard
-          code={data?.data.code}
-          status={data?.data.status}
-          createdAt={data?.data.createdAt}
-          warehouseManager={data?.data?.warehouseManager}
+      {!isCameraOpen && <AppbarHeader title='Create Inventory Report' />}
+      {isCameraOpen ? (
+        <CameraComponent
+          onClose={handleCloseCamera}
+          onScanComplete={handleScanComplete}
         />
-        <TeamCard warehouseStaff={data?.data.warehouseStaff} />
-        <Divider />
-        <PackagesList
-          inventoryReportDetail={data?.data?.inventoryReportDetail}
-          reportId={id as string}
-        />
-      </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <HeaderCard
+            code={data?.data.code}
+            status={data?.data.status}
+            createdAt={data?.data.createdAt}
+            warehouseManager={data?.data?.warehouseManager}
+          />
+          <TeamCard warehouseStaff={data?.data.warehouseStaff} />
+          <Divider />
+          <PackagesList
+            inventoryReportDetail={data?.data?.inventoryReportDetail}
+            reportId={id as string}
+            scannedData={scannedData}
+            onOpenCamera={handleOpenCamera}
+          />
+        </ScrollView>
+      )}
     </View>
   );
 };

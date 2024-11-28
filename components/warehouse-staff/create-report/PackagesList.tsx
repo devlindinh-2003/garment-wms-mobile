@@ -41,6 +41,8 @@ interface MaterialPackage {
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
   reportId: string;
+  scannedData: string | null; // Scanned QR code data
+  onOpenCamera: () => void; // Function to open the camera
 }
 
 const createInventoryReport = async (
@@ -75,6 +77,8 @@ const createInventoryReport = async (
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
   reportId,
+  scannedData,
+  onOpenCamera,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>(''); // For input text
   const [filteredPackages, setFilteredPackages] = useState<
@@ -87,15 +91,17 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const [allReceiptsReported, setAllReceiptsReported] =
     useState<boolean>(false);
 
-  const handleQrScan = () => {
-    Alert.alert('Scan QR Code', 'QR Code scanner is not yet implemented.');
-  };
+  // Sync scanned QR code data with the search query
+  useEffect(() => {
+    if (scannedData) {
+      setSearchQuery(scannedData);
+    }
+  }, [scannedData]);
 
   // Check if the searchQuery matches a valid receipt and does not already exist
   useEffect(() => {
     const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
 
-    // Check if the material receipt exists in the inventory
     const existsInInventory = inventoryReportDetail.some((detail) =>
       detail.materialPackages.some((pkg) =>
         pkg.inventoryReportDetails.some(
@@ -104,12 +110,10 @@ const PackagesList: React.FC<PackagesListProps> = ({
       )
     );
 
-    // Check if the material receipt already exists in the filtered list
     const existsInFiltered = filteredPackages.some(
       (item) => item.query === formattedQuery
     );
 
-    // Enable button only if it exists in inventory and is not already in filtered list
     setIsSearchEnabled(existsInInventory && !existsInFiltered);
   }, [searchQuery, inventoryReportDetail, filteredPackages]);
 
@@ -214,17 +218,15 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 <Text style={styles.materialName}>
                   {detail.materialVariant.name}
                 </Text>
-                <View className='flex-row items-center space-x-1'>
-                  <Text style={styles.materialCode}>Code: </Text>
-                  <StatusBadge className='bg-slate-500 mt-1'>
-                    {detail.materialVariant.code}
-                  </StatusBadge>
+                <View style={styles.codeContainer}>
+                  <Text style={styles.materialCode}>Code:</Text>
+                  <StatusBadge>{detail.materialVariant.code}</StatusBadge>
                 </View>
               </View>
             </View>
-            <View className='flex-row items-center justify-between my-3'>
+            <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>Material Packages</Text>
-              <TouchableOpacity onPress={handleQrScan}>
+              <TouchableOpacity onPress={onOpenCamera}>
                 <ScanQrCode
                   color={Theme.primaryLightBackgroundColor}
                   size={40}
@@ -245,7 +247,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 mode='contained'
                 onPress={handleSearch}
                 buttonColor={Theme.primaryLightBackgroundColor}
-                disabled={!isSearchEnabled} // Default is disabled
+                disabled={!isSearchEnabled}
               >
                 Search
               </Button>
@@ -292,7 +294,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 10,
     borderRadius: 8,
-    elevation: 2,
     backgroundColor: 'white',
   },
   materialHeader: {
@@ -314,14 +315,19 @@ const styles = StyleSheet.create({
     color: 'gray',
     fontSize: 14,
   },
-  reorderLevel: {
-    color: Theme.primaryLightBackgroundColor,
-    fontSize: 14,
+  codeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 10,
   },
   sectionTitle: {
     fontWeight: 'bold',
     fontSize: 16,
-    marginVertical: 10,
   },
   searchRow: {
     flexDirection: 'row',
@@ -339,7 +345,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 16,
   },
   footer: {
     padding: 16,

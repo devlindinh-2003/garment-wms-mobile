@@ -1,5 +1,5 @@
 import Theme from '@/constants/Theme';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -8,9 +8,15 @@ import { Text } from 'react-native-paper';
 // Get the full screen dimensions
 const { width, height } = Dimensions.get('screen');
 
-const CameraComponent = ({ onClose }: { onClose: () => void }) => {
-  const [cameraType, setCameraType] = useState<CameraType>('back');
+const CameraComponent = ({
+  onClose,
+  onScanComplete,
+}: {
+  onClose: () => void;
+  onScanComplete: (data: string) => void; // Callback to handle scanned data
+}) => {
   const [permission, requestPermission] = useCameraPermissions();
+  const [isLocked, setIsLocked] = useState(false); // State to lock the camera
 
   if (!permission) {
     return <View />;
@@ -28,20 +34,29 @@ const CameraComponent = ({ onClose }: { onClose: () => void }) => {
     );
   }
 
-  const toggleCameraType = () => {
-    setCameraType((prev) => (prev === 'back' ? 'front' : 'back'));
+  // Handle barcode scanning
+  const handleBarCodeScanned = (result: any) => {
+    const { data } = result;
+    console.log('Barcode scanned:', data);
+
+    if (!isLocked) {
+      setIsLocked(true); // Lock the camera
+      onScanComplete(data); // Pass the scanned data to the parent
+      onClose(); // Close the camera automatically
+    }
   };
 
   return (
     <View style={styles.fullScreenContainer}>
-      <CameraView style={styles.fullScreenCamera} facing={cameraType}>
+      <CameraView
+        style={StyleSheet.absoluteFillObject}
+        facing='back'
+        onBarcodeScanned={isLocked ? undefined : handleBarCodeScanned} // Disable scanning if locked
+        barcodeScannerSettings={{
+          barcodeTypes: ['code128'],
+        }}
+      >
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={toggleCameraType}
-          >
-            <Text style={styles.controlText}>Flip Camera</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.controlButton} onPress={onClose}>
             <Text style={styles.controlText}>Close</Text>
           </TouchableOpacity>
@@ -66,7 +81,7 @@ const styles = StyleSheet.create({
     bottom: 40,
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'center',
     paddingHorizontal: 20,
   },
   controlButton: {
