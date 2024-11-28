@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, Alert } from 'react-native';
 import { Divider, Button } from 'react-native-paper';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import AppbarHeader from '@/components/common/AppBarHeader';
 import HeaderCard from '@/components/warehouse-staff/HeaderCard';
@@ -21,6 +21,7 @@ const CreateInventoryReport = () => {
   const [processedDetails, setProcessedDetails] = useState<
     { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
   >([]);
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState<boolean>(true);
 
   const handleOpenCamera = () => setIsCameraOpen(true);
   const handleCloseCamera = () => setIsCameraOpen(false);
@@ -39,14 +40,41 @@ const CreateInventoryReport = () => {
 
     // Log the API body
     console.log('API Body:', JSON.stringify(requestBody, null, 2));
+    console.log('id:', id);
 
-    // try {
-    //   await createInventoryReport(id as string, requestBody);
-    //   Alert.alert('Success', 'Inventory report submitted successfully.');
-    // } catch (error: any) {
-    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
-    // }
+    try {
+      await createInventoryReport(id as string, requestBody);
+      Alert.alert('Success', 'Inventory report submitted successfully.');
+      router.replace({
+        pathname: '/(warehouse)/(tabs)/reported/[id]',
+        params: { id: id },
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit the report.');
+    }
   };
+
+  // Check if all material receipts are reported
+  useEffect(() => {
+    if (!data?.data?.inventoryReportDetail) return;
+
+    // Flatten all material receipts into a single array
+    const allMaterialReceipts = data.data.inventoryReportDetail.flatMap(
+      (detail: any) =>
+        detail.materialPackages.flatMap((pkg: any) =>
+          pkg.inventoryReportDetails.map((item: any) => item.id)
+        )
+    );
+
+    // Check if all material receipts exist in processedDetails
+    const allReported = allMaterialReceipts.every((receiptId: any) =>
+      processedDetails.some(
+        (detail) => detail.inventoryReportDetailId === receiptId
+      )
+    );
+
+    setIsSubmitDisabled(!allReported);
+  }, [processedDetails, data]);
 
   if (!isSuccess) return null;
 
@@ -86,7 +114,7 @@ const CreateInventoryReport = () => {
         <Button
           mode='contained'
           onPress={handleSubmit}
-          disabled={processedDetails.length === 0}
+          disabled={isSubmitDisabled}
           buttonColor='#4CAF50'
         >
           Submit Report

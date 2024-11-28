@@ -71,6 +71,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const [isNotFoundModalVisible, setIsNotFoundModalVisible] =
     useState<boolean>(false); // Modal visibility for "Not Found"
   const [lastQuery, setLastQuery] = useState<string | null>(null); // Track last query for modals
+  const [isSearchDisabled, setIsSearchDisabled] = useState<boolean>(true); // Disable search button
 
   // Automatically handle scanned data and initiate search
   useEffect(() => {
@@ -80,6 +81,25 @@ const PackagesList: React.FC<PackagesListProps> = ({
       handleSearch(extractedCode);
     }
   }, [scannedData]);
+
+  // Validate search query
+  useEffect(() => {
+    const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
+    const existsInInventory = inventoryReportDetail.some((detail) =>
+      detail.materialPackages.some((pkg) =>
+        pkg.inventoryReportDetails.some(
+          (item) => item.materialReceipt?.code === formattedQuery
+        )
+      )
+    );
+
+    const existsInFiltered = filteredPackages.some(
+      (item) => item.query === formattedQuery
+    );
+
+    // Disable the search button if query does not exist in inventory or already exists in filteredPackages
+    setIsSearchDisabled(!existsInInventory || existsInFiltered);
+  }, [searchQuery, inventoryReportDetail, filteredPackages]);
 
   // Handle adding/updating processed details
   const handleDetailProcessed = (detail: ProcessedDetail) => {
@@ -204,7 +224,9 @@ const PackagesList: React.FC<PackagesListProps> = ({
               <Button
                 mode='contained'
                 onPress={() => handleSearch()}
-                buttonColor='gray'
+                buttonColor={isSearchDisabled ? '#BDBDBD' : '#4CAF50'}
+                textColor={isSearchDisabled ? '#9E9E9E' : 'white'}
+                disabled={isSearchDisabled}
               >
                 Search
               </Button>

@@ -151,7 +151,7 @@ const WarehouseStaffDashboard = () => {
 
   const ReportedRoute = () => {
     const reports = inventoryReports.filter(
-      (report) => report.status === InventoryReportStatus.REPORTED
+      (report) => report?.status === InventoryReportStatus.REPORTED
     );
 
     if (!reports.length) {
