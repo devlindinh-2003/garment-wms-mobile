@@ -5,10 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +24,7 @@ const Login = () => {
   const [role, setRole] = useState(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null); // Error message state
   const [items, setItems] = useState([
     { label: 'Warehouse Staff', value: 'WAREHOUSE_STAFF' },
     { label: 'Inspection Staff', value: 'INSPECTION_DEPARTMENT' },
@@ -31,49 +32,29 @@ const Login = () => {
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Email and password are required.');
-      return;
-    }
-    if (!role) {
-      Alert.alert('Error', 'Please select a role before logging in.');
+    if (!email || !password || !role) {
+      setError('All fields are required.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const requestBody = {
-        email,
-        password,
-        role,
-      };
-      console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-
       const response = await axios(authApi.login(email, password, role));
-
       const { accessToken, user } = response.data.data;
 
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
-      console.log('API Response:', JSON.stringify(response.data, null, 2));
-
-      Alert.alert('Success', 'Login successful!');
-
-      if (role === 'WAREHOUSE_STAFF') {
-        router.replace('/(warehouse)/(tabs)'); // Replaces the login page in the stack
-      } else if (role === 'INSPECTION_DEPARTMENT') {
-        router.replace('/(main)/(tabs)'); // Replaces the login page in the stack
-      }
+      router.replace(
+        role === 'WAREHOUSE_STAFF' ? '/(warehouse)/(tabs)' : '/(main)/(tabs)'
+      );
     } catch (error: any) {
       const message =
-        error?.message || error.response?.data?.message || 'Login failed.';
-      console.error(
-        'Login Error:',
-        JSON.stringify(error.response?.data || error, null, 2)
-      );
-      Alert.alert('Error', message);
+        error.response?.status === 401
+          ? 'Invalid email or password. Please try again.'
+          : 'Login failed. Please try again later.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -81,6 +62,32 @@ const Login = () => {
 
   return (
     <SafeAreaView className='flex-1 bg-white'>
+      {/* Modal for error display */}
+      <Modal
+        visible={!!error}
+        animationType='fade'
+        transparent={true}
+        onRequestClose={() => setError(null)}
+      >
+        <View className='flex-1 justify-center items-center bg-black bg-opacity-50'>
+          <View className='w-4/5 p-6 bg-white rounded-lg shadow-lg'>
+            <View className='flex-row items-center mb-4'>
+              <AlertCircle size={32} color='#DC2626' />
+              <Text className='text-xl font-semibold text-red-600 ml-3'>
+                Error
+              </Text>
+            </View>
+            <Text className='text-gray-700 text-base mb-4'>{error}</Text>
+            <TouchableOpacity
+              className='w-full py-2 bg-blue-600 rounded-lg items-center'
+              onPress={() => setError(null)}
+            >
+              <Text className='text-white text-lg font-semibold'>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View className='flex-1 px-6 justify-center'>
         <Text className='text-3xl font-bold text-center mb-8 uppercase text-primaryLight'>
           Sign In
@@ -101,16 +108,12 @@ const Login = () => {
           setValue={setRole}
           setItems={setItems}
           placeholder='Select your role'
-          containerStyle={{
-            marginBottom: 16,
-          }}
+          containerStyle={{ marginBottom: 16 }}
           textStyle={{
             fontSize: 15,
             color: Theme.primaryLightBackgroundColor,
           }}
-          labelStyle={{
-            fontWeight: 'bold',
-          }}
+          labelStyle={{ fontWeight: 'bold' }}
         />
 
         <View className='space-y-4'>
@@ -151,12 +154,14 @@ const Login = () => {
           {/* Login Button */}
           <TouchableOpacity
             className={`w-full h-12 rounded-lg items-center justify-center ${
-              loading ? 'bg-gray-400' : 'bg-blue-600'
+              loading || !email || !password || !role
+                ? 'bg-gray-400'
+                : 'bg-blue-600'
             }`}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={loading || !email || !password || !role}
           >
-            <Text className='text-white font-semibold text-lg'>
+            <Text className='text-white text-lg font-semibold'>
               {loading ? 'Logging in...' : 'Login'}
             </Text>
           </TouchableOpacity>
