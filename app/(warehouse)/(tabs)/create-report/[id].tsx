@@ -14,6 +14,12 @@ const CreateInventoryReport = () => {
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
   const [isCameraOpen, setIsCameraOpen] = useState(false); // Manage camera visibility state
   const [scannedData, setScannedData] = useState<string | null>(null); // Store scanned QR code data
+  const [filteredPackages, setFilteredPackages] = useState<
+    { query: string; package: any }[]
+  >([]); // Lifted state for filtered packages
+  const [processedDetails, setProcessedDetails] = useState<
+    { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
+  >([]); // Lifted state for processed details
 
   const handleOpenCamera = () => {
     setIsCameraOpen(true);
@@ -53,6 +59,10 @@ const CreateInventoryReport = () => {
             reportId={id as string}
             scannedData={scannedData}
             onOpenCamera={handleOpenCamera}
+            filteredPackages={filteredPackages}
+            setFilteredPackages={setFilteredPackages}
+            processedDetails={processedDetails}
+            setProcessedDetails={setProcessedDetails}
           />
         </ScrollView>
       )}

@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   TextInput,
-  StyleSheet,
   ScrollView,
-  Alert,
-  Image,
+  Modal,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
-import { ScanQrCode, Search } from 'lucide-react-native';
-import Theme from '@/constants/Theme';
+import { AlertCircle, ScanQrCode, Search, Info } from 'lucide-react-native';
 import PackagesItem from './PackagesItem';
 import EmptyDataComponent from '@/components/common/EmptyData';
 import StatusBadge from '@/components/common/StatusBadge';
+import Theme from '@/constants/Theme';
 
 interface MaterialVariant {
   id: string;
@@ -41,64 +40,44 @@ interface MaterialPackage {
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
   reportId: string;
-  scannedData: string | null; // Scanned QR code data
-  onOpenCamera: () => void; // Function to open the camera
+  scannedData: string | null;
+  onOpenCamera: () => void;
+  filteredPackages: { query: string; package: MaterialPackage }[];
+  setFilteredPackages: React.Dispatch<
+    React.SetStateAction<{ query: string; package: MaterialPackage }[]>
+  >;
 }
-
-const createInventoryReport = async (
-  id: string,
-  body: {
-    details: {
-      inventoryReportDetailId: string;
-      actualQuantity: number;
-      note: string;
-    }[];
-  }
-) => {
-  const baseUrl = 'https://garment-wms-be-1.onrender.com';
-  const url = `${baseUrl}/inventory-report/${id}/record`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error('Failed to submit inventory report');
-    return response.json();
-  } catch (error) {
-    console.error('Error submitting inventory report:', error);
-    throw error;
-  }
-};
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
-  reportId,
   scannedData,
   onOpenCamera,
+  filteredPackages,
+  setFilteredPackages,
 }) => {
-  const [searchQuery, setSearchQuery] = useState<string>(''); // For input text
-  const [filteredPackages, setFilteredPackages] = useState<
-    { query: string; package: MaterialPackage }[]
-  >([]);
-  const [processedDetails, setProcessedDetails] = useState<
-    { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
-  >([]);
-  const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false); // Default is disabled
-  const [allReceiptsReported, setAllReceiptsReported] =
-    useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Input search
+  const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false);
+  const [isDuplicateModalVisible, setIsDuplicateModalVisible] =
+    useState<boolean>(false); // Modal visibility for duplicate
+  const [isNotFoundModalVisible, setIsNotFoundModalVisible] =
+    useState<boolean>(false); // Modal visibility for "Not Found"
+  const [lastDuplicateQuery, setLastDuplicateQuery] = useState<string | null>(
+    null
+  ); // Track last duplicate query
+  const [lastNotFoundQuery, setLastNotFoundQuery] = useState<string | null>(
+    null
+  ); // Track last "Not Found" query
 
-  // Sync scanned QR code data with the search query
+  // Automatically handle scanned data and add to filteredPackages
   useEffect(() => {
     if (scannedData) {
-      setSearchQuery(scannedData);
+      const extractedCode = scannedData.split('-').pop() || scannedData;
+      setSearchQuery(extractedCode);
+      handleSearch(extractedCode);
     }
   }, [scannedData]);
 
-  // Check if the searchQuery matches a valid receipt and does not already exist
+  // Check search validity
   useEffect(() => {
     const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
 
@@ -117,37 +96,42 @@ const PackagesList: React.FC<PackagesListProps> = ({
     setIsSearchEnabled(existsInInventory && !existsInFiltered);
   }, [searchQuery, inventoryReportDetail, filteredPackages]);
 
-  // Update the status of all receipts processed
-  useEffect(() => {
-    const totalReceipts = inventoryReportDetail.flatMap((detail) =>
-      detail.materialPackages.flatMap((pkg) => pkg.inventoryReportDetails)
-    ).length;
-
-    const reportedReceipts = new Set(
-      processedDetails.map((detail) => detail.inventoryReportDetailId)
-    );
-
-    setAllReceiptsReported(totalReceipts === reportedReceipts.size);
-  }, [processedDetails, inventoryReportDetail]);
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+  // Handle duplicate material receipt
+  const handleDuplicate = (query: string) => {
+    if (lastDuplicateQuery !== query) {
+      setLastDuplicateQuery(query);
+      setIsDuplicateModalVisible(true);
+    }
   };
 
-  const handleSearch = () => {
-    const query = searchQuery.trim();
+  // Handle "Not Found" material receipt
+  const handleNotFound = (query: string) => {
+    if (lastNotFoundQuery !== query) {
+      setLastNotFoundQuery(query);
+      setIsNotFoundModalVisible(true);
+    }
+  };
+
+  // Search handler
+  const handleSearch = (queryOverride?: string) => {
+    const query = queryOverride || searchQuery.trim();
     const formattedQuery = `MAT-REC-${query}`;
 
-    if (!query || !isSearchEnabled) {
-      Alert.alert(
-        'Invalid Input',
-        'Please enter a valid receipt code or ensure it is not already added.'
-      );
+    if (!query) {
+      setIsNotFoundModalVisible(true);
+      return;
+    }
+
+    const isDuplicate = filteredPackages.some(
+      (item) => item.query === formattedQuery
+    );
+
+    if (isDuplicate) {
+      handleDuplicate(formattedQuery);
       return;
     }
 
     const matchingPackages: MaterialPackage[] = [];
-
     inventoryReportDetail.forEach((detail) => {
       detail.materialPackages.forEach((packageItem) => {
         const hasMatch = packageItem.inventoryReportDetails.some(
@@ -158,95 +142,66 @@ const PackagesList: React.FC<PackagesListProps> = ({
     });
 
     if (matchingPackages.length > 0) {
-      setFilteredPackages((prev) => [
-        ...prev,
-        ...matchingPackages.map((pkg) => ({
-          query: formattedQuery,
-          package: pkg,
-        })),
-      ]);
+      setFilteredPackages((prev) => {
+        const updatedPackages = [...prev];
+        matchingPackages.forEach((pkg) => {
+          const exists = updatedPackages.some(
+            (item) => item.query === formattedQuery
+          );
+          if (!exists) {
+            updatedPackages.push({ query: formattedQuery, package: pkg });
+          }
+        });
+        return updatedPackages;
+      });
     } else {
-      Alert.alert('No Matches', 'No matching material receipt found.');
-    }
-  };
-
-  const handleDetailProcessed = (detail: {
-    inventoryReportDetailId: string;
-    actualQuantity: number;
-    note: string;
-  }) => {
-    setProcessedDetails((prev) => {
-      const exists = prev.some(
-        (item) =>
-          item.inventoryReportDetailId === detail.inventoryReportDetailId
-      );
-      if (!exists) {
-        return [...prev, detail];
-      }
-      return prev;
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (processedDetails.length === 0) {
-      Alert.alert(
-        'Error',
-        'No details processed. Complete entries before submitting.'
-      );
-      return;
-    }
-
-    try {
-      await createInventoryReport(reportId, { details: processedDetails });
-      Alert.alert('Success', 'Inventory report submitted successfully.');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit the report.');
+      handleNotFound(formattedQuery);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
+    <View className='flex-1 bg-white'>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
         {inventoryReportDetail.map((detail) => (
-          <Card key={detail.materialVariant.id} style={styles.materialCard}>
-            <View style={styles.materialHeader}>
+          <Card
+            key={detail.materialVariant.id}
+            className='mb-5 p-4 rounded-lg bg-white'
+          >
+            <View className='flex-row items-center mb-4'>
               <Image
                 source={{ uri: detail.materialVariant.image }}
-                style={styles.materialImage}
+                className='w-20 h-20 rounded-full mr-4'
               />
               <View>
-                <Text style={styles.materialName}>
+                <Text className='font-bold text-lg'>
                   {detail.materialVariant.name}
                 </Text>
-                <View style={styles.codeContainer}>
-                  <Text style={styles.materialCode}>Code:</Text>
+                <View className='flex-row items-center'>
+                  <Text className='text-gray-500 text-sm'>Code:</Text>
                   <StatusBadge>{detail.materialVariant.code}</StatusBadge>
                 </View>
               </View>
             </View>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>Material Packages</Text>
+            <View className='flex-row justify-between items-center my-2'>
+              <Text className='font-bold text-lg'>Material Packages</Text>
               <TouchableOpacity onPress={onOpenCamera}>
-                <ScanQrCode
-                  color={Theme.primaryLightBackgroundColor}
-                  size={40}
-                />
+                <ScanQrCode color='black' size={35} />
               </TouchableOpacity>
             </View>
-            <View style={styles.searchRow}>
-              <View style={styles.searchContainer}>
-                <Search color={Theme.primaryLightBackgroundColor} size={20} />
+            <View className='flex-row mb-4'>
+              <View className='flex-1 flex-row items-center bg-gray-100 rounded-lg px-4 mr-4'>
+                <Search color='gray' size={20} />
                 <TextInput
                   placeholder='Enter receipt code'
                   value={searchQuery}
-                  onChangeText={handleSearchChange}
-                  style={styles.searchInput}
+                  onChangeText={setSearchQuery}
+                  className='flex-1 ml-2'
                 />
               </View>
               <Button
                 mode='contained'
-                onPress={handleSearch}
-                buttonColor={Theme.primaryLightBackgroundColor}
+                onPress={() => handleSearch()}
+                buttonColor='gray'
                 disabled={!isSearchEnabled}
               >
                 Search
@@ -258,7 +213,6 @@ const PackagesList: React.FC<PackagesListProps> = ({
                   key={`${packageItem.materialPackage.id}-${query}`}
                   materialPackage={packageItem}
                   searchQuery={query}
-                  onDetailProcessed={handleDetailProcessed}
                 />
               ))
             ) : (
@@ -268,94 +222,65 @@ const PackagesList: React.FC<PackagesListProps> = ({
         ))}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          mode='contained'
-          onPress={handleSubmit}
-          style={styles.submitButton}
-          disabled={!allReceiptsReported}
-        >
-          Submit
-        </Button>
-      </View>
+      {/* Duplicate Modal */}
+      <Modal
+        transparent={true}
+        visible={isDuplicateModalVisible}
+        animationType='slide'
+      >
+        <View className='flex-1 justify-center items-center bg-black/50'>
+          <View className='bg-white rounded-lg p-5 w-4/5'>
+            <View className='items-center justify-center mb-4'>
+              <AlertCircle size={50} color={Theme.error} />
+              <Text className='text-lg font-semibold text-red-500'>
+                Duplicate Found
+              </Text>
+            </View>
+            <Text className='text-lg font-semibold text-center mb-4'>
+              The Material Receipt already exists.
+            </Text>
+            <Button
+              mode='outlined'
+              onPress={() => setIsDuplicateModalVisible(false)}
+              buttonColor={Theme.error}
+              textColor='white'
+            >
+              Exit
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Not Found Modal */}
+      <Modal
+        transparent={true}
+        visible={isNotFoundModalVisible}
+        animationType='slide'
+      >
+        <View className='flex-1 justify-center items-center bg-black/50'>
+          <View className='bg-white rounded-lg p-5 w-4/5'>
+            <View className='items-center justify-center mb-4'>
+              <Info size={50} color='red' />
+              <Text className='text-lg font-semibold text-red-500'>
+                Not Found
+              </Text>
+            </View>
+            <Text className='text-lg font-semibold text-center mb-4'>
+              No matching Material Receipt was found.
+            </Text>
+            <Button
+              mode='outlined'
+              onPress={() => setIsNotFoundModalVisible(false)}
+              buttonColor='red'
+              textColor='white'
+            >
+              Exit
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  scrollView: {
-    padding: 10,
-  },
-  materialCard: {
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'white',
-  },
-  materialHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  materialImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  materialName: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  materialCode: {
-    color: 'gray',
-    fontSize: 14,
-  },
-  codeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: 'white',
-  },
-  submitButton: {
-    borderRadius: 8,
-    width: '100%',
-  },
-});
 
 export default PackagesList;
