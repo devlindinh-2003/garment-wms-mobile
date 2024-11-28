@@ -210,13 +210,13 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 </View>
 
                 {/* QR Code Icon */}
-                <View>
+                {/* <View>
                   <QrCode
                     size={50}
                     color={Theme.primaryDarkBackgroundColor}
                     onPress={() => onOpenCamera(handleBarcodeScan)} // Open camera
                   />
-                </View>
+                </View> */}
               </View>
 
               {/* Search Section */}

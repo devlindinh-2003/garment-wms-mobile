@@ -35,19 +35,17 @@ const CreateInventoryReport = () => {
       Alert.alert('Error', 'No inventory details to submit.');
       return;
     }
-
     const requestBody = { details: processedDetails };
-
-    // try {
-    //   await createInventoryReport(id as string, requestBody);
-    //   Alert.alert('Success', 'Inventory report submitted successfully.');
-    //   router.replace({
-    //     pathname: '/(warehouse)/(tabs)/reported/[id]',
-    //     params: { id },
-    //   });
-    // } catch (error: any) {
-    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
-    // }
+    try {
+      await createInventoryReport(id as string, requestBody);
+      Alert.alert('Success', 'Inventory report submitted successfully.');
+      router.replace({
+        pathname: '/(warehouse)/(tabs)/reported/[id]',
+        params: { id },
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit the report.');
+    }
   };
 
   useEffect(() => {
