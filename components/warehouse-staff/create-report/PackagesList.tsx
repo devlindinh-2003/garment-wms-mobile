@@ -6,9 +6,10 @@ import {
   ScrollView,
   Alert,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
-import { Search } from 'lucide-react-native';
+import { ScanQrCode, Search } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
 import PackagesItem from './PackagesItem';
 import EmptyDataComponent from '@/components/common/EmptyData';
@@ -85,6 +86,10 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false); // Default is disabled
   const [allReceiptsReported, setAllReceiptsReported] =
     useState<boolean>(false);
+
+  const handleQrScan = () => {
+    Alert.alert('Scan QR Code', 'QR Code scanner is not yet implemented.');
+  };
 
   // Check if the searchQuery matches a valid receipt and does not already exist
   useEffect(() => {
@@ -217,7 +222,15 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 </View>
               </View>
             </View>
-            <Text style={styles.sectionTitle}>Material Packages</Text>
+            <View className='flex-row items-center justify-between my-3'>
+              <Text style={styles.sectionTitle}>Material Packages</Text>
+              <TouchableOpacity onPress={handleQrScan}>
+                <ScanQrCode
+                  color={Theme.primaryLightBackgroundColor}
+                  size={40}
+                />
+              </TouchableOpacity>
+            </View>
             <View style={styles.searchRow}>
               <View style={styles.searchContainer}>
                 <Search color={Theme.primaryLightBackgroundColor} size={20} />

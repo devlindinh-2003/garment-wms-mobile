@@ -27,7 +27,7 @@ const CreateInventoryReport = () => {
         <Divider />
         <PackagesList
           inventoryReportDetail={data?.data?.inventoryReportDetail}
-          reportId={id as string} // Pass the reportId to PackagesList
+          reportId={id as string}
         />
       </ScrollView>
     </View>
