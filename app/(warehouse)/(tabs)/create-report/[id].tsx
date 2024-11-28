@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
-import { Divider } from 'react-native-paper';
+import { ScrollView, View, StyleSheet, Alert } from 'react-native';
+import { Divider, Button } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import AppbarHeader from '@/components/common/AppBarHeader';
@@ -8,30 +8,44 @@ import HeaderCard from '@/components/warehouse-staff/HeaderCard';
 import TeamCard from '@/components/warehouse-staff/TeamCard';
 import PackagesList from '@/components/warehouse-staff/create-report/PackagesList';
 import CameraComponent from '@/components/warehouse-staff/create-report/CameraComponent';
+import { createInventoryReport } from '@/api/inventoryReport';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
   const { data, isSuccess } = useGetInventoryReporttById(id as string);
-  const [isCameraOpen, setIsCameraOpen] = useState(false); // Manage camera visibility state
-  const [scannedData, setScannedData] = useState<string | null>(null); // Store scanned QR code data
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [scannedData, setScannedData] = useState<string | null>(null);
   const [filteredPackages, setFilteredPackages] = useState<
     { query: string; package: any }[]
-  >([]); // Lifted state for filtered packages
+  >([]);
   const [processedDetails, setProcessedDetails] = useState<
     { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
-  >([]); // Lifted state for processed details
+  >([]);
 
-  const handleOpenCamera = () => {
-    setIsCameraOpen(true);
-  };
-
-  const handleCloseCamera = () => {
-    setIsCameraOpen(false);
-  };
-
+  const handleOpenCamera = () => setIsCameraOpen(true);
+  const handleCloseCamera = () => setIsCameraOpen(false);
   const handleScanComplete = (data: string) => {
-    setScannedData(data); // Save scanned data
+    setScannedData(data);
     setIsCameraOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (processedDetails.length === 0) {
+      Alert.alert('Error', 'No inventory details to submit.');
+      return;
+    }
+
+    const requestBody = { details: processedDetails };
+
+    // Log the API body
+    console.log('API Body:', JSON.stringify(requestBody, null, 2));
+
+    // try {
+    //   await createInventoryReport(id as string, requestBody);
+    //   Alert.alert('Success', 'Inventory report submitted successfully.');
+    // } catch (error: any) {
+    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
+    // }
   };
 
   if (!isSuccess) return null;
@@ -66,6 +80,18 @@ const CreateInventoryReport = () => {
           />
         </ScrollView>
       )}
+
+      {/* Submit Button */}
+      <View style={styles.footer}>
+        <Button
+          mode='contained'
+          onPress={handleSubmit}
+          disabled={processedDetails.length === 0}
+          buttonColor='#4CAF50'
+        >
+          Submit Report
+        </Button>
+      </View>
     </View>
   );
 };
@@ -78,6 +104,12 @@ const styles = StyleSheet.create({
   scrollView: {
     paddingHorizontal: 5,
     paddingBottom: 5,
+  },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    backgroundColor: 'white',
   },
 });
 

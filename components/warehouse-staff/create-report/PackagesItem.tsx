@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -62,15 +62,19 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     };
   }>({});
 
-  // Initialize input state for a specific item
-  const initializeInputState = (id: string) => {
-    if (!inputs[id]) {
+  // Initialize input state for each item
+  useEffect(() => {
+    materialPackage.inventoryReportDetails.forEach((detail) => {
       setInputs((prev) => ({
         ...prev,
-        [id]: { quantity: '', notes: '', isEditable: true },
+        [detail.id]: prev[detail.id] || {
+          quantity: detail.actualQuantity?.toString() || '',
+          notes: '',
+          isEditable: true,
+        },
       }));
-    }
-  };
+    });
+  }, [materialPackage]);
 
   const handleInputChange = (
     id: string,
@@ -116,7 +120,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     }
   };
 
-  // Filter the relevant details based on the search query
   const filteredDetails = materialPackage.inventoryReportDetails.filter(
     (detail) =>
       searchQuery && detail.materialReceipt?.code?.endsWith(searchQuery)
@@ -128,15 +131,13 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         <Text style={styles.packageName}>
           {materialPackage.materialPackage.name || 'Unnamed Package'}
         </Text>
-        <StatusBadge className='bg-primaryLight'>
+        <StatusBadge>
           {materialPackage.materialPackage.code || 'No Code'}
         </StatusBadge>
       </View>
 
       {filteredDetails.length > 0 ? (
         filteredDetails.map((detail) => {
-          initializeInputState(detail.id);
-
           const inputState = inputs[detail.id];
           const isSaveDisabled = !inputState?.quantity || !inputState?.notes;
 
@@ -144,19 +145,19 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
             <View key={detail.id} style={styles.detailContainer}>
               <View style={styles.row}>
                 <Text style={styles.label}>Receipt Code:</Text>
-                <StatusBadge style={styles.statusBadge}>
+                <StatusBadge>
                   {detail.materialReceipt.code || 'N/A'}
                 </StatusBadge>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Import Date:</Text>
-                <Text className='font-bold'>
+                <Text>
                   {convertDate(detail.materialReceipt.importDate) || 'N/A'}
                 </Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Quantity By Pack:</Text>
-                <Text className='font-bold text-lg text-red-500'>
+                <Text style={styles.quantityValue}>
                   {detail.materialReceipt.quantityByPack || 0}
                 </Text>
               </View>
@@ -233,13 +234,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  statusBadge: {
-    backgroundColor: 'gray',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 5,
-    color: '#fff',
-  },
   detailContainer: {
     marginTop: 10,
   },
@@ -252,8 +246,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  value: {
+  quantityValue: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#e53935',
   },
   inputContainer: {
     marginTop: 10,

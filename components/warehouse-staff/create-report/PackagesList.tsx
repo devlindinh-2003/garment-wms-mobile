@@ -37,6 +37,12 @@ interface MaterialPackage {
   inventoryReportDetails: InventoryReportDetail[];
 }
 
+interface ProcessedDetail {
+  inventoryReportDetailId: string;
+  actualQuantity: number;
+  note: string;
+}
+
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
   reportId: string;
@@ -46,6 +52,8 @@ interface PackagesListProps {
   setFilteredPackages: React.Dispatch<
     React.SetStateAction<{ query: string; package: MaterialPackage }[]>
   >;
+  processedDetails: ProcessedDetail[];
+  setProcessedDetails: React.Dispatch<React.SetStateAction<ProcessedDetail[]>>;
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
@@ -54,21 +62,17 @@ const PackagesList: React.FC<PackagesListProps> = ({
   onOpenCamera,
   filteredPackages,
   setFilteredPackages,
+  processedDetails,
+  setProcessedDetails,
 }) => {
-  const [searchQuery, setSearchQuery] = useState<string>(''); // Input search
-  const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Input search query
   const [isDuplicateModalVisible, setIsDuplicateModalVisible] =
-    useState<boolean>(false); // Modal visibility for duplicate
+    useState<boolean>(false); // Modal visibility for duplicates
   const [isNotFoundModalVisible, setIsNotFoundModalVisible] =
     useState<boolean>(false); // Modal visibility for "Not Found"
-  const [lastDuplicateQuery, setLastDuplicateQuery] = useState<string | null>(
-    null
-  ); // Track last duplicate query
-  const [lastNotFoundQuery, setLastNotFoundQuery] = useState<string | null>(
-    null
-  ); // Track last "Not Found" query
+  const [lastQuery, setLastQuery] = useState<string | null>(null); // Track last query for modals
 
-  // Automatically handle scanned data and add to filteredPackages
+  // Automatically handle scanned data and initiate search
   useEffect(() => {
     if (scannedData) {
       const extractedCode = scannedData.split('-').pop() || scannedData;
@@ -77,39 +81,24 @@ const PackagesList: React.FC<PackagesListProps> = ({
     }
   }, [scannedData]);
 
-  // Check search validity
-  useEffect(() => {
-    const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
+  // Handle adding/updating processed details
+  const handleDetailProcessed = (detail: ProcessedDetail) => {
+    setProcessedDetails((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) =>
+          item.inventoryReportDetailId === detail.inventoryReportDetailId
+      );
 
-    const existsInInventory = inventoryReportDetail.some((detail) =>
-      detail.materialPackages.some((pkg) =>
-        pkg.inventoryReportDetails.some(
-          (item) => item.materialReceipt?.code === formattedQuery
-        )
-      )
-    );
+      if (existingIndex > -1) {
+        // Update existing detail
+        const updatedDetails = [...prev];
+        updatedDetails[existingIndex] = detail;
+        return updatedDetails;
+      }
 
-    const existsInFiltered = filteredPackages.some(
-      (item) => item.query === formattedQuery
-    );
-
-    setIsSearchEnabled(existsInInventory && !existsInFiltered);
-  }, [searchQuery, inventoryReportDetail, filteredPackages]);
-
-  // Handle duplicate material receipt
-  const handleDuplicate = (query: string) => {
-    if (lastDuplicateQuery !== query) {
-      setLastDuplicateQuery(query);
-      setIsDuplicateModalVisible(true);
-    }
-  };
-
-  // Handle "Not Found" material receipt
-  const handleNotFound = (query: string) => {
-    if (lastNotFoundQuery !== query) {
-      setLastNotFoundQuery(query);
-      setIsNotFoundModalVisible(true);
-    }
+      // Add new detail
+      return [...prev, detail];
+    });
   };
 
   // Search handler
@@ -118,7 +107,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
     const formattedQuery = `MAT-REC-${query}`;
 
     if (!query) {
-      setIsNotFoundModalVisible(true);
+      showModal('notFound', formattedQuery);
       return;
     }
 
@@ -127,7 +116,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
     );
 
     if (isDuplicate) {
-      handleDuplicate(formattedQuery);
+      showModal('duplicate', formattedQuery);
       return;
     }
 
@@ -145,17 +134,26 @@ const PackagesList: React.FC<PackagesListProps> = ({
       setFilteredPackages((prev) => {
         const updatedPackages = [...prev];
         matchingPackages.forEach((pkg) => {
-          const exists = updatedPackages.some(
-            (item) => item.query === formattedQuery
-          );
-          if (!exists) {
+          if (!updatedPackages.some((item) => item.query === formattedQuery)) {
             updatedPackages.push({ query: formattedQuery, package: pkg });
           }
         });
         return updatedPackages;
       });
     } else {
-      handleNotFound(formattedQuery);
+      showModal('notFound', formattedQuery);
+    }
+  };
+
+  // Helper to show modals for duplicates or "Not Found"
+  const showModal = (type: 'duplicate' | 'notFound', query: string) => {
+    if (lastQuery === query) return;
+
+    setLastQuery(query);
+    if (type === 'duplicate') {
+      setIsDuplicateModalVisible(true);
+    } else {
+      setIsNotFoundModalVisible(true);
     }
   };
 
@@ -167,6 +165,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
             key={detail.materialVariant.id}
             className='mb-5 p-4 rounded-lg bg-white'
           >
+            {/* Material Header */}
             <View className='flex-row items-center mb-4'>
               <Image
                 source={{ uri: detail.materialVariant.image }}
@@ -178,10 +177,14 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 </Text>
                 <View className='flex-row items-center'>
                   <Text className='text-gray-500 text-sm'>Code:</Text>
-                  <StatusBadge>{detail.materialVariant.code}</StatusBadge>
+                  <StatusBadge className='ml-3 text-sm'>
+                    {detail.materialVariant.code}
+                  </StatusBadge>
                 </View>
               </View>
             </View>
+
+            {/* Material Packages and Search */}
             <View className='flex-row justify-between items-center my-2'>
               <Text className='font-bold text-lg'>Material Packages</Text>
               <TouchableOpacity onPress={onOpenCamera}>
@@ -202,17 +205,19 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 mode='contained'
                 onPress={() => handleSearch()}
                 buttonColor='gray'
-                disabled={!isSearchEnabled}
               >
                 Search
               </Button>
             </View>
+
+            {/* Filtered Packages */}
             {filteredPackages.length > 0 ? (
               filteredPackages.map(({ query, package: packageItem }) => (
                 <PackagesItem
                   key={`${packageItem.materialPackage.id}-${query}`}
                   materialPackage={packageItem}
                   searchQuery={query}
+                  onDetailProcessed={handleDetailProcessed}
                 />
               ))
             ) : (
@@ -227,6 +232,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
         transparent={true}
         visible={isDuplicateModalVisible}
         animationType='slide'
+        onRequestClose={() => setIsDuplicateModalVisible(false)}
       >
         <View className='flex-1 justify-center items-center bg-black/50'>
           <View className='bg-white rounded-lg p-5 w-4/5'>
@@ -256,6 +262,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
         transparent={true}
         visible={isNotFoundModalVisible}
         animationType='slide'
+        onRequestClose={() => setIsNotFoundModalVisible(false)}
       >
         <View className='flex-1 justify-center items-center bg-black/50'>
           <View className='bg-white rounded-lg p-5 w-4/5'>
