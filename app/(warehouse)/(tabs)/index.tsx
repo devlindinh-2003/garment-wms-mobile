@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Dimensions } from 'react-native';
+import {
+  View,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import {
   TabView,
   SceneMap,
@@ -7,13 +13,7 @@ import {
   NavigationState,
   SceneRendererProps,
 } from 'react-native-tab-view';
-import {
-  Card,
-  Text,
-  ActivityIndicator,
-  Button,
-  Avatar,
-} from 'react-native-paper';
+import { Card, Text, ActivityIndicator, Button } from 'react-native-paper';
 import { getWarehouseStaffInventoryReport } from '@/api/inventoryReport';
 import {
   InventoryReportStatus,
@@ -24,6 +24,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 import EmptyDataComponent from '@/components/common/EmptyData';
 import { convertDate } from '@/helpers/converDate';
 import { router } from 'expo-router';
+import PullToRefresh from '@/components/common/PullToRefresh';
 
 const initialLayout = { width: Dimensions.get('window').width };
 
@@ -32,32 +33,40 @@ const WarehouseStaffDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [index, setIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchInventoryReports = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getWarehouseStaffInventoryReport({
+        pageSize: 13,
+        pageIndex: 0,
+      });
+
+      const filteredReports = response?.data?.data?.filter(
+        (report) =>
+          report.status === InventoryReportStatus.IN_PROGRESS ||
+          report.status === InventoryReportStatus.REPORTED
+      );
+
+      setInventoryReports(filteredReports || []);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching inventory reports:', error);
+      setIsError(true);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchInventoryReports = async () => {
-      try {
-        const response = await getWarehouseStaffInventoryReport({
-          pageSize: 13,
-          pageIndex: 0,
-        });
-
-        const filteredReports = response?.data?.data?.filter(
-          (report) =>
-            report.status === InventoryReportStatus.IN_PROGRESS ||
-            report.status === InventoryReportStatus.REPORTED
-        );
-
-        setInventoryReports(filteredReports || []);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching inventory reports:', error);
-        setIsError(true);
-        setIsLoading(false);
-      }
-    };
-
     fetchInventoryReports();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchInventoryReports();
+    setRefreshing(false);
+  };
 
   const renderCard = (report: any) => (
     <Card
@@ -79,7 +88,6 @@ const WarehouseStaffDashboard = () => {
             {InventoryReportStatusLabels[report.status]}
           </StatusBadge>
         </View>
-
         <View className='flex-row items-center mb-2'>
           <Text className='text-gray-500 font-medium'>Created At:</Text>
           <Text className='ml-2 text-gray-700'>
@@ -138,31 +146,43 @@ const WarehouseStaffDashboard = () => {
       (report) => report.status === InventoryReportStatus.IN_PROGRESS
     );
 
-    if (!reports.length) {
-      return (
-        <View className='flex-1 justify-center items-center'>
-          <EmptyDataComponent />
-        </View>
-      );
-    }
-
-    return <ScrollView className='p-4'>{reports.map(renderCard)}</ScrollView>;
+    return (
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        contentContainerStyle={styles.refreshContainer}
+      >
+        {reports.length ? (
+          reports.map(renderCard)
+        ) : (
+          <View className='flex-1 justify-center items-center'>
+            <EmptyDataComponent />
+          </View>
+        )}
+      </PullToRefresh>
+    );
   };
 
   const ReportedRoute = () => {
     const reports = inventoryReports.filter(
-      (report) => report?.status === InventoryReportStatus.REPORTED
+      (report) => report.status === InventoryReportStatus.REPORTED
     );
 
-    if (!reports.length) {
-      return (
-        <View className='flex-1 justify-center items-center bg-white'>
-          <EmptyDataComponent />
-        </View>
-      );
-    }
-
-    return <ScrollView className='p-4'>{reports.map(renderCard)}</ScrollView>;
+    return (
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        contentContainerStyle={styles.refreshContainer}
+      >
+        {reports.length ? (
+          reports.map(renderCard)
+        ) : (
+          <View className='flex-1 justify-center items-center'>
+            <EmptyDataComponent />
+          </View>
+        )}
+      </PullToRefresh>
+    );
   };
 
   const renderScene = SceneMap({
@@ -225,5 +245,13 @@ const WarehouseStaffDashboard = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  refreshContainer: {
+    flexGrow: 1,
+    backgroundColor: '#f9f9f9',
+    paddingHorizontal: 16,
+  },
+});
 
 export default WarehouseStaffDashboard;
