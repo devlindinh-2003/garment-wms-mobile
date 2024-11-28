@@ -1,30 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  TextInput,
-  ScrollView,
-  Modal,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, ScrollView, Image, StyleSheet } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
-import { AlertCircle, ScanQrCode, Search, Info } from 'lucide-react-native';
+import { QrCode, Search } from 'lucide-react-native';
 import PackagesItem from './PackagesItem';
-import EmptyDataComponent from '@/components/common/EmptyData';
 import StatusBadge from '@/components/common/StatusBadge';
+import avatar from '@/assets/images/avatar.png';
 import Theme from '@/constants/Theme';
 
+// Interfaces for data structures
 interface MaterialVariant {
   id: string;
   name: string;
   code: string;
   image: string;
-  reorderLevel: number;
+}
+
+interface ProductVariant {
+  id: string;
+  name: string;
+  code: string;
+  image: string;
 }
 
 interface InventoryReportDetail {
-  materialVariant: MaterialVariant;
-  materialPackages: MaterialPackage[];
+  materialVariant?: MaterialVariant;
+  materialPackages?: MaterialPackage[];
+  productVariant?: ProductVariant;
+  productSizes?: ProductSize[];
 }
 
 interface MaterialPackage {
@@ -37,279 +39,310 @@ interface MaterialPackage {
   inventoryReportDetails: InventoryReportDetail[];
 }
 
-interface ProcessedDetail {
-  inventoryReportDetailId: string;
-  actualQuantity: number;
-  note: string;
+interface ProductSize {
+  productSize: {
+    id: string;
+    name: string;
+    code: string;
+    size: string;
+  };
+  inventoryReportDetails: InventoryReportDetail[];
 }
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetail[];
-  reportId: string;
-  scannedData: string | null;
-  onOpenCamera: () => void;
-  filteredPackages: { query: string; package: MaterialPackage }[];
-  setFilteredPackages: React.Dispatch<
-    React.SetStateAction<{ query: string; package: MaterialPackage }[]>
-  >;
-  processedDetails: ProcessedDetail[];
-  setProcessedDetails: React.Dispatch<React.SetStateAction<ProcessedDetail[]>>;
+  onOpenCamera: (onScanComplete: (barcode: string) => void) => void;
 }
 
+// Main component
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
-  scannedData,
   onOpenCamera,
-  filteredPackages,
-  setFilteredPackages,
-  processedDetails,
-  setProcessedDetails,
 }) => {
-  const [searchQuery, setSearchQuery] = useState<string>(''); // Input search query
-  const [isDuplicateModalVisible, setIsDuplicateModalVisible] =
-    useState<boolean>(false); // Modal visibility for duplicates
-  const [isNotFoundModalVisible, setIsNotFoundModalVisible] =
-    useState<boolean>(false); // Modal visibility for "Not Found"
-  const [lastQuery, setLastQuery] = useState<string | null>(null); // Track last query for modals
-  const [isSearchDisabled, setIsSearchDisabled] = useState<boolean>(true); // Disable search button
+  const [searchQueries, setSearchQueries] = useState<{ [id: string]: string }>(
+    {}
+  );
+  const [searchEnabled, setSearchEnabled] = useState<{ [id: string]: boolean }>(
+    {}
+  );
+  const [filteredPackages, setFilteredPackages] = useState<{
+    [id: string]:
+      | { query: string; package: MaterialPackage | ProductSize }[]
+      | undefined;
+  }>({});
 
-  // Automatically handle scanned data and initiate search
-  useEffect(() => {
-    if (scannedData) {
-      const extractedCode = scannedData.split('-').pop() || scannedData;
-      setSearchQuery(extractedCode);
-      handleSearch(extractedCode);
+  // Automatically set search input based on barcode scanning
+  const handleBarcodeScan = (barcode: string) => {
+    let query = '';
+
+    if (barcode.startsWith('MAT-REC-')) {
+      query = barcode.slice(-6); // Extract last 6 digits for material receipts
+    } else if (barcode.startsWith('PRO_REC_')) {
+      query = barcode.slice(-7); // Extract last 7 digits for product receipts
     }
-  }, [scannedData]);
 
-  // Validate search query
-  useEffect(() => {
-    const formattedQuery = `MAT-REC-${searchQuery.trim()}`;
-    const existsInInventory = inventoryReportDetail.some((detail) =>
-      detail.materialPackages.some((pkg) =>
+    if (!query) return;
+
+    // Update all relevant search inputs with the extracted query
+    inventoryReportDetail.forEach((detail) => {
+      const id = detail.materialVariant?.id || detail.productVariant?.id || '';
+      setSearchQueries((prev) => ({ ...prev, [id]: query }));
+      validateSearchQuery(id, query);
+    });
+  };
+
+  // Update search query and validate against inventory data
+  const handleSearchChange = (id: string, query: string) => {
+    setSearchQueries((prev) => ({ ...prev, [id]: query }));
+    validateSearchQuery(id, query.trim());
+  };
+
+  // Validate the search query and enable/disable the search button
+  const validateSearchQuery = (id: string, query: string) => {
+    const detail = inventoryReportDetail.find(
+      (detail) =>
+        detail.materialVariant?.id === id || detail.productVariant?.id === id
+    );
+
+    if (!detail) {
+      setSearchEnabled((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    const isMatch =
+      detail.materialPackages?.some((pkg) =>
         pkg.inventoryReportDetails.some(
-          (item) => item.materialReceipt?.code === formattedQuery
+          (item) => item.materialReceipt?.code === `MAT-REC-${query}`
         )
+      ) ||
+      detail.productSizes?.some((size) =>
+        size.inventoryReportDetails.some(
+          (item) => item.productReceipt?.code === `PRO_REC_${query}`
+        )
+      );
+
+    const alreadyExists = filteredPackages[id]?.some(
+      (pkg) => pkg.query === query
+    );
+
+    setSearchEnabled((prev) => ({ ...prev, [id]: isMatch && !alreadyExists }));
+  };
+
+  // Execute search and filter results
+  const handleSearch = (id: string) => {
+    const query = searchQueries[id]?.trim();
+    if (!query) return;
+
+    const detail = inventoryReportDetail.find(
+      (detail) =>
+        detail.materialVariant?.id === id || detail.productVariant?.id === id
+    );
+
+    if (!detail) return;
+
+    const matchingPackages = detail.materialPackages?.filter((pkg) =>
+      pkg.inventoryReportDetails.some(
+        (item) => item.materialReceipt?.code === `MAT-REC-${query}`
       )
     );
 
-    const existsInFiltered = filteredPackages.some(
-      (item) => item.query === formattedQuery
+    const matchingSizes = detail.productSizes?.filter((size) =>
+      size.inventoryReportDetails.some(
+        (item) => item.productReceipt?.code === `PRO_REC_${query}`
+      )
     );
 
-    // Disable the search button if query does not exist in inventory or already exists in filteredPackages
-    setIsSearchDisabled(!existsInInventory || existsInFiltered);
-  }, [searchQuery, inventoryReportDetail, filteredPackages]);
+    setFilteredPackages((prev) => ({
+      ...prev,
+      [id]: [
+        ...(prev[id] || []),
+        ...(matchingPackages?.map((pkg) => ({
+          query,
+          package: pkg,
+        })) || []),
+        ...(matchingSizes?.map((size) => ({
+          query,
+          package: size,
+        })) || []),
+      ],
+    }));
 
-  // Handle adding/updating processed details
-  const handleDetailProcessed = (detail: ProcessedDetail) => {
-    setProcessedDetails((prev) => {
-      const existingIndex = prev.findIndex(
-        (item) =>
-          item.inventoryReportDetailId === detail.inventoryReportDetailId
-      );
-
-      if (existingIndex > -1) {
-        // Update existing detail
-        const updatedDetails = [...prev];
-        updatedDetails[existingIndex] = detail;
-        return updatedDetails;
-      }
-
-      // Add new detail
-      return [...prev, detail];
-    });
-  };
-
-  // Search handler
-  const handleSearch = (queryOverride?: string) => {
-    const query = queryOverride || searchQuery.trim();
-    const formattedQuery = `MAT-REC-${query}`;
-
-    if (!query) {
-      showModal('notFound', formattedQuery);
-      return;
-    }
-
-    const isDuplicate = filteredPackages.some(
-      (item) => item.query === formattedQuery
-    );
-
-    if (isDuplicate) {
-      showModal('duplicate', formattedQuery);
-      return;
-    }
-
-    const matchingPackages: MaterialPackage[] = [];
-    inventoryReportDetail.forEach((detail) => {
-      detail.materialPackages.forEach((packageItem) => {
-        const hasMatch = packageItem.inventoryReportDetails.some(
-          (detailItem) => detailItem.materialReceipt?.code === formattedQuery
-        );
-        if (hasMatch) matchingPackages.push(packageItem);
-      });
-    });
-
-    if (matchingPackages.length > 0) {
-      setFilteredPackages((prev) => {
-        const updatedPackages = [...prev];
-        matchingPackages.forEach((pkg) => {
-          if (!updatedPackages.some((item) => item.query === formattedQuery)) {
-            updatedPackages.push({ query: formattedQuery, package: pkg });
-          }
-        });
-        return updatedPackages;
-      });
-    } else {
-      showModal('notFound', formattedQuery);
-    }
-  };
-
-  // Helper to show modals for duplicates or "Not Found"
-  const showModal = (type: 'duplicate' | 'notFound', query: string) => {
-    if (lastQuery === query) return;
-
-    setLastQuery(query);
-    if (type === 'duplicate') {
-      setIsDuplicateModalVisible(true);
-    } else {
-      setIsNotFoundModalVisible(true);
-    }
+    setSearchEnabled((prev) => ({ ...prev, [id]: false }));
   };
 
   return (
-    <View className='flex-1 bg-white'>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
-        {inventoryReportDetail.map((detail) => (
-          <Card
-            key={detail.materialVariant.id}
-            className='mb-5 p-4 rounded-lg bg-white'
-          >
-            {/* Material Header */}
-            <View className='flex-row items-center mb-4'>
-              <Image
-                source={{ uri: detail.materialVariant.image }}
-                className='w-20 h-20 rounded-full mr-4'
-              />
-              <View>
-                <Text className='font-bold text-lg'>
-                  {detail.materialVariant.name}
-                </Text>
-                <View className='flex-row items-center'>
-                  <Text className='text-gray-500 text-sm'>Code:</Text>
-                  <StatusBadge className='ml-3 text-sm'>
-                    {detail.materialVariant.code}
-                  </StatusBadge>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {inventoryReportDetail.map((detail) => {
+          const id =
+            detail.materialVariant?.id || detail.productVariant?.id || '';
+          const hasFilteredPackages = filteredPackages[id]?.length > 0;
+
+          return (
+            <Card key={id} style={styles.card}>
+              {/* Card Header */}
+              <View style={styles.headerContainer}>
+                <View style={styles.header}>
+                  <Image
+                    source={{
+                      uri:
+                        detail.materialVariant?.image ||
+                        detail.productVariant?.image ||
+                        avatar,
+                    }}
+                    style={styles.image}
+                  />
+                  <View>
+                    <Text style={styles.title}>
+                      {detail.materialVariant?.name ||
+                        detail.productVariant?.name ||
+                        'Unnamed'}
+                    </Text>
+                    <View style={styles.codeRow}>
+                      <Text style={styles.codeLabel}>Code:</Text>
+                      <StatusBadge>
+                        {detail.materialVariant?.code ||
+                          detail.productVariant?.code ||
+                          'No Code'}
+                      </StatusBadge>
+                    </View>
+                  </View>
+                </View>
+
+                {/* QR Code Icon */}
+                <View>
+                  <QrCode
+                    size={50}
+                    color={Theme.primaryDarkBackgroundColor}
+                    onPress={() => onOpenCamera(handleBarcodeScan)} // Open camera
+                  />
                 </View>
               </View>
-            </View>
 
-            {/* Material Packages and Search */}
-            <View className='flex-row justify-between items-center my-2'>
-              <Text className='font-bold text-lg'>Material Packages</Text>
-              <TouchableOpacity onPress={onOpenCamera}>
-                <ScanQrCode color='black' size={35} />
-              </TouchableOpacity>
-            </View>
-            <View className='flex-row mb-4'>
-              <View className='flex-1 flex-row items-center bg-gray-100 rounded-lg px-4 mr-4'>
-                <Search color='gray' size={20} />
-                <TextInput
-                  placeholder='Enter receipt code'
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  className='flex-1 ml-2'
-                />
+              {/* Search Section */}
+              <View style={styles.searchRow}>
+                <View style={styles.searchInputContainer}>
+                  <Search color='gray' size={20} />
+                  <TextInput
+                    placeholder='Enter receipt code'
+                    value={searchQueries[id] || ''}
+                    onChangeText={(query) => handleSearchChange(id, query)}
+                    style={styles.searchInput}
+                  />
+                </View>
+                <Button
+                  mode='contained'
+                  buttonColor={Theme.primaryLightBackgroundColor}
+                  onPress={() => handleSearch(id)}
+                  disabled={!searchEnabled[id]}
+                >
+                  Add
+                </Button>
               </View>
-              <Button
-                mode='contained'
-                onPress={() => handleSearch()}
-                buttonColor={isSearchDisabled ? '#BDBDBD' : '#4CAF50'}
-                textColor={isSearchDisabled ? '#9E9E9E' : 'white'}
-                disabled={isSearchDisabled}
-              >
-                Search
-              </Button>
-            </View>
 
-            {/* Filtered Packages */}
-            {filteredPackages.length > 0 ? (
-              filteredPackages.map(({ query, package: packageItem }) => (
-                <PackagesItem
-                  key={`${packageItem.materialPackage.id}-${query}`}
-                  materialPackage={packageItem}
-                  searchQuery={query}
-                  onDetailProcessed={handleDetailProcessed}
-                />
-              ))
-            ) : (
-              <EmptyDataComponent />
-            )}
-          </Card>
-        ))}
+              {/* Filtered Results */}
+              {hasFilteredPackages ? (
+                filteredPackages[id]?.map(({ query, package: packageItem }) => (
+                  <PackagesItem
+                    key={
+                      packageItem.materialPackage?.id ||
+                      packageItem.productSize?.id ||
+                      ''
+                    }
+                    materialPackage={packageItem as MaterialPackage}
+                    productSize={packageItem as ProductSize}
+                    searchQuery={query}
+                    onDetailProcessed={() => {}}
+                  />
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    No data found. Please search using a valid code.
+                  </Text>
+                </View>
+              )}
+            </Card>
+          );
+        })}
       </ScrollView>
-
-      {/* Duplicate Modal */}
-      <Modal
-        transparent={true}
-        visible={isDuplicateModalVisible}
-        animationType='slide'
-        onRequestClose={() => setIsDuplicateModalVisible(false)}
-      >
-        <View className='flex-1 justify-center items-center bg-black/50'>
-          <View className='bg-white rounded-lg p-5 w-4/5'>
-            <View className='items-center justify-center mb-4'>
-              <AlertCircle size={50} color={Theme.error} />
-              <Text className='text-lg font-semibold text-red-500'>
-                Duplicate Found
-              </Text>
-            </View>
-            <Text className='text-lg font-semibold text-center mb-4'>
-              The Material Receipt already exists.
-            </Text>
-            <Button
-              mode='outlined'
-              onPress={() => setIsDuplicateModalVisible(false)}
-              buttonColor={Theme.error}
-              textColor='white'
-            >
-              Exit
-            </Button>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Not Found Modal */}
-      <Modal
-        transparent={true}
-        visible={isNotFoundModalVisible}
-        animationType='slide'
-        onRequestClose={() => setIsNotFoundModalVisible(false)}
-      >
-        <View className='flex-1 justify-center items-center bg-black/50'>
-          <View className='bg-white rounded-lg p-5 w-4/5'>
-            <View className='items-center justify-center mb-4'>
-              <Info size={50} color='red' />
-              <Text className='text-lg font-semibold text-red-500'>
-                Not Found
-              </Text>
-            </View>
-            <Text className='text-lg font-semibold text-center mb-4'>
-              No matching Material Receipt was found.
-            </Text>
-            <Button
-              mode='outlined'
-              onPress={() => setIsNotFoundModalVisible(false)}
-              buttonColor='red'
-              textColor='white'
-            >
-              Exit
-            </Button>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
+
+// Styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  scrollViewContent: {
+    paddingHorizontal: 10,
+  },
+  card: {
+    marginBottom: 20,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  image: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  codeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  codeLabel: {
+    color: 'gray',
+    marginRight: 5,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 5,
+    paddingVertical: 5,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  emptyText: {
+    color: 'gray',
+    fontSize: 14,
+  },
+});
 
 export default PackagesList;

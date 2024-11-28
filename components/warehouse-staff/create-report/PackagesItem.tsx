@@ -5,20 +5,28 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  StyleSheet,
+  ScrollView,
 } from 'react-native';
 import { Card } from 'react-native-paper';
 import StatusBadge from '@/components/common/StatusBadge';
-import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
 
 interface MaterialReceipt {
-  code: string;
-  importDate: string;
+  code?: string;
+  importDate?: string;
   expireDate?: string;
-  quantityByPack: number;
-  remainQuantityByPack: number;
-  status: string;
+  quantityByPack?: number;
+  remainQuantityByPack?: number;
+  status?: string;
+}
+
+interface ProductReceipt {
+  code?: string;
+  importDate?: string;
+  expireDate?: string;
+  quantityByUom?: number;
+  remainQuantityByUom?: number;
+  status?: string;
 }
 
 interface InventoryReportDetail {
@@ -26,7 +34,8 @@ interface InventoryReportDetail {
   expectedQuantity: number;
   actualQuantity: number | null;
   managerQuantityConfirm: number | null;
-  materialReceipt: MaterialReceipt;
+  materialReceipt?: MaterialReceipt;
+  productReceipt?: ProductReceipt;
 }
 
 interface MaterialPackage {
@@ -39,8 +48,19 @@ interface MaterialPackage {
   inventoryReportDetails: InventoryReportDetail[];
 }
 
+interface ProductSize {
+  productSize: {
+    id: string;
+    name: string;
+    code: string;
+    size: string;
+  };
+  inventoryReportDetails: InventoryReportDetail[];
+}
+
 interface PackagesItemProps {
-  materialPackage: MaterialPackage;
+  materialPackage?: MaterialPackage;
+  productSize?: ProductSize;
   searchQuery: string;
   onDetailProcessed: (detail: {
     inventoryReportDetailId: string;
@@ -51,6 +71,7 @@ interface PackagesItemProps {
 
 const PackagesItem: React.FC<PackagesItemProps> = ({
   materialPackage,
+  productSize,
   searchQuery,
   onDetailProcessed,
 }) => {
@@ -62,9 +83,12 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     };
   }>({});
 
-  // Initialize input state for each item
+  const inventoryReportDetails =
+    materialPackage?.inventoryReportDetails ||
+    productSize?.inventoryReportDetails;
+
   useEffect(() => {
-    materialPackage.inventoryReportDetails.forEach((detail) => {
+    inventoryReportDetails?.forEach((detail) => {
       setInputs((prev) => ({
         ...prev,
         [detail.id]: prev[detail.id] || {
@@ -74,7 +98,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         },
       }));
     });
-  }, [materialPackage]);
+  }, [inventoryReportDetails]);
 
   const handleInputChange = (
     id: string,
@@ -91,16 +115,14 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     const inputState = inputs[id];
 
     if (inputState?.isEditable) {
-      // Save action
       if (!inputState.quantity || !inputState.notes) {
         Alert.alert(
           'Validation Error',
-          'Both "Quantity" and "Notes" fields must be filled out before saving.'
+          'Both "Quantity" and "Notes" are required.'
         );
         return;
       }
 
-      // Pass the detail to the parent component
       onDetailProcessed({
         inventoryReportDetailId: id,
         actualQuantity: Number(inputState.quantity),
@@ -112,7 +134,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         [id]: { ...prev[id], isEditable: false },
       }));
     } else {
-      // Edit action
       setInputs((prev) => ({
         ...prev,
         [id]: { ...prev[id], isEditable: true },
@@ -120,162 +141,104 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     }
   };
 
-  const filteredDetails = materialPackage.inventoryReportDetails.filter(
-    (detail) =>
-      searchQuery && detail.materialReceipt?.code?.endsWith(searchQuery)
-  );
+  const filteredDetails = inventoryReportDetails?.filter((detail) => {
+    const receiptCode =
+      detail.materialReceipt?.code || detail.productReceipt?.code;
+    return searchQuery && receiptCode?.endsWith(searchQuery);
+  });
+  console.log('Produc');
+  console.log(JSON.stringify(productSize, null, 2));
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.packageName}>
-          {materialPackage.materialPackage.name || 'Unnamed Package'}
-        </Text>
-        <StatusBadge>
-          {materialPackage.materialPackage.code || 'No Code'}
-        </StatusBadge>
-      </View>
+    <ScrollView>
+      <Card className='mt-3 p-4 rounded-lg border border-gray-300 bg-white'>
+        {/* Header */}
+        <View className='flex-row justify-between mb-3'>
+          <Text className='font-bold text-lg'>
+            {materialPackage?.materialPackage?.name ||
+              productSize?.productSize?.name ||
+              productSize?.productVariant?.name ||
+              'Unnamed'}
+          </Text>
+        </View>
 
-      {filteredDetails.length > 0 ? (
-        filteredDetails.map((detail) => {
-          const inputState = inputs[detail.id];
-          const isSaveDisabled = !inputState?.quantity || !inputState?.notes;
+        {/* Filtered Details */}
+        {filteredDetails && filteredDetails.length > 0 ? (
+          filteredDetails.map((detail) => {
+            const inputState = inputs[detail.id];
+            const isSaveDisabled = !inputState?.quantity || !inputState?.notes;
 
-          return (
-            <View key={detail.id} style={styles.detailContainer}>
-              <View style={styles.row}>
-                <Text style={styles.label}>Receipt Code:</Text>
-                <StatusBadge>
-                  {detail.materialReceipt.code || 'N/A'}
-                </StatusBadge>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>Import Date:</Text>
-                <Text>
-                  {convertDate(detail.materialReceipt.importDate) || 'N/A'}
-                </Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>Quantity By Pack:</Text>
-                <Text style={styles.quantityValue}>
-                  {detail.materialReceipt.quantityByPack || 0}
-                </Text>
-              </View>
+            const receipt = detail.materialReceipt || detail.productReceipt;
 
-              {/* Input Fields */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Enter Actual Quantity:</Text>
-                <TextInput
-                  placeholder='Enter quantity'
-                  value={inputState?.quantity || ''}
-                  onChangeText={(value) =>
-                    handleInputChange(detail.id, 'quantity', value)
-                  }
-                  style={styles.input}
-                  keyboardType='numeric'
-                  editable={inputState?.isEditable ?? true}
-                />
-                <Text style={styles.label}>Enter Notes:</Text>
-                <TextInput
-                  placeholder='Enter notes'
-                  value={inputState?.notes || ''}
-                  onChangeText={(value) =>
-                    handleInputChange(detail.id, 'notes', value)
-                  }
-                  style={styles.input}
-                  editable={inputState?.isEditable ?? true}
-                />
-              </View>
+            return (
+              <View key={detail.id} className='mt-3'>
+                <View className='flex-row justify-between mb-2'>
+                  <Text className='font-semibold'>Receipt Code:</Text>
+                  <StatusBadge>{receipt?.code || 'N/A'}</StatusBadge>
+                </View>
+                <View className='flex-row justify-between mb-2'>
+                  <Text className='font-semibold'>Import Date:</Text>
+                  <Text>{convertDate(receipt?.importDate) || 'N/A'}</Text>
+                </View>
+                <View className='flex-row justify-between mb-2'>
+                  <Text className='font-semibold'>Quantity:</Text>
+                  <Text className='text-red-500 font-bold'>
+                    {receipt?.quantityByPack || receipt?.quantityByUom || 0}
+                  </Text>
+                </View>
 
-              {/* Save/Edit Button */}
-              <TouchableOpacity
-                onPress={() => toggleEditSave(detail.id)}
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: inputState?.isEditable
-                      ? Theme.green[500]
-                      : Theme.blue[500],
-                  },
-                ]}
-                disabled={inputState?.isEditable && isSaveDisabled}
-              >
-                <Text style={styles.buttonText}>
-                  {inputState?.isEditable ? 'Save' : 'Edit'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })
-      ) : (
-        <Text style={styles.noDataText}>
-          No data available. Please use the search bar to find matching data.
-        </Text>
-      )}
-    </Card>
+                {/* Input Fields */}
+                <View className='mt-3'>
+                  <Text className='font-semibold'>Enter Actual Quantity:</Text>
+                  <TextInput
+                    placeholder='Enter quantity'
+                    value={inputState?.quantity || ''}
+                    onChangeText={(value) =>
+                      handleInputChange(detail.id, 'quantity', value)
+                    }
+                    className='border border-gray-400 rounded px-3 py-2 mt-1'
+                    keyboardType='numeric'
+                    editable={inputState?.isEditable ?? true}
+                  />
+                  <Text className='font-semibold mt-3'>Enter Notes:</Text>
+                  <TextInput
+                    placeholder='Enter notes'
+                    value={inputState?.notes || ''}
+                    onChangeText={(value) =>
+                      handleInputChange(detail.id, 'notes', value)
+                    }
+                    className='border border-gray-400 rounded px-3 py-2 mt-1'
+                    editable={inputState?.isEditable ?? true}
+                  />
+                </View>
+
+                {/* Save/Edit Button */}
+                <TouchableOpacity
+                  onPress={() => toggleEditSave(detail.id)}
+                  className={`mt-3 px-4 py-2 rounded ${
+                    inputState?.isEditable
+                      ? isSaveDisabled
+                        ? 'bg-gray-300'
+                        : 'bg-green-500'
+                      : 'bg-blue-500'
+                  }`}
+                  disabled={inputState?.isEditable && isSaveDisabled}
+                >
+                  <Text className='text-white font-bold text-center'>
+                    {inputState?.isEditable ? 'Save' : 'Edit'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })
+        ) : (
+          <Text className='text-center text-gray-500 mt-3'>
+            No data available. Please use the search bar to find matching data.
+          </Text>
+        )}
+      </Card>
+    </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    marginTop: 10,
-    padding: 10,
-    borderRadius: 8,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  packageName: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  detailContainer: {
-    marginTop: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  label: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  quantityValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#e53935',
-  },
-  inputContainer: {
-    marginTop: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 5,
-    padding: 8,
-    marginBottom: 10,
-  },
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  noDataText: {
-    textAlign: 'center',
-    color: 'gray',
-    marginTop: 10,
-  },
-});
 
 export default PackagesItem;
