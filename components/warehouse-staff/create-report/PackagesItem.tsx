@@ -40,15 +40,20 @@ interface PackagesItemProps {
 const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [receiptCode, setReceiptCode] = useState<string | null>(null);
+  const [receiptType, setReceiptType] = useState<'material' | 'product' | null>(
+    null
+  );
 
-  const openModal = (code: string | null) => {
+  const openModal = (code: string | null, type: 'material' | 'product') => {
     setReceiptCode(code);
+    setReceiptType(type);
     setModalVisible(true);
   };
 
   const closeModal = () => {
     setModalVisible(false);
     setReceiptCode(null);
+    setReceiptType(null);
   };
 
   return (
@@ -62,7 +67,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
             <Card.Content>
               {/* Render Receipt Header */}
               <View className='flex flex-row items-center justify-between mb-4'>
-                <Text className='text-lg font-bold text-blue-700'>
+                <Text className='text-lg font-bold text-black'>
                   {detail.materialReceipt
                     ? `Material Receipt:`
                     : `Product Receipt:`}
@@ -95,17 +100,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                 <View className='mb-4'>
                   <View className='flex-row items-center justify-between mb-2'>
                     <View className='flex-row items-center gap-2'>
-                      <CalendarX size={20} color={Theme.greyText} />
-                      <Text className='text-sm font-semibold text-gray-700 '>
-                        Expire Date:
-                      </Text>
-                    </View>
-                    <Text className='text-sm text-gray-700'>
-                      {convertDate(detail.materialReceipt.expireDate)}
-                    </Text>
-                  </View>
-                  <View className='flex-row items-center justify-between'>
-                    <View className='flex-row items-center gap-2'>
                       <CalendarPlus size={20} color={Theme.greyText} />
                       <Text className='text-sm font-semibold text-gray-700'>
                         Import Date:
@@ -113,6 +107,17 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                     </View>
                     <Text className='text-sm text-gray-700'>
                       {convertDate(detail.materialReceipt.importDate)}
+                    </Text>
+                  </View>
+                  <View className='flex-row items-center justify-between'>
+                    <View className='flex-row items-center gap-2'>
+                      <CalendarX size={20} color={Theme.greyText} />
+                      <Text className='text-sm font-semibold text-gray-700'>
+                        Expire Date:
+                      </Text>
+                    </View>
+                    <Text className='text-sm text-gray-700'>
+                      {convertDate(detail.materialReceipt.expireDate)}
                     </Text>
                   </View>
                   <Divider className='my-4' />
@@ -171,7 +176,8 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                   openModal(
                     detail.materialReceipt?.code ||
                       detail.productReceipt?.code ||
-                      ' '
+                      ' ',
+                    detail.materialReceipt ? 'material' : 'product'
                   )
                 }
                 className='bg-blue-600'
@@ -191,7 +197,13 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
         visible={isModalVisible}
         onRequestClose={closeModal}
       >
-        <PackagesDetail closeModal={closeModal} receiptCode={receiptCode} />
+        {isModalVisible && receiptType && receiptCode && (
+          <PackagesDetail
+            closeModal={closeModal}
+            receiptCode={receiptCode}
+            receiptType={receiptType}
+          />
+        )}
       </Modal>
     </>
   );

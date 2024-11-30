@@ -209,3 +209,36 @@ export const createInventoryReport = async (
     throw new Error('Failed to create inventory report.');
   }
 };
+
+export const getDetailsByReceipt = async (
+  code: string,
+  type: 'material' | 'product'
+): Promise<ApiResponse> => {
+  const endpoint =
+    type === 'material'
+      ? `/material-receipt/by-code?code=${encodeURIComponent(code)}`
+      : `/product-receipt/by-code?code=${encodeURIComponent(code)}`;
+
+  try {
+    const config = get(endpoint);
+    const response = await axios(config);
+    return response.data as ApiResponse;
+  } catch (error: any) {
+    console.error(`Failed to fetch ${type}-receipt details by code:`, error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        statusCode: error.response.status,
+        data: null,
+        message:
+          error.response.data.message ||
+          `An error occurred while fetching the ${type}-receipt details.`,
+        errors: error.response.data.errors || null,
+      } as ApiResponse;
+    }
+
+    throw new Error(
+      `An unexpected error occurred while fetching the ${type}-receipt details.`
+    );
+  }
+};

@@ -9,10 +9,13 @@ import TeamCard from '@/components/warehouse-staff/TeamCard';
 import CameraComponent from '@/components/warehouse-staff/create-report/CameraComponent';
 import { createInventoryReport } from '@/api/inventoryReport';
 import PackagesList from '@/components/warehouse-staff/create-report/PackagesList';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
 
 const CreateInventoryReport = () => {
   const { id } = useLocalSearchParams();
-  const { data, isSuccess } = useGetInventoryReporttById(id as string);
+  const { data, isSuccess, isPending } = useGetInventoryReporttById(
+    id as string
+  );
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processedDetails, setProcessedDetails] = useState<
@@ -64,6 +67,12 @@ const CreateInventoryReport = () => {
   };
 
   if (!isSuccess) return null;
+  if (isPending)
+    return (
+      <View className='items-center'>
+        <SpinnerLoading />
+      </View>
+    );
 
   return (
     <View style={styles.container}>
