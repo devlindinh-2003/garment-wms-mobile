@@ -1,11 +1,6 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
-import {
-  NotepadText,
-  CalendarDays,
-  CalendarX,
-  CalendarPlus,
-} from 'lucide-react-native';
+import { NotepadText, CalendarPlus } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, Text, Modal } from 'react-native';
 import { Card, Divider, Button, TextInput } from 'react-native-paper';
@@ -36,6 +31,7 @@ interface InventoryReportDetail {
 interface PackagesItemProps {
   details: InventoryReportDetail[];
 }
+
 const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [receiptCode, setReceiptCode] = useState<string | null>(null);
@@ -63,7 +59,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
         detail.productReceipt?.code === code
           ? {
               ...detail,
-              actualQuantity: parseFloat(quantity), // Update the actualQuantity
+              actualQuantity: parseFloat(quantity),
             }
           : detail
       )
@@ -147,7 +143,11 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
               </View>
 
               <Button
-                icon='clipboard-arrow-right'
+                icon={
+                  detail.actualQuantity
+                    ? 'pencil-circle-outline'
+                    : 'clipboard-arrow-right'
+                }
                 mode='contained'
                 onPress={() =>
                   openModal(
@@ -157,9 +157,11 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                     detail.materialReceipt ? 'material' : 'product'
                   )
                 }
-                className='bg-blue-600'
+                className={
+                  detail.actualQuantity ? 'bg-blue-500' : 'bg-green-500'
+                }
               >
-                Open
+                {detail.actualQuantity ? 'Edit' : 'Open'}
               </Button>
             </Card.Content>
           </Card>

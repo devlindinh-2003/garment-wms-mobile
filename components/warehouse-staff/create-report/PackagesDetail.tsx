@@ -1,5 +1,5 @@
 import AppbarHeader from '@/components/common/AppBarHeader';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { useGetDetailByReceipt } from '@/hooks/useGetDetailByReceipt';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
@@ -13,7 +13,7 @@ interface PackagesDetailProps {
   receiptCode: string | null;
   receiptType: 'material' | 'product';
   updateActualQuantity: (code: string, quantity: string) => void;
-  actualQuantity: string; // Pass the actualQuantity from parent
+  actualQuantity: string;
 }
 
 const PackagesDetail: React.FC<PackagesDetailProps> = ({
@@ -21,7 +21,7 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
   receiptCode,
   receiptType,
   updateActualQuantity,
-  actualQuantity: initialQuantity, // Receive the initial quantity as a prop
+  actualQuantity: initialQuantity,
 }) => {
   const { itemReceipt, isPending, isError, error } = useGetDetailByReceipt(
     receiptCode || '',
@@ -29,10 +29,22 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
   );
 
   const [actualQuantity, setActualQuantity] = useState(initialQuantity);
+  const [isEditing, setIsEditing] = useState(!initialQuantity);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+
+  useEffect(() => {
+    setIsEditing(!initialQuantity);
+    setIsButtonDisabled(true);
+  }, [initialQuantity]);
+
+  useEffect(() => {
+    setIsButtonDisabled(actualQuantity === initialQuantity);
+  }, [actualQuantity, initialQuantity]);
 
   const handleSave = () => {
-    if (receiptCode) {
+    if (receiptCode && actualQuantity !== initialQuantity) {
       updateActualQuantity(receiptCode, actualQuantity);
+      setIsEditing(false);
     }
   };
 
@@ -126,10 +138,17 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
         <Button
           mode='contained'
           onPress={handleSave}
-          className='bg-blue-600'
+          className={`${
+            isButtonDisabled
+              ? 'bg-gray-400'
+              : isEditing
+                ? 'bg-green-500'
+                : 'bg-blue-500'
+          }`}
           labelStyle={{ color: 'white', fontWeight: 'bold' }}
+          disabled={isButtonDisabled}
         >
-          Save
+          {isEditing ? 'Save' : 'Edit'}
         </Button>
       </View>
     </View>
