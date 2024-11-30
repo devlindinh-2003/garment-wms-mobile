@@ -31,6 +31,7 @@ export interface InventoryReportDetail {
   managerQuantityConfirm: number;
   warehouseStaffNote?: string | null;
   warehouseManagerNote?: string | null;
+  materialReceipt?: any;
   recordedAt?: string; // ISO format datetime string
   createdAt?: string; // ISO format datetime string
   updatedAt?: string; // ISO format datetime string
