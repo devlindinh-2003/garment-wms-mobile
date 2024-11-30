@@ -3,6 +3,7 @@ import { View, Text, Image } from 'react-native';
 import { Card, Divider } from 'react-native-paper';
 import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
+import PackagesItem from './PackagesItem'; // Importing PackagesItem
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
@@ -12,7 +13,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
 }) => {
   return (
-    <View className='p-4 bg-white'>
+    <View className='p-2 bg-white'>
       {inventoryReportDetail?.map((detail, index) => (
         <Card key={index} className='mb-4 rounded-lg shadow-sm bg-slate-100'>
           <Card.Content>
@@ -64,9 +65,22 @@ const PackagesList: React.FC<PackagesListProps> = ({
             </View>
             <Divider className='my-2' />
             <View>
-              <Text className='font-semibold text-lg text-blue-600'>
+              <Text className='font-semibold text-lg text-blue-600 mb-2'>
                 Inventory Report Details
               </Text>
+              {/* Render Inventory Report Details using PackagesItem */}
+              {detail?.materialPackages?.map((pkg, pkgIndex) => (
+                <PackagesItem
+                  key={pkgIndex}
+                  details={pkg.inventoryReportDetails}
+                />
+              ))}
+              {detail?.productSizes?.map((size, sizeIndex) => (
+                <PackagesItem
+                  key={sizeIndex}
+                  details={size.inventoryReportDetails}
+                />
+              ))}
             </View>
           </Card.Content>
         </Card>
