@@ -36,13 +36,13 @@ interface InventoryReportDetail {
 interface PackagesItemProps {
   details: InventoryReportDetail[];
 }
-
 const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [receiptCode, setReceiptCode] = useState<string | null>(null);
   const [receiptType, setReceiptType] = useState<'material' | 'product' | null>(
     null
   );
+  const [updatedDetails, setUpdatedDetails] = useState(details);
 
   const openModal = (code: string | null, type: 'material' | 'product') => {
     setReceiptCode(code);
@@ -56,16 +56,37 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
     setReceiptType(null);
   };
 
+  const updateActualQuantity = (code: string, quantity: string) => {
+    setUpdatedDetails((prevDetails) =>
+      prevDetails.map((detail) =>
+        detail.materialReceipt?.code === code ||
+        detail.productReceipt?.code === code
+          ? {
+              ...detail,
+              actualQuantity: parseFloat(quantity), // Update the actualQuantity
+            }
+          : detail
+      )
+    );
+    closeModal();
+  };
+
+  const getActualQuantity = (code: string) => {
+    const detail = updatedDetails.find(
+      (d) => d.materialReceipt?.code === code || d.productReceipt?.code === code
+    );
+    return detail?.actualQuantity?.toString() || '';
+  };
+
   return (
     <>
       <View className='bg-gray-100'>
-        {details.map((detail, index) => (
+        {updatedDetails.map((detail, index) => (
           <Card
             key={index}
             className='mb-4 rounded-xl shadow-lg bg-white border border-gray-200'
           >
             <Card.Content>
-              {/* Render Receipt Header */}
               <View className='flex flex-row items-center justify-between mb-4'>
                 <Text className='text-lg font-bold text-black'>
                   {detail.materialReceipt
@@ -80,7 +101,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
               </View>
               <Divider className='mb-4' />
 
-              {/* Render Quantity Details */}
               <View className='mb-2'>
                 <View className='flex-row items-center justify-between mb-2'>
                   <View className='flex-row items-center gap-2'>
@@ -95,7 +115,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                 </View>
               </View>
 
-              {/* Render Material Receipt Information */}
               {detail.materialReceipt && (
                 <View className='mb-4'>
                   <View className='flex-row items-center justify-between mb-2'>
@@ -109,51 +128,10 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                       {convertDate(detail.materialReceipt.importDate)}
                     </Text>
                   </View>
-                  <View className='flex-row items-center justify-between'>
-                    <View className='flex-row items-center gap-2'>
-                      <CalendarX size={20} color={Theme.greyText} />
-                      <Text className='text-sm font-semibold text-gray-700'>
-                        Expire Date:
-                      </Text>
-                    </View>
-                    <Text className='text-sm text-gray-700'>
-                      {convertDate(detail.materialReceipt.expireDate)}
-                    </Text>
-                  </View>
                   <Divider className='my-4' />
                 </View>
               )}
 
-              {/* Render Product Receipt Information */}
-              {detail.productReceipt && (
-                <View className='mb-4'>
-                  <View className='flex-row items-center justify-between mb-2'>
-                    <View className='flex-row items-center gap-2'>
-                      <CalendarX size={20} color={Theme.greyText} />
-                      <Text className='text-sm font-semibold text-gray-700'>
-                        Expire Date:
-                      </Text>
-                    </View>
-                    <Text className='text-sm text-gray-700'>
-                      {convertDate(detail.productReceipt.expireDate)}
-                    </Text>
-                  </View>
-                  <View className='flex-row items-center justify-between'>
-                    <View className='flex-row items-center gap-2'>
-                      <CalendarPlus size={20} color={Theme.greyText} />
-                      <Text className='text-sm font-semibold text-gray-700'>
-                        Import Date:
-                      </Text>
-                    </View>
-                    <Text className='text-sm text-gray-700'>
-                      {convertDate(detail.productReceipt.importDate)}
-                    </Text>
-                  </View>
-                  <Divider className='my-4' />
-                </View>
-              )}
-
-              {/* Render Actual Quantity with Disabled TextInput */}
               <View className='mb-4'>
                 <View className='flex-row items-center justify-between gap-3'>
                   <Text className='text-sm font-semibold text-gray-700 '>
@@ -168,7 +146,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                 </View>
               </View>
 
-              {/* Render Open Button */}
               <Button
                 icon='clipboard-arrow-right'
                 mode='contained'
@@ -189,7 +166,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
         ))}
       </View>
 
-      {/* Modal Implementation */}
       <Modal
         presentationStyle='pageSheet'
         animationType='slide'
@@ -202,6 +178,8 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
             closeModal={closeModal}
             receiptCode={receiptCode}
             receiptType={receiptType}
+            updateActualQuantity={updateActualQuantity}
+            actualQuantity={getActualQuantity(receiptCode)}
           />
         )}
       </Modal>

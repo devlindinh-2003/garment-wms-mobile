@@ -12,24 +12,28 @@ interface PackagesDetailProps {
   closeModal: () => void;
   receiptCode: string | null;
   receiptType: 'material' | 'product';
+  updateActualQuantity: (code: string, quantity: string) => void;
+  actualQuantity: string; // Pass the actualQuantity from parent
 }
 
 const PackagesDetail: React.FC<PackagesDetailProps> = ({
   closeModal,
   receiptCode,
   receiptType,
+  updateActualQuantity,
+  actualQuantity: initialQuantity, // Receive the initial quantity as a prop
 }) => {
   const { itemReceipt, isPending, isError, error } = useGetDetailByReceipt(
     receiptCode || '',
     receiptType
   );
 
-  const [actualQuantity, setActualQuantity] = useState('');
+  const [actualQuantity, setActualQuantity] = useState(initialQuantity);
 
   const handleSave = () => {
-    console.log('Save button clicked');
-    console.log('Actual Quantity:', actualQuantity);
-    // Add your save functionality here
+    if (receiptCode) {
+      updateActualQuantity(receiptCode, actualQuantity);
+    }
   };
 
   return (
@@ -76,14 +80,14 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                   </Text>
                 </View>
 
-                <View className='flex-row items-center justify-between'>
+                {/* Receipt Code, Import Date, and Expire Date */}
+                <View className='flex-row items-start justify-between mt-4'>
                   <View>
                     {/* Import Date */}
                     <View className='flex-row items-center gap-2 mb-1'>
                       <CalendarDays size={20} color='#4CAF50' />
                       <Text className='text-sm text-gray-600'>
-                        Import Date:{' '}
-                        {convertDate(itemReceipt.importDate || 'N/A')}
+                        Imported: {convertDate(itemReceipt.importDate || 'N/A')}
                       </Text>
                     </View>
                     {/* Expire Date */}
@@ -91,13 +95,14 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                       <View className='flex-row items-center gap-2'>
                         <CalendarX size={20} color='#E53E3E' />
                         <Text className='text-sm text-gray-600'>
-                          Expire Date:{' '}
+                          Expired:{' '}
                           {convertDate(itemReceipt.expireDate || 'N/A')}
                         </Text>
                       </View>
                     )}
                   </View>
 
+                  {/* Receipt Code */}
                   <StatusBadge className='bg-primaryLight'>
                     {itemReceipt?.code}
                   </StatusBadge>
