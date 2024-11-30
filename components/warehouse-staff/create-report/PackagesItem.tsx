@@ -1,9 +1,14 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
-import { NotepadText, CalendarDays } from 'lucide-react-native';
+import {
+  NotepadText,
+  CalendarDays,
+  CalendarX,
+  CalendarPlus,
+} from 'lucide-react-native';
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Card, Divider, Button } from 'react-native-paper';
+import { Card, Divider, Button, TextInput } from 'react-native-paper';
 import { convertDate } from '@/helpers/converDate';
 
 interface InventoryReportDetail {
@@ -56,41 +61,42 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
             <Divider className='mb-4' />
 
             {/* Render Quantity Details */}
-            <View className='mb-4'>
-              <View className='flex-row items-center gap-2'>
-                <NotepadText size={20} color={Theme.greyText} />
-                <Text className='text-sm text-gray-700'>
-                  <Text className='font-semibold'>Expected Quantity:</Text>{' '}
+            <View className='mb-2'>
+              <View className='flex-row items-center justify-between mb-2'>
+                <View className='flex-row items-center gap-2'>
+                  <NotepadText size={20} color={Theme.greyText} />
+                  <Text className='text-sm font-semibold text-gray-700'>
+                    Expected Quantity:
+                  </Text>
+                </View>
+                <Text className='font-bold text-gray-700 text-lg '>
                   {detail.expectedQuantity}
                 </Text>
               </View>
-              {detail.actualQuantity !== null && (
-                <View className='flex-row items-center gap-2 mt-2'>
-                  <NotepadText size={20} color={Theme.greyText} />
-                  <Text className='text-sm text-gray-700'>
-                    <Text className='font-semibold'>Actual Quantity:</Text>{' '}
-                    {detail.actualQuantity}
-                  </Text>
-                </View>
-              )}
             </View>
-
-            <Divider className='mb-4' />
 
             {/* Render Material Receipt Information */}
             {detail.materialReceipt && (
               <View className='mb-4'>
-                <View className='flex-row items-center gap-2'>
-                  <CalendarDays size={20} color={Theme.greyText} />
+                <View className='flex-row items-center justify-between mb-2'>
+                  <View className='flex-row items-center gap-2'>
+                    <CalendarX size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700 '>
+                      Expire Date:
+                    </Text>
+                  </View>
                   <Text className='text-sm text-gray-700'>
-                    <Text className='font-semibold'>Expire Date:</Text>{' '}
                     {convertDate(detail.materialReceipt.expireDate)}
                   </Text>
                 </View>
-                <View className='flex-row items-center gap-2 mt-2'>
-                  <CalendarDays size={20} color={Theme.greyText} />
+                <View className='flex-row items-center justify-between'>
+                  <View className='flex-row items-center gap-2'>
+                    <CalendarPlus size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      Import Date:
+                    </Text>
+                  </View>
                   <Text className='text-sm text-gray-700'>
-                    <Text className='font-semibold'>Import Date:</Text>{' '}
                     {convertDate(detail.materialReceipt.importDate)}
                   </Text>
                 </View>
@@ -100,18 +106,26 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
 
             {/* Render Product Receipt Information */}
             {detail.productReceipt && (
-              <View>
-                <View className='flex-row items-center gap-2'>
-                  <CalendarDays size={20} color={Theme.greyText} />
+              <View className='mb-4'>
+                <View className='flex-row items-center justify-between mb-2'>
+                  <View className='flex-row items-center gap-2'>
+                    <CalendarX size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      Expire Date:
+                    </Text>
+                  </View>
                   <Text className='text-sm text-gray-700'>
-                    <Text className='font-semibold'>Expire Date:</Text>{' '}
                     {convertDate(detail.productReceipt.expireDate)}
                   </Text>
                 </View>
-                <View className='flex-row items-center gap-2 mt-2'>
-                  <CalendarDays size={20} color={Theme.greyText} />
+                <View className='flex-row items-center justify-between'>
+                  <View className='flex-row items-center gap-2'>
+                    <CalendarPlus size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      Import Date:
+                    </Text>
+                  </View>
                   <Text className='text-sm text-gray-700'>
-                    <Text className='font-semibold'>Import Date:</Text>{' '}
                     {convertDate(detail.productReceipt.importDate)}
                   </Text>
                 </View>
@@ -119,11 +133,27 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
               </View>
             )}
 
+            {/* Render Actual Quantity with Disabled TextInput */}
+            <View className='mb-4'>
+              <View className='flex-row items-center justify-between gap-3'>
+                <Text className='text-sm font-semibold text-gray-700 '>
+                  Actual Quantity:
+                </Text>
+                <TextInput
+                  mode='outlined'
+                  value={detail.actualQuantity?.toString() || 'NOT YET'}
+                  disabled
+                  className='flex-1'
+                />
+              </View>
+            </View>
+
             {/* Render Open Button */}
             <Button
+              icon='clipboard-arrow-right'
               mode='contained'
               onPress={() => console.log('Open Button Pressed')}
-              className='bg-blue-600 '
+              className='bg-blue-600'
             >
               Open
             </Button>
