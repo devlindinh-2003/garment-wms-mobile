@@ -1,4 +1,6 @@
 import { InventoryReportStatus } from '@/enums/inventoryReportStatus';
+import { MaterialPackagesWithDetails, MaterialVariant } from './MaterialTypes';
+import { ProductVariant } from './Product';
 
 export interface InventoryReport {
   id: string;
@@ -33,4 +35,14 @@ export interface InventoryReportDetail {
   createdAt?: string; // ISO format datetime string
   updatedAt?: string; // ISO format datetime string
   deletedAt?: string | null; // ISO format datetime string
+}
+
+export interface InventoryReportDetailRoot {
+  materialVariant?: MaterialVariant | null; // Optional material data
+  materialPackages?: MaterialPackagesWithDetails[] | null; // Optional material package details
+  productVariant?: ProductVariant | null; // Optional product data
+  productSizes?: any[] | null; // Optional product size details
+  totalExpectedQuantity: number;
+  totalActualQuantity: number;
+  totalManagerQuantityConfirm: number;
 }

@@ -1,3 +1,4 @@
+import { InventoryReportDetail } from './InventoryReport';
 import { PageMeta } from './PurchaseOrder';
 
 // Unit of Measure (UOM)
@@ -74,3 +75,11 @@ export type MaterialVariantResponse = {
   message: string;
   errors: any | null;
 };
+
+export interface MaterialPackagesWithDetails {
+  materialPackage: MaterialPackage;
+  inventoryReportDetails: InventoryReportDetail[];
+  totalExpectedQuantity: number;
+  totalActualQuantity: number;
+  totalManagerQuantityConfirm: number;
+}
