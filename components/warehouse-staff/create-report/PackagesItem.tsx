@@ -1,243 +1,217 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { Card } from 'react-native-paper';
+import { View, Text, Modal } from 'react-native';
+import { Card, Divider, Button, TextInput } from 'react-native-paper';
+import { NotepadText, CalendarPlus } from 'lucide-react-native';
 import StatusBadge from '@/components/common/StatusBadge';
+import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
-
-// Interfaces for data structures
-interface MaterialReceipt {
-  code?: string;
-  importDate?: string;
-  expireDate?: string;
-  quantityByPack?: number;
-  remainQuantityByPack?: number;
-  status?: string;
-}
-
-interface ProductReceipt {
-  code?: string;
-  importDate?: string;
-  expireDate?: string;
-  quantityByUom?: number;
-  remainQuantityByUom?: number;
-  status?: string;
-}
+import PackagesDetail from './PackagesDetail';
 
 interface InventoryReportDetail {
   id: string;
   expectedQuantity: number;
   actualQuantity: number | null;
   managerQuantityConfirm: number | null;
-  materialReceipt?: MaterialReceipt;
-  productReceipt?: ProductReceipt;
-}
-
-interface MaterialPackage {
-  materialPackage: {
+  materialReceipt?: {
     id: string;
-    name: string;
     code: string;
-    packUnit: string;
+    expireDate?: string;
+    importDate?: string;
+    status: string;
   };
-  inventoryReportDetails: InventoryReportDetail[];
-}
-
-interface ProductSize {
-  productSize: {
+  productReceipt?: {
     id: string;
-    name: string;
     code: string;
-    size: string;
+    expireDate?: string;
+    importDate?: string;
+    status: string;
   };
-  inventoryReportDetails: InventoryReportDetail[];
 }
 
 interface PackagesItemProps {
-  materialPackage?: MaterialPackage;
-  productSize?: ProductSize;
-  searchQuery: string;
-  onDetailProcessed: (detail: {
-    inventoryReportDetailId: string;
-    actualQuantity: number;
-    note: string;
-  }) => void;
+  details: InventoryReportDetail[];
+  updateDetails: (updatedDetails: InventoryReportDetail[]) => void;
+  selectedDetail?: {
+    receiptCode: string;
+    receiptType: 'material' | 'product';
+  } | null;
+  clearSelectedDetail: () => void; // Clear the selected detail
 }
 
 const PackagesItem: React.FC<PackagesItemProps> = ({
-  materialPackage,
-  productSize,
-  searchQuery,
-  onDetailProcessed,
+  details,
+  updateDetails,
+  selectedDetail,
+  clearSelectedDetail,
 }) => {
-  const [inputs, setInputs] = useState<{
-    [key: string]: {
-      quantity: string;
-      notes: string;
-      isEditable: boolean;
-    };
-  }>({});
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [receiptCode, setReceiptCode] = useState<string | null>(null);
+  const [receiptType, setReceiptType] = useState<'material' | 'product' | null>(
+    null
+  );
+  const [currentDetails, setCurrentDetails] = useState(details);
 
-  const inventoryReportDetails =
-    materialPackage?.inventoryReportDetails ||
-    productSize?.inventoryReportDetails;
-
-  // Initialize input fields
   useEffect(() => {
-    inventoryReportDetails?.forEach((detail) => {
-      setInputs((prev) => ({
-        ...prev,
-        [detail.id]: prev[detail.id] || {
-          quantity: detail.actualQuantity?.toString() || '',
-          notes: '',
-          isEditable: true,
-        },
-      }));
-    });
-  }, [inventoryReportDetails]);
-
-  const handleInputChange = (
-    id: string,
-    field: 'quantity' | 'notes',
-    value: string
-  ) => {
-    setInputs((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }));
-  };
-
-  const toggleEditSave = (id: string) => {
-    const inputState = inputs[id];
-
-    if (inputState?.isEditable) {
-      if (!inputState.quantity || !inputState.notes) {
-        Alert.alert(
-          'Validation Error',
-          'Both "Quantity" and "Notes" are required.'
-        );
-        return;
+    if (selectedDetail && !isModalVisible) {
+      const { receiptCode, receiptType } = selectedDetail;
+      const detailExists = currentDetails.some(
+        (d) =>
+          d.materialReceipt?.code === receiptCode ||
+          d.productReceipt?.code === receiptCode
+      );
+      if (detailExists) {
+        setReceiptCode(receiptCode);
+        setReceiptType(receiptType);
+        setModalVisible(true);
       }
-
-      onDetailProcessed({
-        inventoryReportDetailId: id,
-        actualQuantity: Number(inputState.quantity),
-        note: inputState.notes,
-      });
-
-      setInputs((prev) => ({
-        ...prev,
-        [id]: { ...prev[id], isEditable: false },
-      }));
-    } else {
-      setInputs((prev) => ({
-        ...prev,
-        [id]: { ...prev[id], isEditable: true },
-      }));
     }
+  }, [selectedDetail, isModalVisible, currentDetails]);
+
+  const openModal = (code: string | null, type: 'material' | 'product') => {
+    setReceiptCode(code);
+    setReceiptType(type);
+    setModalVisible(true);
   };
 
-  const filteredDetails = inventoryReportDetails?.filter((detail) => {
-    const receiptCode =
-      detail.materialReceipt?.code || detail.productReceipt?.code;
-    return searchQuery && receiptCode?.endsWith(searchQuery);
-  });
+  const closeModal = () => {
+    setModalVisible(false);
+    setReceiptCode(null);
+    setReceiptType(null);
+    clearSelectedDetail(); // Ensure the selected detail is cleared
+  };
+
+  const updateActualQuantity = (code: string, quantity: string) => {
+    const updatedDetails = currentDetails.map((detail) =>
+      detail.materialReceipt?.code === code ||
+      detail.productReceipt?.code === code
+        ? { ...detail, actualQuantity: parseFloat(quantity) }
+        : detail
+    );
+    setCurrentDetails(updatedDetails);
+    updateDetails(updatedDetails);
+    closeModal(); // Ensure the modal is closed properly after updating
+  };
 
   return (
-    <ScrollView>
-      <Card className='mt-3 p-4 rounded-lg border border-gray-300 bg-white'>
-        {/* Header Section */}
-        <View className='flex-row justify-between mb-3'>
-          <Text className='font-bold text-lg'>
-            {materialPackage?.materialPackage?.name ||
-              productSize?.productSize?.name ||
-              'Unnamed'}
-          </Text>
-        </View>
-
-        {/* Filtered Details */}
-        {filteredDetails && filteredDetails.length > 0 ? (
-          filteredDetails.map((detail) => {
-            const inputState = inputs[detail.id];
-            const isSaveDisabled = !inputState?.quantity || !inputState?.notes;
-
-            const receipt = detail.materialReceipt || detail.productReceipt;
-
-            return (
-              <View key={detail.id} className='mt-3'>
-                {/* Receipt Details */}
-                <View className='flex-row justify-between mb-2'>
-                  <Text className='font-semibold'>Receipt Code:</Text>
-                  <StatusBadge>{receipt?.code || 'N/A'}</StatusBadge>
-                </View>
-                <View className='flex-row justify-between mb-2'>
-                  <Text className='font-semibold'>Import Date:</Text>
-                  <Text>{convertDate(receipt?.importDate) || 'N/A'}</Text>
-                </View>
-                <View className='flex-row justify-between mb-2'>
-                  <Text className='font-semibold'>Quantity:</Text>
-                  <Text className='text-red-500 font-bold'>
-                    {receipt?.quantityByPack || receipt?.quantityByUom || 0}
-                  </Text>
-                </View>
-
-                {/* Input Fields */}
-                <View className='mt-3'>
-                  <Text className='font-semibold'>Enter Actual Quantity:</Text>
-                  <TextInput
-                    placeholder='Enter quantity'
-                    value={inputState?.quantity || ''}
-                    onChangeText={(value) =>
-                      handleInputChange(detail.id, 'quantity', value)
-                    }
-                    className='border border-gray-400 rounded px-3 py-2 mt-1'
-                    keyboardType='numeric'
-                    editable={inputState?.isEditable ?? true}
-                  />
-                  <Text className='font-semibold mt-3'>Enter Notes:</Text>
-                  <TextInput
-                    placeholder='Enter notes'
-                    value={inputState?.notes || ''}
-                    onChangeText={(value) =>
-                      handleInputChange(detail.id, 'notes', value)
-                    }
-                    className='border border-gray-400 rounded px-3 py-2 mt-1'
-                    editable={inputState?.isEditable ?? true}
-                  />
-                </View>
-
-                {/* Save/Edit Button */}
-                <TouchableOpacity
-                  onPress={() => toggleEditSave(detail.id)}
-                  className={`mt-3 px-4 py-2 rounded ${
-                    inputState?.isEditable
-                      ? isSaveDisabled
-                        ? 'bg-gray-300'
-                        : 'bg-green-500'
-                      : 'bg-blue-500'
-                  }`}
-                  disabled={inputState?.isEditable && isSaveDisabled}
-                >
-                  <Text className='text-white font-bold text-center'>
-                    {inputState?.isEditable ? 'Save' : 'Edit'}
-                  </Text>
-                </TouchableOpacity>
+    <>
+      <View className='bg-gray-100'>
+        {currentDetails.map((detail, index) => (
+          <Card
+            key={index}
+            className='mb-4 rounded-xl shadow-lg bg-white border border-gray-200'
+          >
+            <Card.Content>
+              <View className='flex flex-row items-center justify-between mb-4'>
+                <Text className='text-lg font-bold text-black'>
+                  {detail.materialReceipt
+                    ? `Material Receipt:`
+                    : `Product Receipt:`}
+                </Text>
+                <StatusBadge>
+                  {detail.materialReceipt
+                    ? detail.materialReceipt.code
+                    : detail.productReceipt?.code || 'N/A'}
+                </StatusBadge>
               </View>
-            );
-          })
-        ) : (
-          <Text className='text-center text-gray-500 mt-3'>
-            No data available. Please use the search bar to find matching data.
-          </Text>
+              <Divider className='mb-4' />
+
+              <View className='mb-2'>
+                <View className='flex-row items-center justify-between mb-2'>
+                  <View className='flex-row items-center gap-2'>
+                    <NotepadText size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      Expected Quantity:
+                    </Text>
+                  </View>
+                  <Text className='font-bold text-gray-700 text-lg'>
+                    {detail.expectedQuantity}
+                  </Text>
+                </View>
+              </View>
+
+              {detail.materialReceipt && (
+                <View className='mb-4'>
+                  <View className='flex-row items-center justify-between mb-2'>
+                    <View className='flex-row items-center gap-2'>
+                      <CalendarPlus size={20} color={Theme.greyText} />
+                      <Text className='text-sm font-semibold text-gray-700'>
+                        Import Date:
+                      </Text>
+                    </View>
+                    <Text className='text-sm text-gray-700'>
+                      {convertDate(detail.materialReceipt.importDate)}
+                    </Text>
+                  </View>
+                  <Divider className='my-4' />
+                </View>
+              )}
+
+              <View className='mb-4'>
+                <View className='flex-row items-center justify-between gap-3'>
+                  <Text className='text-sm font-semibold text-gray-700'>
+                    Actual Quantity:
+                  </Text>
+                  <TextInput
+                    mode='outlined'
+                    value={detail.actualQuantity?.toString() || 'NOT YET'}
+                    disabled
+                    className='flex-1'
+                  />
+                </View>
+              </View>
+
+              <Button
+                icon={
+                  detail.actualQuantity
+                    ? 'pencil-circle-outline'
+                    : 'clipboard-arrow-right'
+                }
+                mode='contained'
+                onPress={() =>
+                  openModal(
+                    detail.materialReceipt?.code ||
+                      detail.productReceipt?.code ||
+                      '',
+                    detail.materialReceipt ? 'material' : 'product'
+                  )
+                }
+                className={
+                  detail.actualQuantity ? 'bg-blue-500' : 'bg-green-500'
+                }
+              >
+                {detail.actualQuantity ? 'Edit' : 'Open'}
+              </Button>
+            </Card.Content>
+          </Card>
+        ))}
+      </View>
+
+      <Modal
+        presentationStyle='pageSheet'
+        animationType='slide'
+        transparent={false}
+        visible={isModalVisible}
+        onRequestClose={closeModal}
+      >
+        {isModalVisible && receiptType && receiptCode && (
+          <PackagesDetail
+            closeModal={closeModal}
+            receiptCode={receiptCode}
+            receiptType={receiptType}
+            updateActualQuantity={updateActualQuantity}
+            actualQuantity={
+              currentDetails
+                .find(
+                  (d) =>
+                    d.materialReceipt?.code === receiptCode ||
+                    d.productReceipt?.code === receiptCode
+                )
+                ?.actualQuantity?.toString() || ''
+            }
+          />
         )}
-      </Card>
-    </ScrollView>
+      </Modal>
+    </>
   );
 };
 

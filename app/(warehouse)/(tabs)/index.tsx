@@ -44,7 +44,7 @@ const WarehouseStaffDashboard = () => {
       });
 
       const filteredReports = response?.data?.data?.filter(
-        (report) =>
+        (report: any) =>
           report.status === InventoryReportStatus.IN_PROGRESS ||
           report.status === InventoryReportStatus.REPORTED
       );

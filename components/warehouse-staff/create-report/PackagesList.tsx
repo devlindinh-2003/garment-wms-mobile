@@ -1,255 +1,340 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, ScrollView, Image, Alert } from 'react-native';
-import { Card, Text, Button } from 'react-native-paper';
-import { QrCode, Search } from 'lucide-react-native';
-import PackagesItem from './PackagesItem';
+import { View, Text, Image, Alert } from 'react-native';
+import { Button, Card, Divider, TextInput } from 'react-native-paper';
+import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
-import avatar from '@/assets/images/avatar.png';
+import PackagesItem from './PackagesItem';
 import Theme from '@/constants/Theme';
-
-// Interfaces for data structures
-interface MaterialVariant {
-  id: string;
-  name: string;
-  code: string;
-  image: string;
-}
-
-interface ProductVariant {
-  id: string;
-  name: string;
-  code: string;
-  image: string;
-}
-
-interface InventoryReportDetail {
-  materialVariant?: MaterialVariant;
-  materialPackages?: MaterialPackage[];
-  productVariant?: ProductVariant;
-  productSizes?: ProductSize[];
-}
-
-interface MaterialPackage {
-  materialPackage: {
-    id: string;
-    name: string;
-    code: string;
-    packUnit: string;
-  };
-  inventoryReportDetails: {
-    id: string;
-    materialReceipt?: { code: string };
-  }[];
-}
-
-interface ProductSize {
-  productSize: {
-    id: string;
-    name: string;
-    code: string;
-    size: string;
-  };
-  inventoryReportDetails: {
-    id: string;
-    productReceipt?: { code: string };
-  }[];
-}
+import { Scan } from 'lucide-react-native';
 
 interface PackagesListProps {
-  inventoryReportDetail: InventoryReportDetail[];
-  onOpenCamera: (onScanComplete: (barcode: string) => void) => void;
-  setProcessedDetails: any;
+  inventoryReportDetail: InventoryReportDetailRoot[];
   scannedData?: string | null;
+  onScanTrigger: () => void;
+  clearScannedData: () => void; // Clear scanned data callback
+  onValidationChange: (isValid: boolean) => void; // Callback for validation
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
-  onOpenCamera,
-  setProcessedDetails,
   scannedData,
+  onScanTrigger,
+  clearScannedData,
+  onValidationChange,
 }) => {
-  const [searchQueries, setSearchQueries] = useState<{ [id: string]: string }>(
-    {}
-  );
-  const [filteredPackages, setFilteredPackages] = useState<{
-    [id: string]: { query: string; package: MaterialPackage | ProductSize }[];
-  }>({});
+  const [detailsState, setDetailsState] = useState(inventoryReportDetail);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Search query state
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true); // Disable button by default
+  const [selectedDetail, setSelectedDetail] = useState<{
+    receiptCode: string;
+    receiptType: 'material' | 'product';
+    index: number;
+  } | null>(null);
 
-  // Handle barcode scanning updates
-  useEffect(() => {
-    if (scannedData) {
-      handleBarcodeScan(scannedData);
-    }
-  }, [scannedData]);
+  const clearSelectedDetail = () => {
+    setSelectedDetail(null);
+    setSearchQuery('');
+    clearScannedData();
+  };
 
-  // Handle barcode scanning and update search queries
-  const handleBarcodeScan = (barcode: string) => {
-    let query = '';
+  const updateItemDetails = (
+    index: number,
+    updatedItem: InventoryReportDetailRoot
+  ) => {
+    const updatedDetails = [...detailsState];
+    updatedDetails[index] = updatedItem;
+    setDetailsState(updatedDetails);
+  };
 
-    // Extract relevant query from the scanned barcode
-    if (barcode.startsWith('MAT-REC-')) {
-      query = barcode.slice(-6); // Extract last 6 digits for material receipts
-    } else if (barcode.startsWith('PRO_REC_')) {
-      query = barcode.slice(-7); // Extract last 7 digits for product receipts
-    }
+  const checkAllActualQuantities = () => {
+    return detailsState.every((detail) => {
+      const allMaterialPackagesValid = (detail.materialPackages || []).every(
+        (pkg) =>
+          (pkg.inventoryReportDetails || []).every(
+            (item) => item.actualQuantity !== null
+          )
+      );
 
-    if (!query) {
-      Alert.alert('Error', 'Invalid barcode scanned.');
-      return;
-    }
+      const allProductSizesValid = (detail.productSizes || []).every((size) =>
+        (size.inventoryReportDetails || []).every(
+          (item) => item.actualQuantity !== null
+        )
+      );
 
-    // Update search query for all matching inventory report details
-    inventoryReportDetail.forEach((detail) => {
-      const id = detail.materialVariant?.id || detail.productVariant?.id || '';
-      if (id) {
-        setSearchQueries((prev) => ({ ...prev, [id]: query }));
-        handleSearch(id, query);
-      }
+      return allMaterialPackagesValid && allProductSizesValid;
     });
   };
 
-  // Handle search input changes
-  const handleSearchChange = (id: string, query: string) => {
-    setSearchQueries((prev) => ({ ...prev, [id]: query }));
+  useEffect(() => {
+    const isValid = checkAllActualQuantities();
+    onValidationChange(isValid); // Notify parent about validation status
+  }, [detailsState]);
+
+  const checkReceiptsExist = (query: string) => {
+    const searchQueryLower = query.trim().toLowerCase();
+    let found = false;
+
+    detailsState.forEach((detail) => {
+      // Search in materialPackages
+      detail.materialPackages?.forEach((pkg) => {
+        pkg.inventoryReportDetails.forEach((report) => {
+          if (report.materialReceipt?.code.toLowerCase() === searchQueryLower) {
+            found = true;
+          }
+        });
+      });
+
+      detail.productSizes?.forEach((size) => {
+        size.inventoryReportDetails.forEach((report: any) => {
+          if (report.productReceipt?.code.toLowerCase() === searchQueryLower) {
+            found = true;
+          }
+        });
+      });
+    });
+
+    return found;
   };
 
-  // Execute the search and filter the results
-  const handleSearch = (id: string, query: string) => {
-    if (!query.trim()) {
-      Alert.alert('Error', 'Please enter a valid receipt code.');
+  const handleInputChange = (text: string) => {
+    setSearchQuery(text);
+
+    // Enable the button only if the receipt exists
+    const exists = checkReceiptsExist(text);
+    setIsButtonDisabled(!exists);
+  };
+
+  const handleSearch = () => {
+    const searchQueryLower = searchQuery.trim().toLowerCase();
+    if (!searchQueryLower) {
+      Alert.alert('Search Error', 'Please enter a valid search query.');
       return;
     }
 
-    const detail = inventoryReportDetail.find(
-      (detail) =>
-        detail.materialVariant?.id === id || detail.productVariant?.id === id
-    );
+    let found = false;
 
-    if (!detail) {
-      Alert.alert('Error', 'No matching inventory report detail found.');
-      return;
+    detailsState.forEach((detail, index) => {
+      // Search in materialPackages
+      detail.materialPackages?.forEach((pkg) => {
+        pkg.inventoryReportDetails.forEach((report) => {
+          if (report.materialReceipt?.code.toLowerCase() === searchQueryLower) {
+            setSelectedDetail({
+              receiptCode: report.materialReceipt.code,
+              receiptType: 'material',
+              index,
+            });
+            found = true;
+          }
+        });
+      });
+
+      // Search in productSizes
+      detail.productSizes?.forEach((size) => {
+        size.inventoryReportDetails.forEach((report: any) => {
+          if (report.productReceipt?.code.toLowerCase() === searchQueryLower) {
+            setSelectedDetail({
+              receiptCode: report.productReceipt.code,
+              receiptType: 'product',
+              index,
+            });
+            found = true;
+          }
+        });
+      });
+    });
+
+    if (!found) {
+      Alert.alert('Not Found', `No receipt found for "${searchQuery}".`);
     }
-
-    const matchingPackages = detail.materialPackages?.filter((pkg) =>
-      pkg.inventoryReportDetails.some(
-        (item) =>
-          item.materialReceipt?.code === `MAT-REC-${query}` ||
-          item.materialReceipt?.code === query
-      )
-    );
-
-    const matchingSizes = detail.productSizes?.filter((size) =>
-      size.inventoryReportDetails.some(
-        (item) =>
-          item.productReceipt?.code === `PRO_REC_${query}` ||
-          item.productReceipt?.code === query
-      )
-    );
-
-    // Update the filtered packages state
-    setFilteredPackages((prev) => ({
-      ...prev,
-      [id]: [
-        ...(matchingPackages?.map((pkg) => ({ query, package: pkg })) || []),
-        ...(matchingSizes?.map((size) => ({ query, package: size })) || []),
-      ],
-    }));
   };
+
+  useEffect(() => {
+    if (scannedData) {
+      let found = false;
+
+      detailsState.forEach((detail, index) => {
+        // Search in materialPackages
+        detail.materialPackages?.forEach((pkg) => {
+          pkg.inventoryReportDetails.forEach((report) => {
+            if (report.materialReceipt?.code === scannedData) {
+              setSelectedDetail({
+                receiptCode: scannedData,
+                receiptType: 'material',
+                index,
+              });
+              found = true;
+            }
+          });
+        });
+
+        // Search in productSizes
+        detail.productSizes?.forEach((size) => {
+          size.inventoryReportDetails.forEach((report: any) => {
+            if (report.productReceipt?.code === scannedData) {
+              setSelectedDetail({
+                receiptCode: scannedData,
+                receiptType: 'product',
+                index,
+              });
+              found = true;
+            }
+          });
+        });
+      });
+
+      if (!found) {
+        Alert.alert(
+          'Not Found',
+          `Scanned code "${scannedData}" was not found in any inventory detail.`
+        );
+      } else {
+        clearScannedData(); // Clear scanned data after it has been processed
+      }
+    }
+  }, [scannedData, detailsState]);
 
   return (
-    <View className='flex-1 bg-white'>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
-        {inventoryReportDetail.map((detail) => {
-          const id =
-            detail.materialVariant?.id || detail.productVariant?.id || '';
-          const hasFilteredPackages = filteredPackages[id]?.length > 0;
+    <View className='p-2 bg-white'>
+      {/* Search and Scan Section */}
+      <View className='mb-3'>
+        <View className='flex flex-row gap-2 items-center'>
+          <TextInput
+            placeholder='Search all inventory details'
+            value={searchQuery}
+            onChangeText={handleInputChange}
+            mode='outlined'
+            className='flex-1 bg-white mr-2'
+            activeOutlineColor={Theme.blue[600]}
+            outlineColor={Theme.blue[200]}
+            style={{ height: 40 }}
+          />
+          <Button
+            mode='text'
+            onPress={onScanTrigger}
+            className='p-2 rounded-full shadow-md bg-blue-100 ml-2'
+          >
+            <Scan size={24} color={Theme.primaryLightBackgroundColor} />
+          </Button>
+        </View>
+        <Button
+          icon='magnify'
+          mode='contained'
+          onPress={handleSearch}
+          disabled={isButtonDisabled} // Disable if no matching receipts
+          className='mt-3'
+          buttonColor={
+            isButtonDisabled
+              ? Theme.gray[300]
+              : Theme.primaryLightBackgroundColor
+          }
+          labelStyle={{
+            color: isButtonDisabled ? Theme.gray[500] : 'white',
+            fontWeight: 'bold',
+          }}
+          style={{ height: 40 }}
+        >
+          Search
+        </Button>
+      </View>
 
-          return (
-            <Card
-              key={id}
-              className='mb-5 p-4 rounded-lg border border-gray-300 bg-white'
-            >
-              {/* Header Section */}
-              <View className='flex-row justify-between items-center mb-4'>
-                <View className='flex-row items-center'>
-                  <Image
-                    source={{
-                      uri:
-                        detail.materialVariant?.image ||
-                        detail.productVariant?.image ||
-                        avatar,
-                    }}
-                    className='w-16 h-16 rounded-full mr-4'
-                  />
-                  <View>
-                    <Text className='font-bold text-lg'>
-                      {detail.materialVariant?.name ||
-                        detail.productVariant?.name ||
-                        'Unnamed'}
+      {/* Inventory Report Details */}
+      {detailsState.map((detail, index) => (
+        <Card key={index} className='mb-4 rounded-lg shadow-sm bg-slate-100'>
+          <Card.Content>
+            {/* Header with Image */}
+            <View className='flex flex-row justify-between items-center'>
+              <Image
+                source={{
+                  uri:
+                    detail?.materialVariant?.image ||
+                    detail?.productVariant?.image ||
+                    '',
+                }}
+                style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: 8,
+                  marginRight: 16,
+                }}
+                resizeMode='cover'
+              />
+              <View className='flex-1'>
+                {detail?.materialVariant ? (
+                  <>
+                    <Text className='text-lg font-semibold text-gray-800 mb-2'>
+                      Material: {detail.materialVariant.name || 'Unknown'}
                     </Text>
-                    <View className='flex-row items-center mt-1'>
-                      <Text className='text-gray-500 mr-2'>Code:</Text>
-                      <StatusBadge>
-                        {detail.materialVariant?.code ||
-                          detail.productVariant?.code ||
-                          'No Code'}
-                      </StatusBadge>
-                    </View>
-                  </View>
-                </View>
-                <QrCode
-                  size={50}
-                  color={Theme.primaryDarkBackgroundColor}
-                  onPress={() => onOpenCamera(handleBarcodeScan)}
-                />
-              </View>
-
-              {/* Search Section */}
-              <View className='flex-row items-center mb-4'>
-                <View className='flex-1 flex-row items-center bg-gray-100 rounded-lg px-4 py-2 mr-3'>
-                  <Search color='gray' size={20} />
-                  <TextInput
-                    placeholder='Enter receipt code'
-                    value={searchQueries[id] || ''}
-                    onChangeText={(query) => handleSearchChange(id, query)}
-                    className='flex-1 ml-2 text-base'
-                  />
-                </View>
-                <Button
-                  mode='contained'
-                  onPress={() => handleSearch(id, searchQueries[id] || '')}
-                  buttonColor={Theme.primaryLightBackgroundColor}
-                >
-                  Add
-                </Button>
-              </View>
-
-              {/* Filtered Results Section */}
-              {hasFilteredPackages ? (
-                filteredPackages[id]?.map(({ query, package: packageItem }) => (
-                  <PackagesItem
-                    key={
-                      packageItem.materialPackage?.id ||
-                      packageItem.productSize?.id ||
-                      ''
-                    }
-                    materialPackage={packageItem as MaterialPackage}
-                    productSize={packageItem as ProductSize}
-                    searchQuery={query}
-                    onDetailProcessed={setProcessedDetails}
-                  />
-                ))
-              ) : (
-                <View className='items-center mt-2'>
-                  <Text className='text-gray-500'>
-                    No data found. Please search using a valid code.
+                    <StatusBadge className='text-sm bg-gray-600 mb-2'>
+                      {detail.materialVariant.code || 'N/A'}
+                    </StatusBadge>
+                  </>
+                ) : detail?.productVariant ? (
+                  <>
+                    <Text className='text-lg font-semibold text-gray-800 mb-2'>
+                      Product: {detail.productVariant.name || 'Unknown'}
+                    </Text>
+                    <StatusBadge className='text-sm bg-gray-600 mb-2'>
+                      {detail.productVariant.code || 'N/A'}
+                    </StatusBadge>
+                  </>
+                ) : (
+                  <Text className='text-sm text-gray-500'>
+                    No material or product information available.
                   </Text>
-                </View>
-              )}
-            </Card>
-          );
-        })}
-      </ScrollView>
+                )}
+              </View>
+            </View>
+
+            <Divider className='my-2' />
+
+            {/* Material and Product Packages */}
+            <View>
+              {detail.materialPackages?.map((pkg, pkgIndex) => (
+                <PackagesItem
+                  key={pkgIndex}
+                  details={pkg.inventoryReportDetails}
+                  selectedDetail={
+                    selectedDetail?.index === index ? selectedDetail : null
+                  }
+                  clearSelectedDetail={clearSelectedDetail}
+                  updateDetails={(updatedDetails) => {
+                    const updatedMaterialPackages = [
+                      ...(detail.materialPackages || []),
+                    ];
+                    updatedMaterialPackages[pkgIndex].inventoryReportDetails =
+                      updatedDetails;
+                    updateItemDetails(index, {
+                      ...detail,
+                      materialPackages: updatedMaterialPackages,
+                    });
+                  }}
+                />
+              ))}
+              {detail.productSizes?.map((size, sizeIndex) => (
+                <PackagesItem
+                  key={sizeIndex}
+                  details={size.inventoryReportDetails}
+                  selectedDetail={
+                    selectedDetail?.index === index ? selectedDetail : null
+                  }
+                  clearSelectedDetail={clearSelectedDetail}
+                  updateDetails={(updatedDetails) => {
+                    const updatedProductSizes = [
+                      ...(detail.productSizes || []),
+                    ];
+                    updatedProductSizes[sizeIndex].inventoryReportDetails =
+                      updatedDetails;
+                    updateItemDetails(index, {
+                      ...detail,
+                      productSizes: updatedProductSizes,
+                    });
+                  }}
+                />
+              ))}
+            </View>
+          </Card.Content>
+        </Card>
+      ))}
     </View>
   );
 };

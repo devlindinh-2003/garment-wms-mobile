@@ -3,7 +3,7 @@ import {
   FilterBuilder,
   FilterOperationType,
 } from '@chax-at/prisma-filter-common';
-import { get } from './ApiCaller';
+import { get, post } from './ApiCaller';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiResponse } from '@/types/ApiResponse';
@@ -81,27 +81,27 @@ export const getWarehouseStaffInventoryReport = async ({
   filters = [],
   pageSize = 5,
   pageIndex = 0,
-}: GetAllInventoryReport): Promise<InventoryReportListResponse> => {
+}: GetAllInventoryReportInput): Promise<InventoryReportListResponse> => {
   const limit = pageSize;
   const offset = pageIndex * pageSize;
-  // Construct query string
   const queryString = new URLSearchParams({
     limit: limit.toString(),
     offset: offset.toString(),
   }).toString();
-  const fullUrl = `https://garment-wms-be.onrender.com/inventory-report/warehouse-staff?${queryString}`;
+
+  const endpoint = `/inventory-report/warehouse-staff?${queryString}`;
+
   try {
-    // Retrieve the access token from AsyncStorage
     const accessToken = await AsyncStorage.getItem('accessToken');
     if (!accessToken) {
       throw new Error('Access token not found. Please log in again.');
     }
-    // Configure the API request with axios
-    const response = await axios.get(fullUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }); // Log response data for debugging
+
+    const config = get(endpoint, undefined, {
+      Authorization: `Bearer ${accessToken}`,
+    });
+
+    const response = await axios(config);
     console.log('API Response:', JSON.stringify(response.data, null, 2));
     return response.data as InventoryReportListResponse;
   } catch (error: any) {
@@ -140,6 +140,44 @@ export const getInventoryReportById = async (
   }
 };
 
+// export const createInventoryReport = async (
+//   id: string,
+//   body: {
+//     details: {
+//       inventoryReportDetailId: string;
+//       actualQuantity: number;
+//       note: string;
+//     }[];
+//   }
+// ): Promise<any> => {
+//   const baseUrl = 'https://garment-wms-be.onrender.com';
+//   const url = `${baseUrl}/inventory-report/${id}/record`;
+//   console.log(url);
+
+//   try {
+//     // Retrieve the access token from AsyncStorage
+//     const accessToken = await AsyncStorage.getItem('accessToken');
+
+//     if (!accessToken) {
+//       throw new Error('Access token not found. Please log in again.');
+//     }
+
+//     const response = await axios.patch(url, body, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     return response.data;
+//   } catch (error: any) {
+//     console.error(
+//       'Error creating inventory report:',
+//       error.response?.data || error.message
+//     );
+//     throw new Error('Failed to create inventory report.');
+//   }
+// };
 export const createInventoryReport = async (
   id: string,
   body: {
@@ -150,25 +188,28 @@ export const createInventoryReport = async (
     }[];
   }
 ): Promise<any> => {
-  const baseUrl = 'https://garment-wms-be.onrender.com';
-  const url = `${baseUrl}/inventory-report/${id}/record`;
-  console.log(url);
+  const baseUrl = 'https://garment-wms-be.onrender.com'; // Replace with your actual base URL
+  const endpoint = `/inventory-report/${id}/record`;
+  const fullUrl = `${baseUrl}${endpoint}`; // Combine base URL and endpoint to form the full URL
 
   try {
-    // Retrieve the access token from AsyncStorage
     const accessToken = await AsyncStorage.getItem('accessToken');
-
     if (!accessToken) {
       throw new Error('Access token not found. Please log in again.');
     }
 
-    const response = await axios.patch(url, body, {
+    console.log('Full URL:', fullUrl); // Log the full URL for debugging
+
+    const config = {
+      method: 'patch',
+      url: fullUrl,
+      data: body,
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-    });
-
+    };
+    const response = await axios(config);
     return response.data;
   } catch (error: any) {
     console.error(
@@ -176,5 +217,38 @@ export const createInventoryReport = async (
       error.response?.data || error.message
     );
     throw new Error('Failed to create inventory report.');
+  }
+};
+
+export const getDetailsByReceipt = async (
+  code: string,
+  type: 'material' | 'product'
+): Promise<ApiResponse> => {
+  const endpoint =
+    type === 'material'
+      ? `/material-receipt/by-code?code=${encodeURIComponent(code)}`
+      : `/product-receipt/by-code?code=${encodeURIComponent(code)}`;
+
+  try {
+    const config = get(endpoint);
+    const response = await axios(config);
+    return response.data as ApiResponse;
+  } catch (error: any) {
+    console.error(`Failed to fetch ${type}-receipt details by code:`, error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        statusCode: error.response.status,
+        data: null,
+        message:
+          error.response.data.message ||
+          `An error occurred while fetching the ${type}-receipt details.`,
+        errors: error.response.data.errors || null,
+      } as ApiResponse;
+    }
+
+    throw new Error(
+      `An unexpected error occurred while fetching the ${type}-receipt details.`
+    );
   }
 };
