@@ -7,6 +7,7 @@ import { Card, Text, Button, TextInput } from 'react-native-paper';
 import StatusBadge from '@/components/common/StatusBadge';
 import { convertDate } from '../../../helpers/converDate';
 import { CalendarDays, CalendarX } from 'lucide-react-native';
+import Theme from '@/constants/Theme';
 
 interface PackagesDetailProps {
   closeModal: () => void;
@@ -122,6 +123,8 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
 
                 {/* Actual Quantity Input */}
                 <TextInput
+                  outlineColor={Theme.blue[200]}
+                  activeOutlineColor={Theme.primaryDarkBackgroundColor}
                   label='Actual Quantity'
                   value={actualQuantity}
                   onChangeText={(text) => setActualQuantity(text)}

@@ -80,6 +80,7 @@ const CreateInventoryReport = () => {
     }
 
     const requestBody = { details: processedDetails };
+    console.log(JSON.stringify(requestBody, null, 2));
 
     try {
       await createInventoryReport(id as string, requestBody);
@@ -133,6 +134,7 @@ const CreateInventoryReport = () => {
 
       <View style={styles.footer}>
         <Button
+          icon='arrow-right-drop-circle'
           mode='contained'
           onPress={handleSubmit}
           disabled={isSubmitDisabled}
