@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, Alert } from 'react-native';
 import { Button, Card, Divider, TextInput } from 'react-native-paper';
 import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -9,8 +9,8 @@ import { Scan } from 'lucide-react-native';
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
-  scannedData?: string | null; // Scanned data from the camera
-  onScanTrigger: () => void; // Function to open the camera
+  scannedData?: string | null;
+  onScanTrigger: () => void;
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
@@ -19,22 +19,12 @@ const PackagesList: React.FC<PackagesListProps> = ({
   onScanTrigger,
 }) => {
   const [detailsState, setDetailsState] = useState(inventoryReportDetail);
-  const [searchQueries, setSearchQueries] = useState<{ [key: number]: string }>(
-    {}
-  );
-  const [isButtonDisabled, setIsButtonDisabled] = useState<{
-    [key: number]: boolean;
-  }>(() => {
-    const initialState: { [key: number]: boolean } = {};
-    inventoryReportDetail.forEach((_, index) => {
-      initialState[index] = true;
-    });
-    return initialState;
-  });
-
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Search for all details
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true); // Disable by default
   const [selectedDetail, setSelectedDetail] = useState<{
     receiptCode: string;
     receiptType: 'material' | 'product';
+    index: number;
   } | null>(null);
 
   const clearSelectedDetail = () => {
@@ -50,100 +40,172 @@ const PackagesList: React.FC<PackagesListProps> = ({
     setDetailsState(updatedDetails);
   };
 
-  const handleSearch = (index: number) => {
-    const searchQuery = searchQueries[index]?.trim().toLowerCase();
-    if (!searchQuery) return;
-
-    const detail = detailsState[index];
-    let foundReceipt: {
-      receiptCode: string;
-      receiptType: 'material' | 'product';
-    } | null = null;
-
-    // Search in materialPackages
-    detail.materialPackages?.forEach((pkg) => {
-      pkg.inventoryReportDetails.forEach((report) => {
-        if (report.materialReceipt?.code.toLowerCase() === searchQuery) {
-          foundReceipt = {
-            receiptCode: report.materialReceipt.code,
-            receiptType: 'material',
-          };
-        }
-      });
-    });
-
-    // Search in productSizes
-    detail.productSizes?.forEach((size) => {
-      size.inventoryReportDetails.forEach((report: any) => {
-        if (report.productReceipt?.code.toLowerCase() === searchQuery) {
-          foundReceipt = {
-            receiptCode: report.productReceipt.code,
-            receiptType: 'product',
-          };
-        }
-      });
-    });
-
-    if (foundReceipt) {
-      setSelectedDetail(foundReceipt);
-    } else {
-      console.log('No matching receipt code found.');
-    }
-  };
-
-  const handleInputChange = (index: number, text: string) => {
-    setSearchQueries((prev) => ({ ...prev, [index]: text }));
-
-    const searchQuery = text.trim().toLowerCase();
-    const detail = detailsState[index];
+  const checkReceiptsExist = (query: string) => {
+    const searchQueryLower = query.trim().toLowerCase();
     let found = false;
 
-    detail.materialPackages?.forEach((pkg) => {
-      pkg.inventoryReportDetails.forEach((report) => {
-        if (report.materialReceipt?.code.toLowerCase() === searchQuery) {
-          found = true;
-        }
+    detailsState.forEach((detail) => {
+      // Search in materialPackages
+      detail.materialPackages?.forEach((pkg) => {
+        pkg.inventoryReportDetails.forEach((report) => {
+          if (report.materialReceipt?.code.toLowerCase() === searchQueryLower) {
+            found = true;
+          }
+        });
+      });
+
+      detail.productSizes?.forEach((size) => {
+        size.inventoryReportDetails.forEach((report: any) => {
+          if (report.productReceipt?.code.toLowerCase() === searchQueryLower) {
+            found = true;
+          }
+        });
       });
     });
 
-    detail.productSizes?.forEach((size) => {
-      size.inventoryReportDetails.forEach((report: any) => {
-        if (report.productReceipt?.code.toLowerCase() === searchQuery) {
-          found = true;
-        }
+    return found;
+  };
+
+  const handleInputChange = (text: string) => {
+    setSearchQuery(text);
+
+    // Enable the button only if the receipt exists
+    const exists = checkReceiptsExist(text);
+    setIsButtonDisabled(!exists);
+  };
+
+  const handleSearch = () => {
+    const searchQueryLower = searchQuery.trim().toLowerCase();
+    if (!searchQueryLower) {
+      Alert.alert('Search Error', 'Please enter a valid search query.');
+      return;
+    }
+
+    let found = false;
+
+    detailsState.forEach((detail, index) => {
+      // Search in materialPackages
+      detail.materialPackages?.forEach((pkg) => {
+        pkg.inventoryReportDetails.forEach((report) => {
+          if (report.materialReceipt?.code.toLowerCase() === searchQueryLower) {
+            setSelectedDetail({
+              receiptCode: report.materialReceipt.code,
+              receiptType: 'material',
+              index,
+            });
+            found = true;
+          }
+        });
+      });
+
+      // Search in productSizes
+      detail.productSizes?.forEach((size) => {
+        size.inventoryReportDetails.forEach((report: any) => {
+          if (report.productReceipt?.code.toLowerCase() === searchQueryLower) {
+            setSelectedDetail({
+              receiptCode: report.productReceipt.code,
+              receiptType: 'product',
+              index,
+            });
+            found = true;
+          }
+        });
       });
     });
 
-    setIsButtonDisabled((prev) => ({ ...prev, [index]: !text || !found }));
+    if (!found) {
+      Alert.alert('Not Found', `No receipt found for "${searchQuery}".`);
+    }
   };
 
   useEffect(() => {
     if (scannedData) {
-      // Handle scanned data
-      const foundDetail = detailsState.find((detail) =>
-        detail.materialPackages?.some((pkg) =>
-          pkg.inventoryReportDetails.some(
-            (report) =>
-              report.materialReceipt?.code === scannedData ||
-              report.productReceipt?.code === scannedData
-          )
-        )
-      );
+      let found = false;
 
-      if (foundDetail) {
-        console.log(`Found detail for scanned code: ${scannedData}`);
-        setSelectedDetail({
-          receiptCode: scannedData,
-          receiptType: 'material', // Adjust if necessary based on data
+      detailsState.forEach((detail, index) => {
+        // Search in materialPackages
+        detail.materialPackages?.forEach((pkg) => {
+          pkg.inventoryReportDetails.forEach((report) => {
+            if (report.materialReceipt?.code === scannedData) {
+              setSelectedDetail({
+                receiptCode: scannedData,
+                receiptType: 'material',
+                index,
+              });
+              found = true;
+            }
+          });
         });
-      } else {
-        console.log('No matching detail found for scanned code.');
+
+        // Search in productSizes
+        detail.productSizes?.forEach((size) => {
+          size.inventoryReportDetails.forEach((report: any) => {
+            if (report.productReceipt?.code === scannedData) {
+              setSelectedDetail({
+                receiptCode: scannedData,
+                receiptType: 'product',
+                index,
+              });
+              found = true;
+            }
+          });
+        });
+      });
+
+      if (!found) {
+        Alert.alert(
+          'Not Found',
+          `Scanned code "${scannedData}" was not found in any inventory detail.`
+        );
       }
     }
   }, [scannedData, detailsState]);
 
   return (
     <View className='p-2 bg-white'>
+      {/* Search and Scan Section */}
+      <View className='mb-3'>
+        <View className='flex flex-row gap-2 items-center'>
+          <TextInput
+            placeholder='Search all inventory details'
+            value={searchQuery}
+            onChangeText={handleInputChange}
+            mode='outlined'
+            className='flex-1 bg-white mr-2'
+            activeOutlineColor={Theme.blue[600]}
+            outlineColor={Theme.blue[200]}
+            style={{ height: 40 }}
+          />
+          <Button
+            mode='text'
+            onPress={onScanTrigger}
+            className='p-2 rounded-full shadow-md bg-blue-100 ml-2'
+          >
+            <Scan size={24} color={Theme.primaryLightBackgroundColor} />
+          </Button>
+        </View>
+        <Button
+          icon='magnify'
+          mode='contained'
+          onPress={handleSearch}
+          disabled={isButtonDisabled} // Disable if no matching receipts
+          className='mt-3'
+          buttonColor={
+            isButtonDisabled
+              ? Theme.gray[300]
+              : Theme.primaryLightBackgroundColor
+          }
+          labelStyle={{
+            color: isButtonDisabled ? Theme.gray[500] : 'white',
+            fontWeight: 'bold',
+          }}
+          style={{ height: 40 }}
+        >
+          Search
+        </Button>
+      </View>
+
+      {/* Inventory Report Details */}
       {detailsState.map((detail, index) => (
         <Card key={index} className='mb-4 rounded-lg shadow-sm bg-slate-100'>
           <Card.Content>
@@ -193,59 +255,15 @@ const PackagesList: React.FC<PackagesListProps> = ({
 
             <Divider className='my-2' />
 
-            {/* Inventory Report Details Section */}
-            <View className='flex flex-row items-center justify-between mb-3'>
-              <Text className='text-lg font-semibold text-gray-700'>
-                Inventory Report Details
-              </Text>
-              <Button
-                mode='text'
-                onPress={onScanTrigger}
-                className='p-2 rounded-full shadow-md bg-blue-100'
-              >
-                <Scan size={24} color={Theme.primaryLightBackgroundColor} />
-              </Button>
-            </View>
-
-            {/* Search Section */}
-            <View className='space-y-2 mb-5 flex-row items-center gap-2'>
-              <TextInput
-                placeholder='Search'
-                value={searchQueries[index] || ''}
-                activeOutlineColor={Theme.blue[600]}
-                outlineColor={Theme.blue[200]}
-                onChangeText={(text) => handleInputChange(index, text)}
-                mode='outlined'
-                className='flex-1 bg-white'
-                style={{ height: 40 }}
-              />
-              <Button
-                icon='magnify'
-                mode='contained'
-                onPress={() => handleSearch(index)}
-                disabled={isButtonDisabled[index]}
-                buttonColor={
-                  isButtonDisabled[index]
-                    ? Theme.gray[300]
-                    : Theme.primaryLightBackgroundColor
-                }
-                labelStyle={{
-                  color: isButtonDisabled[index] ? Theme.gray[500] : 'white',
-                  fontWeight: 'bold',
-                }}
-                style={{ height: 40 }}
-              >
-                Search
-              </Button>
-            </View>
-
             {/* Material and Product Packages */}
             <View>
               {detail.materialPackages?.map((pkg, pkgIndex) => (
                 <PackagesItem
                   key={pkgIndex}
                   details={pkg.inventoryReportDetails}
-                  selectedDetail={selectedDetail}
+                  selectedDetail={
+                    selectedDetail?.index === index ? selectedDetail : null
+                  }
                   clearSelectedDetail={clearSelectedDetail}
                   updateDetails={(updatedDetails) => {
                     const updatedMaterialPackages = [
@@ -264,7 +282,9 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 <PackagesItem
                   key={sizeIndex}
                   details={size.inventoryReportDetails}
-                  selectedDetail={selectedDetail}
+                  selectedDetail={
+                    selectedDetail?.index === index ? selectedDetail : null
+                  }
                   clearSelectedDetail={clearSelectedDetail}
                   updateDetails={(updatedDetails) => {
                     const updatedProductSizes = [
