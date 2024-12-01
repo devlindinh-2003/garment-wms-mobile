@@ -22,6 +22,7 @@ const CreateInventoryReport = () => {
     { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
   >([]);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState<boolean>(true);
+
   // Deconstruct data properties
   const {
     code,
@@ -31,10 +32,11 @@ const CreateInventoryReport = () => {
     warehouseStaff,
     inventoryReportDetail,
   } = data?.data || {};
+
   const handleOpenCamera = () => setIsCameraOpen(true);
   const handleCloseCamera = () => setIsCameraOpen(false);
-  const handleScanComplete = (scannedData: string) => {
-    setScannedData(scannedData);
+  const handleScanComplete = (data: string) => {
+    setScannedData(data); // Pass scanned data to the list
     setIsCameraOpen(false);
   };
 
@@ -54,16 +56,16 @@ const CreateInventoryReport = () => {
       ),
     };
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-    // try {
-    //   await createInventoryReport(id as string, requestBody);
-    //   Alert.alert('Success', 'Inventory report submitted successfully.');
-    //   router.replace({
-    //     pathname: '/(warehouse)/(tabs)/reported/[id]',
-    //     params: { id },
-    //   });
-    // } catch (error: any) {
-    //   Alert.alert('Error', error.message || 'Failed to submit the report.');
-    // }
+    try {
+      await createInventoryReport(id as string, requestBody);
+      Alert.alert('Success', 'Inventory report submitted successfully.');
+      router.replace({
+        pathname: '/(warehouse)/(tabs)/reported/[id]',
+        params: { id },
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit the report.');
+    }
   };
 
   if (!isSuccess) return null;
@@ -92,7 +94,11 @@ const CreateInventoryReport = () => {
           />
           <TeamCard warehouseStaff={warehouseStaff} />
           <Divider />
-          <PackagesList inventoryReportDetail={inventoryReportDetail} />
+          <PackagesList
+            inventoryReportDetail={inventoryReportDetail}
+            scannedData={scannedData}
+            onScanTrigger={handleOpenCamera}
+          />
         </ScrollView>
       )}
 

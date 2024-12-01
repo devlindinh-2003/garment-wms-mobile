@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image } from 'react-native';
 import { Button, Card, Divider, TextInput } from 'react-native-paper';
 import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
 import PackagesItem from './PackagesItem';
 import Theme from '@/constants/Theme';
-import { QrCode, Scan } from 'lucide-react-native';
+import { Scan } from 'lucide-react-native';
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
+  scannedData?: string | null; // Scanned data from the camera
+  onScanTrigger: () => void; // Function to open the camera
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
+  scannedData,
+  onScanTrigger,
 }) => {
   const [detailsState, setDetailsState] = useState(inventoryReportDetail);
   const [searchQueries, setSearchQueries] = useState<{ [key: number]: string }>(
@@ -113,6 +117,31 @@ const PackagesList: React.FC<PackagesListProps> = ({
     setIsButtonDisabled((prev) => ({ ...prev, [index]: !text || !found }));
   };
 
+  useEffect(() => {
+    if (scannedData) {
+      // Handle scanned data
+      const foundDetail = detailsState.find((detail) =>
+        detail.materialPackages?.some((pkg) =>
+          pkg.inventoryReportDetails.some(
+            (report) =>
+              report.materialReceipt?.code === scannedData ||
+              report.productReceipt?.code === scannedData
+          )
+        )
+      );
+
+      if (foundDetail) {
+        console.log(`Found detail for scanned code: ${scannedData}`);
+        setSelectedDetail({
+          receiptCode: scannedData,
+          receiptType: 'material', // Adjust if necessary based on data
+        });
+      } else {
+        console.log('No matching detail found for scanned code.');
+      }
+    }
+  }, [scannedData, detailsState]);
+
   return (
     <View className='p-2 bg-white'>
       {detailsState.map((detail, index) => (
@@ -169,7 +198,13 @@ const PackagesList: React.FC<PackagesListProps> = ({
               <Text className='text-lg font-semibold text-gray-700'>
                 Inventory Report Details
               </Text>
-              <Scan size={24} color={Theme.primaryLightBackgroundColor} />
+              <Button
+                mode='text'
+                onPress={onScanTrigger}
+                className='p-2 rounded-full shadow-md bg-blue-100'
+              >
+                <Scan size={24} color={Theme.primaryLightBackgroundColor} />
+              </Button>
             </View>
 
             {/* Search Section */}
