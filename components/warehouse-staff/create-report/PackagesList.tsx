@@ -5,6 +5,7 @@ import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
 import PackagesItem from './PackagesItem';
 import Theme from '@/constants/Theme';
+import { QrCode, Scan } from 'lucide-react-native';
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
@@ -31,6 +32,10 @@ const PackagesList: React.FC<PackagesListProps> = ({
     receiptCode: string;
     receiptType: 'material' | 'product';
   } | null>(null);
+
+  const clearSelectedDetail = () => {
+    setSelectedDetail(null);
+  };
 
   const updateItemDetails = (
     index: number,
@@ -89,7 +94,6 @@ const PackagesList: React.FC<PackagesListProps> = ({
     const detail = detailsState[index];
     let found = false;
 
-    // Check for matches in materialPackages and productSizes
     detail.materialPackages?.forEach((pkg) => {
       pkg.inventoryReportDetails.forEach((report) => {
         if (report.materialReceipt?.code.toLowerCase() === searchQuery) {
@@ -114,6 +118,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
       {detailsState.map((detail, index) => (
         <Card key={index} className='mb-4 rounded-lg shadow-sm bg-slate-100'>
           <Card.Content>
+            {/* Header with Image */}
             <View className='flex flex-row justify-between items-center'>
               <Image
                 source={{
@@ -156,17 +161,28 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 )}
               </View>
             </View>
+
             <Divider className='my-2' />
 
-            <View className='space-y-3 mb-3'>
+            {/* Inventory Report Details Section */}
+            <View className='flex flex-row items-center justify-between mb-3'>
+              <Text className='text-lg font-semibold text-gray-700'>
+                Inventory Report Details
+              </Text>
+              <Scan size={24} color={Theme.primaryLightBackgroundColor} />
+            </View>
+
+            {/* Search Section */}
+            <View className='space-y-2 mb-5 flex-row items-center gap-2'>
               <TextInput
-                placeholder='Search by Receipt Code'
+                placeholder='Search'
                 value={searchQueries[index] || ''}
                 activeOutlineColor={Theme.blue[600]}
                 outlineColor={Theme.blue[200]}
                 onChangeText={(text) => handleInputChange(index, text)}
                 mode='outlined'
                 className='flex-1 bg-white'
+                style={{ height: 40 }}
               />
               <Button
                 icon='magnify'
@@ -182,17 +198,20 @@ const PackagesList: React.FC<PackagesListProps> = ({
                   color: isButtonDisabled[index] ? Theme.gray[500] : 'white',
                   fontWeight: 'bold',
                 }}
+                style={{ height: 40 }}
               >
                 Search
               </Button>
             </View>
 
+            {/* Material and Product Packages */}
             <View>
               {detail.materialPackages?.map((pkg, pkgIndex) => (
                 <PackagesItem
                   key={pkgIndex}
                   details={pkg.inventoryReportDetails}
                   selectedDetail={selectedDetail}
+                  clearSelectedDetail={clearSelectedDetail}
                   updateDetails={(updatedDetails) => {
                     const updatedMaterialPackages = [
                       ...(detail.materialPackages || []),
@@ -211,9 +230,10 @@ const PackagesList: React.FC<PackagesListProps> = ({
                   key={sizeIndex}
                   details={size.inventoryReportDetails}
                   selectedDetail={selectedDetail}
+                  clearSelectedDetail={clearSelectedDetail}
                   updateDetails={(updatedDetails) => {
                     const updatedProductSizes = [
-                      ...(detail.productSizes || ''),
+                      ...(detail.productSizes || []),
                     ];
                     updatedProductSizes[sizeIndex].inventoryReportDetails =
                       updatedDetails;

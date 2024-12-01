@@ -35,12 +35,14 @@ interface PackagesItemProps {
     receiptCode: string;
     receiptType: 'material' | 'product';
   } | null;
+  clearSelectedDetail: () => void; // Clear the selected detail
 }
 
 const PackagesItem: React.FC<PackagesItemProps> = ({
   details,
   updateDetails,
   selectedDetail,
+  clearSelectedDetail,
 }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [receiptCode, setReceiptCode] = useState<string | null>(null);
@@ -49,9 +51,8 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
   );
   const [currentDetails, setCurrentDetails] = useState(details);
 
-  // Automatically open modal if selectedDetail is set
   useEffect(() => {
-    if (selectedDetail) {
+    if (selectedDetail && !isModalVisible) {
       const { receiptCode, receiptType } = selectedDetail;
       const detailExists = currentDetails.some(
         (d) =>
@@ -64,7 +65,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         setModalVisible(true);
       }
     }
-  }, [selectedDetail]);
+  }, [selectedDetail, isModalVisible, currentDetails]);
 
   const openModal = (code: string | null, type: 'material' | 'product') => {
     setReceiptCode(code);
@@ -76,6 +77,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     setModalVisible(false);
     setReceiptCode(null);
     setReceiptType(null);
+    clearSelectedDetail(); // Clear the selected detail after closing
   };
 
   const updateActualQuantity = (code: string, quantity: string) => {
