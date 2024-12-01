@@ -9,6 +9,7 @@ import { InspectionReportDetail } from '@/types/InspectionReportDetail';
 import { ApiResponse } from '@/types/ApiResponse';
 import { ImportRequestType } from '@/enums/importRequestType';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface GetAllInspectionReportInput {
   sorting?: { id: string; desc: boolean }[];
@@ -81,10 +82,23 @@ export const getAllInspectionReport = async ({
 export const createInspectionReport = async (
   data: CreateInspectionReportParams
 ): Promise<ApiResponse> => {
-  const endpoint = '/inspection-report';
-  const config = post(endpoint, data);
+  const baseUrl = 'https://garment-wms-be.onrender.com';
+  const url = `${baseUrl}/inspection-report`;
   try {
-    const response = await axios(config);
+    // Retrieve the access token from AsyncStorage
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    if (!accessToken) {
+      throw new Error('Access token not found. Please log in again.');
+    }
+
+    // Make the POST request with the access token
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
     return response.data as ApiResponse;
   } catch (error: any) {
     console.error('Failed to create inspection report:', error);
@@ -105,6 +119,34 @@ export const createInspectionReport = async (
     );
   }
 };
+
+// export const createInspectionReport = async (
+//   data: CreateInspectionReportParams
+// ): Promise<ApiResponse> => {
+//   const endpoint = '/inspection-report';
+//   const config = post(endpoint, data);
+//   try {
+//     const response = await axios(config);
+//     return response.data as ApiResponse;
+//   } catch (error: any) {
+//     console.error('Failed to create inspection report:', error);
+
+//     if (axios.isAxiosError(error) && error.response) {
+//       return {
+//         statusCode: error.response.status,
+//         data: null,
+//         message:
+//           error.response.data.message ||
+//           'An error occurred while creating the inspection report.',
+//         errors: error.response.data.errors || null,
+//       } as ApiResponse;
+//     }
+
+//     throw new Error(
+//       'An unexpected error occurred while creating the inspection report.'
+//     );
+//   }
+// };
 
 export const getInspectionReportById = async (
   id: string

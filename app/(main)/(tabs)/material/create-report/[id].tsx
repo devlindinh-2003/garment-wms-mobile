@@ -181,7 +181,7 @@ const CreateMaterialReport = () => {
               onUpdate={(pass, fail, isValid, defects) =>
                 handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }
-              defects={defectsList} // Pass dynamically fetched defects
+              defects={defectsList}
             />
           ))}
 
