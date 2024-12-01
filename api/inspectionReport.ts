@@ -84,7 +84,6 @@ export const createInspectionReport = async (
 ): Promise<ApiResponse> => {
   const baseUrl = 'https://garment-wms-be.onrender.com';
   const url = `${baseUrl}/inspection-report`;
-
   try {
     // Retrieve the access token from AsyncStorage
     const accessToken = await AsyncStorage.getItem('accessToken');
