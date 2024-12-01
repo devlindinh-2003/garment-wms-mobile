@@ -1,4 +1,4 @@
-import { router, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import ProductInspectingCard from '@/components/inspecting-process/product/ProductInspectingCard';
 import ProductInspectionRequest from '@/components/inspecting-process/product/ProductInspectionRequest';
@@ -13,12 +13,14 @@ import { Button, Snackbar, Text } from 'react-native-paper';
 import Theme from '@/constants/Theme';
 
 const CreateProductReport = () => {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
     id as string
   );
   const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
+
   const [reportDetails, setReportDetails] = useState<
     {
       id: string;
@@ -31,7 +33,8 @@ const CreateProductReport = () => {
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const allInputsValid = data?.data.importRequest.importRequestDetail.every(
+
+  const allInputsValid = data?.data.importRequest.importRequestDetail?.every(
     (detail: ImportRequestDetail) => {
       const reportDetail = reportDetails.find((d) => d.id === detail.id);
       return reportDetail && reportDetail.isValid;
@@ -45,22 +48,14 @@ const CreateProductReport = () => {
     isValid: boolean,
     defects: { defectId: string; quantityByPack: number }[]
   ) => {
-    const filteredDefects = defects.filter(
-      (defect) => defect.quantityByPack > 0
-    ); // Filter out defects with quantityByPack = 0
     setReportDetails((prevDetails) => {
       const existingDetail = prevDetails.find((detail) => detail.id === id);
       if (existingDetail) {
         return prevDetails.map((detail) =>
-          detail.id === id
-            ? { id, pass, fail, isValid, defects: filteredDefects }
-            : detail
+          detail.id === id ? { id, pass, fail, isValid, defects } : detail
         );
       }
-      return [
-        ...prevDetails,
-        { id, pass, fail, isValid, defects: filteredDefects },
-      ];
+      return [...prevDetails, { id, pass, fail, isValid, defects }];
     });
   };
 
@@ -84,14 +79,14 @@ const CreateProductReport = () => {
         return null;
       }
 
-      const detailObject: any = {
+      return {
         approvedQuantityByPack: detail.pass,
         defectQuantityByPack: detail.fail,
         productSizeId: correspondingImportDetail.productSize?.id || null,
-        inspectionReportDetailDefect: detail.defects,
+        inspectionReportDetailDefect: detail.defects.filter(
+          (defect) => defect.quantityByPack > 0
+        ),
       };
-
-      return detailObject;
     });
 
     const filteredInspectionReportDetail = inspectionReportDetail.filter(
@@ -160,7 +155,7 @@ const CreateProductReport = () => {
             managerName={managerName}
           />
 
-          {importRequestDetail.map((detail: ImportRequestDetail) => (
+          {importRequestDetail?.map((detail: ImportRequestDetail) => (
             <ProductInspectingCard
               key={detail.id}
               image={detail.productSize.productVariant.image}
@@ -171,7 +166,7 @@ const CreateProductReport = () => {
               weight={`${detail.productSize.weight}kg`}
               length={`${detail.productSize.length}m`}
               total={detail.quantityByPack}
-              defects={defectsList} // Pass dynamically fetched defects
+              defects={defectsList}
               onUpdate={(pass, fail, isValid, defects) =>
                 handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }
