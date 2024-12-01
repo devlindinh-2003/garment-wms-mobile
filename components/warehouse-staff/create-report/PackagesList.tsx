@@ -13,6 +13,7 @@ interface PackagesListProps {
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
 }) => {
+  const [detailsState, setDetailsState] = useState(inventoryReportDetail);
   const [searchQueries, setSearchQueries] = useState<{ [key: number]: string }>(
     {}
   );
@@ -21,21 +22,43 @@ const PackagesList: React.FC<PackagesListProps> = ({
   }>(() => {
     const initialState: { [key: number]: boolean } = {};
     inventoryReportDetail.forEach((_, index) => {
-      initialState[index] = true; // Default disabled for all search buttons
+      initialState[index] = true;
     });
     return initialState;
   });
 
-  const handleSearch = (index: number) => {
-    const searchQuery = searchQueries[index] || '';
-    let found = false;
+  const [selectedDetail, setSelectedDetail] = useState<{
+    receiptCode: string;
+    receiptType: 'material' | 'product';
+  } | null>(null);
 
-    const detail = inventoryReportDetail[index];
+  const updateItemDetails = (
+    index: number,
+    updatedItem: InventoryReportDetailRoot
+  ) => {
+    const updatedDetails = [...detailsState];
+    updatedDetails[index] = updatedItem;
+    setDetailsState(updatedDetails);
+  };
+
+  const handleSearch = (index: number) => {
+    const searchQuery = searchQueries[index]?.trim().toLowerCase();
+    if (!searchQuery) return;
+
+    const detail = detailsState[index];
+    let foundReceipt: {
+      receiptCode: string;
+      receiptType: 'material' | 'product';
+    } | null = null;
+
     // Search in materialPackages
     detail.materialPackages?.forEach((pkg) => {
       pkg.inventoryReportDetails.forEach((report) => {
-        if (report.materialReceipt?.code === searchQuery) {
-          found = true;
+        if (report.materialReceipt?.code.toLowerCase() === searchQuery) {
+          foundReceipt = {
+            receiptCode: report.materialReceipt.code,
+            receiptType: 'material',
+          };
         }
       });
     });
@@ -43,29 +66,33 @@ const PackagesList: React.FC<PackagesListProps> = ({
     // Search in productSizes
     detail.productSizes?.forEach((size) => {
       size.inventoryReportDetails.forEach((report: any) => {
-        if (report.productReceipt?.code === searchQuery) {
-          found = true;
+        if (report.productReceipt?.code.toLowerCase() === searchQuery) {
+          foundReceipt = {
+            receiptCode: report.productReceipt.code,
+            receiptType: 'product',
+          };
         }
       });
     });
 
-    console.log(found ? 'true' : 'false');
+    if (foundReceipt) {
+      setSelectedDetail(foundReceipt);
+    } else {
+      console.log('No matching receipt code found.');
+    }
   };
 
   const handleInputChange = (index: number, text: string) => {
-    setSearchQueries((prev) => ({
-      ...prev,
-      [index]: text,
-    }));
+    setSearchQueries((prev) => ({ ...prev, [index]: text }));
 
-    const searchQuery = text;
+    const searchQuery = text.trim().toLowerCase();
+    const detail = detailsState[index];
     let found = false;
 
-    const detail = inventoryReportDetail[index];
-    // Search in materialPackages
+    // Check for matches in materialPackages and productSizes
     detail.materialPackages?.forEach((pkg) => {
       pkg.inventoryReportDetails.forEach((report) => {
-        if (report.materialReceipt?.code === searchQuery) {
+        if (report.materialReceipt?.code.toLowerCase() === searchQuery) {
           found = true;
         }
       });
@@ -73,25 +100,21 @@ const PackagesList: React.FC<PackagesListProps> = ({
 
     detail.productSizes?.forEach((size) => {
       size.inventoryReportDetails.forEach((report: any) => {
-        if (report.productReceipt?.code === searchQuery) {
+        if (report.productReceipt?.code.toLowerCase() === searchQuery) {
           found = true;
         }
       });
     });
 
-    setIsButtonDisabled((prev) => ({
-      ...prev,
-      [index]: !text || !found,
-    }));
+    setIsButtonDisabled((prev) => ({ ...prev, [index]: !text || !found }));
   };
 
   return (
     <View className='p-2 bg-white'>
-      {inventoryReportDetail?.map((detail, index) => (
+      {detailsState.map((detail, index) => (
         <Card key={index} className='mb-4 rounded-lg shadow-sm bg-slate-100'>
           <Card.Content>
             <View className='flex flex-row justify-between items-center'>
-              {/* Display Image */}
               <Image
                 source={{
                   uri:
@@ -107,14 +130,11 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 }}
                 resizeMode='cover'
               />
-
-              {/* Display Material or Product Information */}
               <View className='flex-1'>
                 {detail?.materialVariant ? (
                   <>
                     <Text className='text-lg font-semibold text-gray-800 mb-2'>
-                      Material:{' '}
-                      {detail.materialVariant.name || 'Unknown Material'}
+                      Material: {detail.materialVariant.name || 'Unknown'}
                     </Text>
                     <StatusBadge className='text-sm bg-gray-600 mb-2'>
                       {detail.materialVariant.code || 'N/A'}
@@ -123,7 +143,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
                 ) : detail?.productVariant ? (
                   <>
                     <Text className='text-lg font-semibold text-gray-800 mb-2'>
-                      Product: {detail.productVariant.name || 'Unknown Product'}
+                      Product: {detail.productVariant.name || 'Unknown'}
                     </Text>
                     <StatusBadge className='text-sm bg-gray-600 mb-2'>
                       {detail.productVariant.code || 'N/A'}
@@ -137,54 +157,71 @@ const PackagesList: React.FC<PackagesListProps> = ({
               </View>
             </View>
             <Divider className='my-2' />
-            <View>
-              <Text className='font-semibold text-lg text-blue-600 mb-2'>
-                Inventory Report Details
-              </Text>
 
-              {/* Search Bar and Button */}
-              <View className='space-y-3 mb-3'>
-                <TextInput
-                  placeholder='Search by Receipt Code'
-                  value={searchQueries[index] || ''}
-                  activeOutlineColor={Theme.blue[600]}
-                  outlineColor={Theme.blue[200]}
-                  onChangeText={(text) => handleInputChange(index, text)}
-                  mode='outlined'
-                  className='flex-1 bg-white'
-                />
-                <Button
-                  icon='magnify'
-                  mode='contained'
-                  onPress={() => handleSearch(index)}
-                  disabled={isButtonDisabled[index]}
-                  buttonColor={
-                    isButtonDisabled[index]
-                      ? Theme.gray[300]
-                      : Theme.primaryLightBackgroundColor
-                  }
-                  labelStyle={{
-                    color: isButtonDisabled[index] ? Theme.gray[500] : 'white',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Search
-                </Button>
-              </View>
+            <View className='space-y-3 mb-3'>
+              <TextInput
+                placeholder='Search by Receipt Code'
+                value={searchQueries[index] || ''}
+                activeOutlineColor={Theme.blue[600]}
+                outlineColor={Theme.blue[200]}
+                onChangeText={(text) => handleInputChange(index, text)}
+                mode='outlined'
+                className='flex-1 bg-white'
+              />
+              <Button
+                icon='magnify'
+                mode='contained'
+                onPress={() => handleSearch(index)}
+                disabled={isButtonDisabled[index]}
+                buttonColor={
+                  isButtonDisabled[index]
+                    ? Theme.gray[300]
+                    : Theme.primaryLightBackgroundColor
+                }
+                labelStyle={{
+                  color: isButtonDisabled[index] ? Theme.gray[500] : 'white',
+                  fontWeight: 'bold',
+                }}
+              >
+                Search
+              </Button>
             </View>
 
-            {/* Render Inventory Report Details */}
             <View>
-              {detail?.materialPackages?.map((pkg, pkgIndex) => (
+              {detail.materialPackages?.map((pkg, pkgIndex) => (
                 <PackagesItem
                   key={pkgIndex}
                   details={pkg.inventoryReportDetails}
+                  selectedDetail={selectedDetail}
+                  updateDetails={(updatedDetails) => {
+                    const updatedMaterialPackages = [
+                      ...(detail.materialPackages || []),
+                    ];
+                    updatedMaterialPackages[pkgIndex].inventoryReportDetails =
+                      updatedDetails;
+                    updateItemDetails(index, {
+                      ...detail,
+                      materialPackages: updatedMaterialPackages,
+                    });
+                  }}
                 />
               ))}
-              {detail?.productSizes?.map((size, sizeIndex) => (
+              {detail.productSizes?.map((size, sizeIndex) => (
                 <PackagesItem
                   key={sizeIndex}
                   details={size.inventoryReportDetails}
+                  selectedDetail={selectedDetail}
+                  updateDetails={(updatedDetails) => {
+                    const updatedProductSizes = [
+                      ...(detail.productSizes || ''),
+                    ];
+                    updatedProductSizes[sizeIndex].inventoryReportDetails =
+                      updatedDetails;
+                    updateItemDetails(index, {
+                      ...detail,
+                      productSizes: updatedProductSizes,
+                    });
+                  }}
                 />
               ))}
             </View>

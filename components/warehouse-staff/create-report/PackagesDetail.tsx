@@ -1,12 +1,12 @@
-import AppbarHeader from '@/components/common/AppBarHeader';
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
-import { useGetDetailByReceipt } from '@/hooks/useGetDetailByReceipt';
-import SpinnerLoading from '@/components/common/SpinnerLoading';
 import { Card, Text, Button, TextInput } from 'react-native-paper';
-import StatusBadge from '@/components/common/StatusBadge';
-import { convertDate } from '../../../helpers/converDate';
 import { CalendarDays, CalendarX } from 'lucide-react-native';
+import AppbarHeader from '@/components/common/AppBarHeader';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
+import StatusBadge from '@/components/common/StatusBadge';
+import { useGetDetailByReceipt } from '@/hooks/useGetDetailByReceipt';
+import { convertDate } from '@/helpers/converDate';
 
 interface PackagesDetailProps {
   closeModal: () => void;
@@ -45,6 +45,7 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
     if (receiptCode && actualQuantity !== initialQuantity) {
       updateActualQuantity(receiptCode, actualQuantity);
       setIsEditing(false);
+      closeModal();
     }
   };
 
@@ -78,21 +79,21 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
               ) : null}
 
               <Card.Content>
-                {/* Name and Code in Justified Layout */}
+                {/* Name and Code */}
                 <View className='flex-row justify-between items-center mb-2 gap-3'>
                   <Text className='text-xl font-bold text-gray-800 flex-1'>
                     {receiptType === 'material'
                       ? itemReceipt.materialPackage?.name
                       : itemReceipt.productSize?.name || 'Unknown'}
                   </Text>
-                  <Text className='text-green-500 font-bold '>
+                  <Text className='text-green-500 font-bold'>
                     {receiptType === 'material'
                       ? itemReceipt.materialPackage?.code
                       : itemReceipt.productSize?.code || 'N/A'}
                   </Text>
                 </View>
 
-                {/* Receipt Code, Import Date, and Expire Date */}
+                {/* Receipt Details */}
                 <View className='flex-row items-start justify-between mt-4'>
                   <View>
                     {/* Import Date */}
@@ -102,7 +103,8 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                         Imported: {convertDate(itemReceipt.importDate || 'N/A')}
                       </Text>
                     </View>
-                    {/* Expire Date */}
+
+                    {/* Expire Date (for material) */}
                     {receiptType === 'material' && (
                       <View className='flex-row items-center gap-2'>
                         <CalendarX size={20} color='#E53E3E' />
@@ -134,6 +136,8 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
           </ScrollView>
         )}
       </View>
+
+      {/* Save Button */}
       <View className='p-4 border-t border-gray-200 bg-white'>
         <Button
           mode='contained'

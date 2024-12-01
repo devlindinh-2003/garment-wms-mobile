@@ -1,9 +1,9 @@
-import StatusBadge from '@/components/common/StatusBadge';
-import Theme from '@/constants/Theme';
-import { NotepadText, CalendarPlus } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Modal } from 'react-native';
 import { Card, Divider, Button, TextInput } from 'react-native-paper';
+import { NotepadText, CalendarPlus } from 'lucide-react-native';
+import StatusBadge from '@/components/common/StatusBadge';
+import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
 import PackagesDetail from './PackagesDetail';
 
@@ -30,15 +30,41 @@ interface InventoryReportDetail {
 
 interface PackagesItemProps {
   details: InventoryReportDetail[];
+  updateDetails: (updatedDetails: InventoryReportDetail[]) => void;
+  selectedDetail?: {
+    receiptCode: string;
+    receiptType: 'material' | 'product';
+  } | null;
 }
 
-const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
+const PackagesItem: React.FC<PackagesItemProps> = ({
+  details,
+  updateDetails,
+  selectedDetail,
+}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [receiptCode, setReceiptCode] = useState<string | null>(null);
   const [receiptType, setReceiptType] = useState<'material' | 'product' | null>(
     null
   );
-  const [updatedDetails, setUpdatedDetails] = useState(details);
+  const [currentDetails, setCurrentDetails] = useState(details);
+
+  // Automatically open modal if selectedDetail is set
+  useEffect(() => {
+    if (selectedDetail) {
+      const { receiptCode, receiptType } = selectedDetail;
+      const detailExists = currentDetails.some(
+        (d) =>
+          d.materialReceipt?.code === receiptCode ||
+          d.productReceipt?.code === receiptCode
+      );
+      if (detailExists) {
+        setReceiptCode(receiptCode);
+        setReceiptType(receiptType);
+        setModalVisible(true);
+      }
+    }
+  }, [selectedDetail]);
 
   const openModal = (code: string | null, type: 'material' | 'product') => {
     setReceiptCode(code);
@@ -53,22 +79,19 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
   };
 
   const updateActualQuantity = (code: string, quantity: string) => {
-    setUpdatedDetails((prevDetails) =>
-      prevDetails.map((detail) =>
-        detail.materialReceipt?.code === code ||
-        detail.productReceipt?.code === code
-          ? {
-              ...detail,
-              actualQuantity: parseFloat(quantity),
-            }
-          : detail
-      )
+    const updatedDetails = currentDetails.map((detail) =>
+      detail.materialReceipt?.code === code ||
+      detail.productReceipt?.code === code
+        ? { ...detail, actualQuantity: parseFloat(quantity) }
+        : detail
     );
+    setCurrentDetails(updatedDetails);
+    updateDetails(updatedDetails);
     closeModal();
   };
 
   const getActualQuantity = (code: string) => {
-    const detail = updatedDetails.find(
+    const detail = currentDetails.find(
       (d) => d.materialReceipt?.code === code || d.productReceipt?.code === code
     );
     return detail?.actualQuantity?.toString() || '';
@@ -77,7 +100,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
   return (
     <>
       <View className='bg-gray-100'>
-        {updatedDetails.map((detail, index) => (
+        {currentDetails.map((detail, index) => (
           <Card
             key={index}
             className='mb-4 rounded-xl shadow-lg bg-white border border-gray-200'
@@ -97,6 +120,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
               </View>
               <Divider className='mb-4' />
 
+              {/* Expected Quantity */}
               <View className='mb-2'>
                 <View className='flex-row items-center justify-between mb-2'>
                   <View className='flex-row items-center gap-2'>
@@ -105,12 +129,13 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                       Expected Quantity:
                     </Text>
                   </View>
-                  <Text className='font-bold text-gray-700 text-lg '>
+                  <Text className='font-bold text-gray-700 text-lg'>
                     {detail.expectedQuantity}
                   </Text>
                 </View>
               </View>
 
+              {/* Import Date */}
               {detail.materialReceipt && (
                 <View className='mb-4'>
                   <View className='flex-row items-center justify-between mb-2'>
@@ -128,9 +153,10 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                 </View>
               )}
 
+              {/* Actual Quantity */}
               <View className='mb-4'>
                 <View className='flex-row items-center justify-between gap-3'>
-                  <Text className='text-sm font-semibold text-gray-700 '>
+                  <Text className='text-sm font-semibold text-gray-700'>
                     Actual Quantity:
                   </Text>
                   <TextInput
@@ -142,6 +168,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                 </View>
               </View>
 
+              {/* Edit / Open Button */}
               <Button
                 icon={
                   detail.actualQuantity
@@ -153,7 +180,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
                   openModal(
                     detail.materialReceipt?.code ||
                       detail.productReceipt?.code ||
-                      ' ',
+                      '',
                     detail.materialReceipt ? 'material' : 'product'
                   )
                 }
@@ -168,6 +195,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({ details }) => {
         ))}
       </View>
 
+      {/* Modal for Packages Detail */}
       <Modal
         presentationStyle='pageSheet'
         animationType='slide'
