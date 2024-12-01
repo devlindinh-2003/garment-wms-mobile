@@ -18,12 +18,8 @@ const CreateInventoryReport = () => {
   );
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
-  const [processedDetails, setProcessedDetails] = useState<
-    { inventoryReportDetailId: string; actualQuantity: number; note: string }[]
-  >([]);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState<boolean>(true);
 
-  // Deconstruct data properties
   const {
     code,
     status,
@@ -36,28 +32,55 @@ const CreateInventoryReport = () => {
   const handleOpenCamera = () => setIsCameraOpen(true);
   const handleCloseCamera = () => setIsCameraOpen(false);
   const handleScanComplete = (data: string) => {
-    setScannedData(data); // Pass scanned data to the list
+    setScannedData(data);
     setIsCameraOpen(false);
   };
 
-  const clearScannedData = () => setScannedData(null); // Function to clear scanned data
+  const clearScannedData = () => setScannedData(null);
+
+  const handleValidationChange = (isValid: boolean) => {
+    setIsSubmitDisabled(!isValid);
+  };
 
   const handleSubmit = async () => {
+    if (!inventoryReportDetail) {
+      Alert.alert('Error', 'No inventory details found.');
+      return;
+    }
+
+    const processedDetails: any = [];
+    inventoryReportDetail.forEach((detail: any) => {
+      detail.materialPackages?.forEach((pkg: any) => {
+        pkg.inventoryReportDetails?.forEach((item: any) => {
+          if (item.actualQuantity !== null) {
+            processedDetails.push({
+              inventoryReportDetailId: item.id,
+              actualQuantity: item.actualQuantity,
+              note: `Material Receipt: ${item.materialReceipt?.code || ''}`,
+            });
+          }
+        });
+      });
+      detail.productSizes?.forEach((size: any) => {
+        size.inventoryReportDetails?.forEach((item: any) => {
+          if (item.actualQuantity !== null) {
+            processedDetails.push({
+              inventoryReportDetailId: item.id,
+              actualQuantity: item.actualQuantity,
+              note: `Product Receipt: ${item.productReceipt?.code || ''}`,
+            });
+          }
+        });
+      });
+    });
+
     if (processedDetails.length === 0) {
       Alert.alert('Error', 'No inventory details to submit.');
       return;
     }
 
-    const requestBody = {
-      details: processedDetails.map(
-        ({ inventoryReportDetailId, actualQuantity, note }) => ({
-          inventoryReportDetailId,
-          actualQuantity,
-          note,
-        })
-      ),
-    };
-    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+    const requestBody = { details: processedDetails };
+
     try {
       await createInventoryReport(id as string, requestBody);
       Alert.alert('Success', 'Inventory report submitted successfully.');
@@ -70,16 +93,13 @@ const CreateInventoryReport = () => {
     }
   };
 
-  useEffect(() => {
-    setIsSubmitDisabled(processedDetails.length === 0);
-  }, [processedDetails]);
-
-  if (isPending)
+  if (isPending) {
     return (
       <View style={styles.centered}>
         <SpinnerLoading />
       </View>
     );
+  }
 
   if (!isSuccess) return null;
 
@@ -105,7 +125,8 @@ const CreateInventoryReport = () => {
             inventoryReportDetail={inventoryReportDetail}
             scannedData={scannedData}
             onScanTrigger={handleOpenCamera}
-            clearScannedData={clearScannedData} // Clear scanned data
+            clearScannedData={clearScannedData}
+            onValidationChange={handleValidationChange} // Pass validation change handler
           />
         </ScrollView>
       )}

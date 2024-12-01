@@ -11,7 +11,8 @@ interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
   scannedData?: string | null;
   onScanTrigger: () => void;
-  clearScannedData: () => void; // New prop to clear scanned data
+  clearScannedData: () => void; // Clear scanned data callback
+  onValidationChange: (isValid: boolean) => void; // Callback for validation
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
@@ -19,6 +20,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   scannedData,
   onScanTrigger,
   clearScannedData,
+  onValidationChange,
 }) => {
   const [detailsState, setDetailsState] = useState(inventoryReportDetail);
   const [searchQuery, setSearchQuery] = useState<string>(''); // Search query state
@@ -43,6 +45,30 @@ const PackagesList: React.FC<PackagesListProps> = ({
     updatedDetails[index] = updatedItem;
     setDetailsState(updatedDetails);
   };
+
+  const checkAllActualQuantities = () => {
+    return detailsState.every((detail) => {
+      const allMaterialPackagesValid = (detail.materialPackages || []).every(
+        (pkg) =>
+          (pkg.inventoryReportDetails || []).every(
+            (item) => item.actualQuantity !== null
+          )
+      );
+
+      const allProductSizesValid = (detail.productSizes || []).every((size) =>
+        (size.inventoryReportDetails || []).every(
+          (item) => item.actualQuantity !== null
+        )
+      );
+
+      return allMaterialPackagesValid && allProductSizesValid;
+    });
+  };
+
+  useEffect(() => {
+    const isValid = checkAllActualQuantities();
+    onValidationChange(isValid); // Notify parent about validation status
+  }, [detailsState]);
 
   const checkReceiptsExist = (query: string) => {
     const searchQueryLower = query.trim().toLowerCase();

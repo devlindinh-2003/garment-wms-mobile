@@ -178,7 +178,6 @@ export const getInventoryReportById = async (
 //     throw new Error('Failed to create inventory report.');
 //   }
 // };
-
 export const createInventoryReport = async (
   id: string,
   body: {
@@ -189,16 +188,27 @@ export const createInventoryReport = async (
     }[];
   }
 ): Promise<any> => {
+  const baseUrl = 'https://garment-wms-be.onrender.com'; // Replace with your actual base URL
   const endpoint = `/inventory-report/${id}/record`;
+  const fullUrl = `${baseUrl}${endpoint}`; // Combine base URL and endpoint to form the full URL
+
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');
     if (!accessToken) {
       throw new Error('Access token not found. Please log in again.');
     }
-    const config = post(endpoint, body, undefined, {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    });
+
+    console.log('Full URL:', fullUrl); // Log the full URL for debugging
+
+    const config = {
+      method: 'patch',
+      url: fullUrl,
+      data: body,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    };
     const response = await axios(config);
     return response.data;
   } catch (error: any) {
