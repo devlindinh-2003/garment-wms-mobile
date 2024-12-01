@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, Alert } from 'react-native';
 import { Divider, Button } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -40,6 +40,8 @@ const CreateInventoryReport = () => {
     setIsCameraOpen(false);
   };
 
+  const clearScannedData = () => setScannedData(null); // Function to clear scanned data
+
   const handleSubmit = async () => {
     if (processedDetails.length === 0) {
       Alert.alert('Error', 'No inventory details to submit.');
@@ -68,13 +70,18 @@ const CreateInventoryReport = () => {
     }
   };
 
-  if (!isSuccess) return null;
+  useEffect(() => {
+    setIsSubmitDisabled(processedDetails.length === 0);
+  }, [processedDetails]);
+
   if (isPending)
     return (
-      <View className='items-center'>
+      <View style={styles.centered}>
         <SpinnerLoading />
       </View>
     );
+
+  if (!isSuccess) return null;
 
   return (
     <View style={styles.container}>
@@ -98,6 +105,7 @@ const CreateInventoryReport = () => {
             inventoryReportDetail={inventoryReportDetail}
             scannedData={scannedData}
             onScanTrigger={handleOpenCamera}
+            clearScannedData={clearScannedData} // Clear scanned data
           />
         </ScrollView>
       )}
@@ -130,6 +138,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     backgroundColor: 'white',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

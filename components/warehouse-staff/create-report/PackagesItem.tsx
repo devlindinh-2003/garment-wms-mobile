@@ -77,7 +77,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     setModalVisible(false);
     setReceiptCode(null);
     setReceiptType(null);
-    clearSelectedDetail(); // Clear the selected detail after closing
+    clearSelectedDetail(); // Ensure the selected detail is cleared
   };
 
   const updateActualQuantity = (code: string, quantity: string) => {
@@ -89,14 +89,7 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
     );
     setCurrentDetails(updatedDetails);
     updateDetails(updatedDetails);
-    closeModal();
-  };
-
-  const getActualQuantity = (code: string) => {
-    const detail = currentDetails.find(
-      (d) => d.materialReceipt?.code === code || d.productReceipt?.code === code
-    );
-    return detail?.actualQuantity?.toString() || '';
+    closeModal(); // Ensure the modal is closed properly after updating
   };
 
   return (
@@ -122,7 +115,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
               </View>
               <Divider className='mb-4' />
 
-              {/* Expected Quantity */}
               <View className='mb-2'>
                 <View className='flex-row items-center justify-between mb-2'>
                   <View className='flex-row items-center gap-2'>
@@ -137,7 +129,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
                 </View>
               </View>
 
-              {/* Import Date */}
               {detail.materialReceipt && (
                 <View className='mb-4'>
                   <View className='flex-row items-center justify-between mb-2'>
@@ -155,7 +146,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
                 </View>
               )}
 
-              {/* Actual Quantity */}
               <View className='mb-4'>
                 <View className='flex-row items-center justify-between gap-3'>
                   <Text className='text-sm font-semibold text-gray-700'>
@@ -170,7 +160,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
                 </View>
               </View>
 
-              {/* Edit / Open Button */}
               <Button
                 icon={
                   detail.actualQuantity
@@ -197,7 +186,6 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
         ))}
       </View>
 
-      {/* Modal for Packages Detail */}
       <Modal
         presentationStyle='pageSheet'
         animationType='slide'
@@ -211,7 +199,15 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
             receiptCode={receiptCode}
             receiptType={receiptType}
             updateActualQuantity={updateActualQuantity}
-            actualQuantity={getActualQuantity(receiptCode)}
+            actualQuantity={
+              currentDetails
+                .find(
+                  (d) =>
+                    d.materialReceipt?.code === receiptCode ||
+                    d.productReceipt?.code === receiptCode
+                )
+                ?.actualQuantity?.toString() || ''
+            }
           />
         )}
       </Modal>

@@ -11,16 +11,18 @@ interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
   scannedData?: string | null;
   onScanTrigger: () => void;
+  clearScannedData: () => void; // New prop to clear scanned data
 }
 
 const PackagesList: React.FC<PackagesListProps> = ({
   inventoryReportDetail,
   scannedData,
   onScanTrigger,
+  clearScannedData,
 }) => {
   const [detailsState, setDetailsState] = useState(inventoryReportDetail);
-  const [searchQuery, setSearchQuery] = useState<string>(''); // Search for all details
-  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true); // Disable by default
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Search query state
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true); // Disable button by default
   const [selectedDetail, setSelectedDetail] = useState<{
     receiptCode: string;
     receiptType: 'material' | 'product';
@@ -29,6 +31,8 @@ const PackagesList: React.FC<PackagesListProps> = ({
 
   const clearSelectedDetail = () => {
     setSelectedDetail(null);
+    setSearchQuery('');
+    clearScannedData();
   };
 
   const updateItemDetails = (
@@ -157,6 +161,8 @@ const PackagesList: React.FC<PackagesListProps> = ({
           'Not Found',
           `Scanned code "${scannedData}" was not found in any inventory detail.`
         );
+      } else {
+        clearScannedData(); // Clear scanned data after it has been processed
       }
     }
   }, [scannedData, detailsState]);
