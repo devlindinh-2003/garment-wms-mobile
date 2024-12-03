@@ -1,23 +1,24 @@
-import React, { useState } from "react";
-import { View, ScrollView, Dimensions } from "react-native";
+import React, { useState } from 'react';
+import { View, ScrollView, Dimensions } from 'react-native';
 import {
   TabView,
   SceneMap,
   TabBar,
   NavigationState,
   SceneRendererProps,
-} from "react-native-tab-view";
-import { Text, Card, Button } from "react-native-paper";
-import { useGetAllInspectionRequest } from "@/hooks/useGetAllInspectionRequest";
-import { InspectionRequestType } from "@/enums/inspectionRequestType";
-import { InspectionRequestStatus } from "@/enums/inspectionRequestStatus";
-import { InspectionRequest } from "@/types/InspectionRequest";
-import Theme from "@/constants/Theme";
-import { useRouter } from "expo-router";
-import { convertDate } from "@/helpers/converDate";
-import StatusBadge from "@/components/common/StatusBadge";
-import SpinnerLoading from "@/components/common/SpinnerLoading";
-import PullToRefresh from "@/components/common/PullToRefresh";
+} from 'react-native-tab-view';
+import { Text, Card, Button } from 'react-native-paper';
+import { useGetAllInspectionRequest } from '@/hooks/useGetAllInspectionRequest';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
+import { InspectionRequestStatus } from '@/enums/inspectionRequestStatus';
+import { InspectionRequest } from '@/types/InspectionRequest';
+import Theme from '@/constants/Theme';
+import { useRouter } from 'expo-router';
+import { convertDate } from '@/helpers/converDate';
+import StatusBadge from '@/components/common/StatusBadge';
+import SpinnerLoading from '@/components/common/SpinnerLoading';
+import PullToRefresh from '@/components/common/PullToRefresh';
+import { convertDateWithTime } from '@/helpers/convertDateWithTime';
 
 interface RouteProps {
   inspectedMaterialList: InspectionRequest[];
@@ -25,7 +26,7 @@ interface RouteProps {
   onRefresh: any;
 }
 
-const initialLayout = { width: Dimensions.get("window").width };
+const initialLayout = { width: Dimensions.get('window').width };
 
 const InspectedRoute: React.FC<RouteProps> = ({
   inspectedMaterialList,
@@ -36,47 +37,63 @@ const InspectedRoute: React.FC<RouteProps> = ({
 
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
-      <ScrollView className="p-4">
+      <ScrollView className='p-4'>
         {inspectedMaterialList.map((item) => (
           <Card
             key={item.id}
-            className="mb-4 rounded-xl shadow-sm border border-gray-300"
+            className='mb-4 rounded-xl shadow-sm border border-gray-300'
           >
             <Card.Content>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">Code</Text>
-                <Text className="font-semibold text-primaryLight">
-                  {item.code}
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-gray-500 font-medium'>Code</Text>
+                <StatusBadge>{item.code}</StatusBadge>
+              </View>
+              <View className='flex-row justify-between mb-4 mt-2'>
+                <Text className='text-gray-500 font-medium'>
+                  Import Request
+                </Text>
+                <Text className='font-bold text-primaryLight'>
+                  {item?.importRequest?.code}
                 </Text>
               </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">Status</Text>
-                <StatusBadge variant="success">{item.status}</StatusBadge>
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-gray-500 font-medium'>Status</Text>
+                <StatusBadge variant='success'>{item.status}</StatusBadge>
               </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">
-                  Inspected Requested Date
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-gray-500 font-medium'>
+                  Request Inspection Date
                 </Text>
-                <Text className="font-semibold">
-                  {convertDate(item.createdAt || "")}
+                <Text className='font-semibold'>
+                  {convertDateWithTime(item.createdAt || '')}
                 </Text>
               </View>
+              {item?.finishedAt && (
+                <View className='flex-row justify-between mb-2 mt-3'>
+                  <Text className='text-green-800 font-bold'>
+                    Inspected Date
+                  </Text>
+                  <Text className='font-semibold text-green-500'>
+                    {convertDateWithTime(item?.finishedAt || '')}
+                  </Text>
+                </View>
+              )}
             </Card.Content>
-            <View className="items-end px-4 py-3">
+            <View className='w-full px-4 py-3'>
               <Button
-                mode="contained"
-                icon="open-in-app"
+                mode='contained'
+                icon='open-in-app'
                 onPress={() => {
                   console.log(item?.inspectionReport?.id);
                   router.push({
-                    pathname: "/(main)/(tabs)/material/inspected/[id]",
-                    params: { id: item?.inspectionReport?.id || "" },
+                    pathname: '/(main)/(tabs)/material/inspected/[id]',
+                    params: { id: item?.inspectionReport?.id || '' },
                   });
                 }}
-                className="rounded-lg"
+                className='rounded-lg'
                 labelStyle={{
-                  color: "white",
-                  fontWeight: "600",
+                  color: 'white',
+                  fontWeight: '600',
                 }}
                 style={{
                   backgroundColor: Theme.primaryLightBackgroundColor,
@@ -104,46 +121,52 @@ const InspectingRoute: React.FC<RouteProps> = ({
 
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
-      <ScrollView className="p-4">
+      <ScrollView className='p-4'>
         {inspectedMaterialList.map((item) => (
           <Card
             key={item.id}
-            className="mb-4 rounded-xl shadow-sm border border-gray-300"
+            className='mb-4 rounded-xl shadow-sm border border-gray-300'
           >
             <Card.Content>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">Code</Text>
-                <Text className="font-semibold text-primaryLight">
-                  {item.code}
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-gray-500 font-medium'>Code</Text>
+                <StatusBadge>{item.code}</StatusBadge>
+              </View>
+              <View className='flex-row justify-between mb-4 mt-2'>
+                <Text className='text-gray-500 font-medium'>
+                  Import Request
+                </Text>
+                <Text className='font-bold text-primaryLight'>
+                  {item?.importRequest?.code}
                 </Text>
               </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">Status</Text>
-                <StatusBadge variant="default">{item.status}</StatusBadge>
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-gray-500 font-medium'>Status</Text>
+                <StatusBadge variant='default'>{item.status}</StatusBadge>
               </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">
-                  Inspected Requested Date
+              <View className='flex-row justify-between mb-2'>
+                <Text className='text-blue-800 font-bold'>
+                  Request Inspection Date
                 </Text>
-                <Text className="font-semibold">
-                  {convertDate(item.createdAt || "")}
+                <Text className='font-semibold text-blue-800'>
+                  {convertDateWithTime(item.createdAt || '')}
                 </Text>
               </View>
             </Card.Content>
-            <View className="items-end px-4 py-3">
+            <View className='w-full px-4 py-3'>
               <Button
-                mode="contained"
-                icon="magnify"
+                mode='contained'
+                icon='magnify'
                 onPress={() =>
                   router.push({
-                    pathname: "/(main)/(tabs)/material/create-report/[id]",
+                    pathname: '/(main)/(tabs)/material/create-report/[id]',
                     params: { id: item.id },
                   })
                 }
-                className="rounded-lg"
+                className='rounded-lg'
                 labelStyle={{
-                  color: "white",
-                  fontWeight: "600",
+                  color: 'white',
+                  fontWeight: '600',
                 }}
                 style={{
                   backgroundColor: Theme.green[500],
@@ -170,7 +193,7 @@ const MaterialPage: React.FC = () => {
     try {
       await Promise.all([refetchInspectionRequest()]);
     } catch (error) {
-      console.error("Error during refresh:", error);
+      console.error('Error during refresh:', error);
     } finally {
       setRefreshing(false);
     }
@@ -204,11 +227,11 @@ const MaterialPage: React.FC = () => {
   const [index, setIndex] = useState(0);
   const routes = [
     {
-      key: "inspected",
+      key: 'inspected',
       title: `Inspected (${inspectedMaterialList.length})`,
     },
     {
-      key: "inspecting",
+      key: 'inspecting',
       title: `Inspecting (${inspectingMaterialList.length})`,
     },
   ];
@@ -238,20 +261,20 @@ const MaterialPage: React.FC = () => {
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: index === 0 ? Theme.green[500] : "#3b82f6",
+        backgroundColor: index === 0 ? Theme.green[500] : '#3b82f6',
       }}
-      style={{ backgroundColor: "white" }}
-      activeColor={index === 0 ? Theme.green[500] : "#3b82f6"}
-      inactiveColor="#9ca3af"
+      style={{ backgroundColor: 'white' }}
+      activeColor={index === 0 ? Theme.green[500] : '#3b82f6'}
+      inactiveColor='#9ca3af'
     />
   );
 
   return (
-    <View className="flex-1 mb-9">
+    <View className='flex-1 mb-9'>
       <Text
-        style={{ fontWeight: "bold" }}
-        variant="titleLarge"
-        className="text-primaryLight capitalize mb-2 text-center mt-4"
+        style={{ fontWeight: 'bold' }}
+        variant='titleLarge'
+        className='text-primaryLight capitalize mb-2 text-center mt-4'
       >
         Raw Material Statistics
       </Text>

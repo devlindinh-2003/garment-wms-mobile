@@ -36,6 +36,7 @@ const InspectedDetails = () => {
         ? `${inspectionRequest.inspectionDepartment.account.firstName} ${inspectionRequest.inspectionDepartment.account.lastName}`
         : 'N/A';
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
+    const importRequestCode = inspectionRequest?.importRequest?.code || 'N/A';
 
     // Calculate totals
     const totalMaterials =
@@ -55,12 +56,15 @@ const InspectedDetails = () => {
         (acc: number, item: any) => acc + (item.approvedQuantityByPack || 0),
         0
       ) || 0;
-
     const failCount =
       inspectionReportDetail?.reduce(
         (acc: number, item: any) => acc + (item.defectQuantityByPack || 0),
         0
       ) || 0;
+    const totalCount = totalMaterials + passCount;
+    console.log('Pass Count:', passCount);
+    console.log('Fail Count:', failCount);
+    console.log('Total Count:', totalCount);
 
     const passPercentage = totalMaterials
       ? ((passCount / totalMaterials) * 100).toFixed(0)
@@ -114,11 +118,13 @@ const InspectedDetails = () => {
           inspectionReportCreatedAt={inspectionReportCreatedAt}
           inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
+          importRequestCode={importRequestCode}
+          inspectionRequestDate={inspectionRequest?.createdAt}
         />
         {/* Inspection Report */}
         <MaterialInspectionReport
           inspectionReportCode={inspectionReportCode}
-          totalMaterials={totalMaterials}
+          totalMaterials={totalCount}
           chartData={chartData}
           failPercentage={failPercentage}
           passPercentage={passPercentage}

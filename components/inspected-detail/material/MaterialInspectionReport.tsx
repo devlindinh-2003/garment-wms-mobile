@@ -27,7 +27,6 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
   allDefects,
 }) => {
   const mapDefects = (detailDefects: any[]) => {
-    // Map all defects and set missing ones to quantity 0
     return allDefects.map((defect) => {
       const matchedDefect = detailDefects.find((d) => d.defectId === defect.id);
       return {
@@ -100,7 +99,11 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
             width={`${detail.materialPackage?.packedWidth || 0}m`}
             weight={`${detail.materialPackage?.packedWeight || 0}kg`}
             length={`${detail.materialPackage?.packedLength || 0}m`}
-            total={detail?.quantityByPack || 0}
+            total={
+              detail?.quantityByPack ||
+              detail.approvedQuantityByPack + detail.defectQuantityByPack ||
+              0
+            }
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
             defects={mapDefects(detail.inspectionReportDetailDefect || [])}

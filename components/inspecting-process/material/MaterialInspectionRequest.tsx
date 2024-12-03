@@ -1,7 +1,13 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
-import { Calendar, Notebook, UserRoundSearch } from 'lucide-react-native';
+import { convertDateWithTime } from '@/helpers/convertDateWithTime';
+import {
+  Calendar,
+  ClipboardCopy,
+  Notebook,
+  UserRoundSearch,
+} from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
@@ -14,6 +20,7 @@ interface MaterialInspectionRequestInfoProps {
   inspectionDeptLastName: string;
   inspectionRequestNote: string | null;
   managerName: string;
+  importRequestCode?: string;
 }
 
 const MaterialInspectionRequest: React.FC<
@@ -26,6 +33,7 @@ const MaterialInspectionRequest: React.FC<
   inspectionDeptLastName,
   inspectionRequestNote,
   managerName,
+  importRequestCode,
 }) => {
   return (
     <View>
@@ -47,10 +55,10 @@ const MaterialInspectionRequest: React.FC<
           <View className='flex-row items-center'>
             <Calendar size={20} color='#6b7280' className='mr-2' />
             <Text className='text-gray-700 font-medium'>
-              Date:{' '}
+              Request:{' '}
               <Text className='text-black font-bold'>
                 {inspectionRequestCreatedAt
-                  ? convertDate(inspectionRequestCreatedAt)
+                  ? convertDateWithTime(inspectionRequestCreatedAt)
                   : 'N/A'}
               </Text>
             </Text>
@@ -58,12 +66,22 @@ const MaterialInspectionRequest: React.FC<
           <View className='flex-row items-center'>
             <UserRoundSearch size={20} color='#6b7280' className='mr-2' />
             <Text className='text-gray-700 font-medium'>
-              Inspector:{' '}
               <Text className='text-black font-bold'>
                 {inspectionDeptFirstName} {inspectionDeptLastName}
               </Text>
             </Text>
           </View>
+        </View>
+
+        {/* Import Request Code */}
+        <View className='flex-row items-center mb-3'>
+          <ClipboardCopy size={20} color='#6b7280' className='mr-2' />
+          <Text className='text-gray-700 font-medium'>Import Request: </Text>
+          <StatusBadge>
+            {/* update this later */}
+            {importRequestCode}
+            {/* {inspectionDeptName || 'Tung Trong'} */}
+          </StatusBadge>
         </View>
 
         {/* Manager Information */}

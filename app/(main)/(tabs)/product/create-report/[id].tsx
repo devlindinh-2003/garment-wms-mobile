@@ -5,11 +5,10 @@ import ProductInspectionRequest from '@/components/inspecting-process/product/Pr
 import { useGetInspectionRequestById } from '@/hooks/useGetInspectionRequestById';
 import { useCreateInspectionReport } from '@/hooks/useCreateInspectionReport';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
-import { ImportRequestDetail } from '@/types/ImportRequestType';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { Button, Snackbar, Text } from 'react-native-paper';
+import { ScrollView, View, Text } from 'react-native';
+import { Button, Snackbar } from 'react-native-paper';
 import Theme from '@/constants/Theme';
 
 const CreateProductReport = () => {
@@ -34,13 +33,6 @@ const CreateProductReport = () => {
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const allInputsValid = data?.data.importRequest.importRequestDetail?.every(
-    (detail: ImportRequestDetail) => {
-      const reportDetail = reportDetails.find((d) => d.id === detail.id);
-      return reportDetail && reportDetail.isValid;
-    }
-  );
-
   const handleReportUpdate = (
     id: string,
     pass: number,
@@ -59,6 +51,13 @@ const CreateProductReport = () => {
     });
   };
 
+  const allInputsValid = data?.data.importRequest.importRequestDetail?.every(
+    (detail: any) => {
+      const reportDetail = reportDetails.find((d) => d.id === detail.id);
+      return reportDetail && reportDetail.isValid;
+    }
+  );
+
   const handleSendReport = () => {
     if (!allInputsValid) {
       setSnackbarMessage(
@@ -70,8 +69,8 @@ const CreateProductReport = () => {
 
     const inspectionReportDetail = reportDetails.map((detail) => {
       const correspondingImportDetail =
-        data?.data.importRequest.importRequestDetail.find(
-          (importDetail: ImportRequestDetail) => importDetail.id === detail.id
+        data?.data.importRequest.importRequestDetail?.find(
+          (importDetail: any) => importDetail.id === detail.id
         );
 
       if (!correspondingImportDetail) {
@@ -79,14 +78,26 @@ const CreateProductReport = () => {
         return null;
       }
 
-      return {
+      const detailObject: any = {
         approvedQuantityByPack: detail.pass,
         defectQuantityByPack: detail.fail,
         productSizeId: correspondingImportDetail.productSize?.id || null,
-        inspectionReportDetailDefect: detail.defects.filter(
-          (defect) => defect.quantityByPack > 0
-        ),
       };
+
+      const validDefects = detail.defects.filter(
+        (defect) => defect.quantityByPack > 0
+      );
+
+      if (validDefects.length > 0) {
+        detailObject.inspectionReportDetailDefect = validDefects.map(
+          (defect) => ({
+            defectId: defect.defectId,
+            quantityByPack: defect.quantityByPack,
+          })
+        );
+      }
+
+      return detailObject;
     });
 
     const filteredInspectionReportDetail = inspectionReportDetail.filter(
@@ -155,7 +166,7 @@ const CreateProductReport = () => {
             managerName={managerName}
           />
 
-          {importRequestDetail?.map((detail: ImportRequestDetail) => (
+          {importRequestDetail?.map((detail: any) => (
             <ProductInspectingCard
               key={detail.id}
               image={detail.productSize.productVariant.image}

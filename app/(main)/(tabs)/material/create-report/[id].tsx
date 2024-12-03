@@ -117,6 +117,8 @@ const CreateMaterialReport = () => {
     mutate(requestBody, {
       onSuccess: (response) => {
         setSnackbarMessage('Report submitted successfully!');
+        console.log('Response  success');
+        console.log(JSON.stringify(response.data, null, 2));
         setSnackbarVisibleSuccess(true);
         router.replace({
           pathname: '/(main)/(tabs)/material/inspected/[id]',
@@ -124,7 +126,8 @@ const CreateMaterialReport = () => {
         });
       },
       onError: (error) => {
-        console.error('Error submitting report:', error.message);
+        console.log('Response error');
+        console.log(JSON.stringify(error, null, 2));
         setSnackbarMessage('Failed to submit the report.');
         setSnackbarVisibleError(true);
       },
@@ -143,7 +146,7 @@ const CreateMaterialReport = () => {
       note: inspectionRequestNote,
       inspectionDepartment,
       warehouseManager,
-      importRequest: { importRequestDetail },
+      importRequest: { code: importRequestCode, importRequestDetail },
     } = data.data;
 
     const inspectionDeptFirstName =
@@ -153,7 +156,7 @@ const CreateMaterialReport = () => {
     const managerName = `${warehouseManager?.account?.firstName || 'N/A'} ${
       warehouseManager?.account?.lastName || 'N/A'
     }`;
-
+    console.log(JSON.stringify(importRequestDetail, null, 2));
     return (
       <>
         <ScrollView className='p-4 bg-white'>
@@ -165,6 +168,7 @@ const CreateMaterialReport = () => {
             inspectionDeptLastName={inspectionDeptLastName}
             inspectionRequestNote={inspectionRequestNote}
             managerName={managerName}
+            importRequestCode={importRequestCode}
           />
 
           {importRequestDetail?.map((detail: ImportRequestDetail) => (

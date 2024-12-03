@@ -80,7 +80,11 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
             width={`${detail.productSize?.width || 0}m`}
             weight={`${detail.productSize?.weight || 0}kg`}
             length={`${detail.productSize?.length || 0}m`}
-            total={detail.quantityByPack || 0}
+            total={
+              detail.quantityByPack ||
+              detail.approvedQuantityByPack + detail.defectQuantityByPack ||
+              0
+            }
             pass={detail.approvedQuantityByPack || 0}
             fail={detail.defectQuantityByPack || 0}
             defects={mapDefects(detail.inspectionReportDetailDefect || [])}
