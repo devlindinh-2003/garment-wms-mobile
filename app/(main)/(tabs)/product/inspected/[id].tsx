@@ -54,6 +54,7 @@ const InspectedProductDetails = () => {
         (acc: number, item: any) => acc + (item.defectQuantityByPack || 0),
         0
       ) || 0;
+    const totalCount = passCount + failCount;
 
     const passPercentage = totalMaterials
       ? ((passCount / totalMaterials) * 100).toFixed(0)
@@ -112,7 +113,7 @@ const InspectedProductDetails = () => {
         {/* Inspection Report */}
         <ProductInspectionReport
           inspectionReportCode={inspectionReportCode}
-          totalMaterials={totalMaterials}
+          totalMaterials={totalMaterials || totalCount}
           chartData={chartData}
           failPercentage={failPercentage}
           passPercentage={passPercentage}
