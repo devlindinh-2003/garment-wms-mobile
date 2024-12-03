@@ -26,8 +26,10 @@ export interface InspectionRequest {
   purchasingStaff?: PurchasingStaff | null;
   productionDeparment?: ProductionDepartment | null;
   warehouseManager?: WarehouseManager | null;
+  startedAt?: string;
+  expectedFinishedAt?: string;
+  finishedAt?: string | null;
 }
-
 
 export interface ProductionDepartment {
   id: string;

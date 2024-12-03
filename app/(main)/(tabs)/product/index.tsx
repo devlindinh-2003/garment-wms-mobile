@@ -20,6 +20,7 @@ import {
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import PullToRefresh from '@/components/common/PullToRefresh';
 import EmptyDataComponent from '@/components/common/EmptyData';
+import { convertDateWithTime } from '@/helpers/convertDateWithTime';
 
 interface RouteProps {
   inspectedProductList: InspectionRequest[];
@@ -100,8 +101,14 @@ const ProductPage = () => {
               <Card.Content>
                 <View className='flex-row justify-between mb-2'>
                   <Text className='text-gray-500 font-medium'>Code</Text>
-                  <Text className='font-semibold text-primaryLight'>
-                    {item.code}
+                  <StatusBadge>{item.code}</StatusBadge>
+                </View>
+                <View className='flex-row justify-between mb-4 mt-2'>
+                  <Text className='text-gray-500 font-medium'>
+                    Import Request
+                  </Text>
+                  <Text className='font-bold text-primaryLight'>
+                    {item?.importRequest?.code}
                   </Text>
                 </View>
                 <View className='flex-row justify-between mb-2'>
@@ -110,14 +117,24 @@ const ProductPage = () => {
                 </View>
                 <View className='flex-row justify-between mb-2'>
                   <Text className='text-gray-500 font-medium'>
-                    Inspected Requested Date
+                    Request Inspection Date
                   </Text>
                   <Text className='font-semibold'>
-                    {convertDate(item.createdAt || '')}
+                    {convertDateWithTime(item.createdAt || '')}
                   </Text>
                 </View>
+                {item?.finishedAt && (
+                  <View className='flex-row justify-between mb-2 mt-3'>
+                    <Text className='text-green-800 font-bold'>
+                      Inspected Date
+                    </Text>
+                    <Text className='font-semibold text-green-500'>
+                      {convertDateWithTime(item?.finishedAt || '')}
+                    </Text>
+                  </View>
+                )}
               </Card.Content>
-              <View className='items-end px-4 py-3'>
+              <View className='w-full px-4 py-3'>
                 <Button
                   mode='contained'
                   icon='open-in-app'
@@ -169,8 +186,14 @@ const ProductPage = () => {
               <Card.Content>
                 <View className='flex-row justify-between mb-2'>
                   <Text className='text-gray-500 font-medium'>Code</Text>
-                  <Text className='font-semibold text-primaryLight'>
-                    {item.code}
+                  <StatusBadge>{item.code}</StatusBadge>
+                </View>
+                <View className='flex-row justify-between mb-4 mt-2'>
+                  <Text className='text-gray-500 font-medium'>
+                    Import Request
+                  </Text>
+                  <Text className='font-bold text-primaryLight'>
+                    {item?.importRequest?.code}
                   </Text>
                 </View>
                 <View className='flex-row justify-between mb-2'>
@@ -178,15 +201,15 @@ const ProductPage = () => {
                   <StatusBadge variant='default'>{item.status}</StatusBadge>
                 </View>
                 <View className='flex-row justify-between mb-2'>
-                  <Text className='text-gray-500 font-medium'>
-                    Inspected Requested Date
+                  <Text className='text-blue-800 font-bold'>
+                    Request Inspection Date
                   </Text>
-                  <Text className='font-semibold'>
-                    {convertDate(item.createdAt || '')}
+                  <Text className='font-semibold text-blue-800'>
+                    {convertDateWithTime(item.createdAt || '')}
                   </Text>
                 </View>
               </Card.Content>
-              <View className='items-end px-4 py-3'>
+              <View className='w-full px-4 py-3'>
                 <Button
                   mode='contained'
                   icon='magnify'
