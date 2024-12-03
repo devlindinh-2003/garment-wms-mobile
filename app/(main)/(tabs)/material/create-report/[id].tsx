@@ -117,6 +117,8 @@ const CreateMaterialReport = () => {
     mutate(requestBody, {
       onSuccess: (response) => {
         setSnackbarMessage('Report submitted successfully!');
+        console.log('Response  success');
+        console.log(JSON.stringify(response.data, null, 2));
         setSnackbarVisibleSuccess(true);
         router.replace({
           pathname: '/(main)/(tabs)/material/inspected/[id]',
@@ -124,7 +126,8 @@ const CreateMaterialReport = () => {
         });
       },
       onError: (error) => {
-        console.error('Error submitting report:', error.message);
+        console.log('Response error');
+        console.log(JSON.stringify(error, null, 2));
         setSnackbarMessage('Failed to submit the report.');
         setSnackbarVisibleError(true);
       },

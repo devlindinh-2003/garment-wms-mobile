@@ -82,27 +82,27 @@ export const getAllInspectionReport = async ({
 export const createInspectionReport = async (
   data: CreateInspectionReportParams
 ): Promise<ApiResponse> => {
-  const baseUrl = 'https://garment-wms-be.onrender.com';
-  const url = `${baseUrl}/inspection-report`;
+  const endpoint = '/inspection-report';
+
   try {
-    // Retrieve the access token from AsyncStorage
+    // Retrieve the access token
     const accessToken = await AsyncStorage.getItem('accessToken');
     if (!accessToken) {
       throw new Error('Access token not found. Please log in again.');
     }
 
-    // Make the POST request with the access token
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+    // Create the API caller configuration using the post utility
+    const config = post(endpoint, data, undefined, {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
     });
-
+    // Make the HTTP request
+    const response = await axios(config);
+    // Return the response data
     return response.data as ApiResponse;
   } catch (error: any) {
     console.error('Failed to create inspection report:', error);
-
+    // Handle known Axios errors
     if (axios.isAxiosError(error) && error.response) {
       return {
         statusCode: error.response.status,
@@ -113,7 +113,7 @@ export const createInspectionReport = async (
         errors: error.response.data.errors || null,
       } as ApiResponse;
     }
-
+    // Handle unexpected errors
     throw new Error(
       'An unexpected error occurred while creating the inspection report.'
     );
@@ -123,10 +123,19 @@ export const createInspectionReport = async (
 // export const createInspectionReport = async (
 //   data: CreateInspectionReportParams
 // ): Promise<ApiResponse> => {
-//   const endpoint = '/inspection-report';
-//   const config = post(endpoint, data);
+//   const baseUrl = 'https://garment-wms-be-1.onrender.com';
+//   const url = `${baseUrl}/inspection-report`;
 //   try {
-//     const response = await axios(config);
+//     const accessToken = await AsyncStorage.getItem('accessToken');
+//     if (!accessToken) {
+//       throw new Error('Access token not found. Please log in again.');
+//     }
+//     const response = await axios.post(url, data, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//         'Content-Type': 'application/json',
+//       },
+//     });
 //     return response.data as ApiResponse;
 //   } catch (error: any) {
 //     console.error('Failed to create inspection report:', error);

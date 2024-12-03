@@ -23,11 +23,9 @@ export const useCreateInspectionReport = () => {
     },
     onSuccess: (data) => {
       console.log('Inspection report created successfully:', data);
-      // Add additional success handling if needed (e.g., navigate or display a toast)
     },
     onError: (error) => {
       console.error('Error creating inspection report:', error.message);
-      // Add additional error handling if needed
     },
   });
 
