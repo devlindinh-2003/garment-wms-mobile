@@ -1,8 +1,10 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
+import { convertDateWithTime } from '@/helpers/convertDateWithTime';
 import {
   Calendar,
+  CalendarCheck2,
   ClipboardCopy,
   Notebook,
   UserRoundSearch,
@@ -18,6 +20,7 @@ interface ProductInspectionRequestInfoProps {
   inspectionDeptName: string | null;
   inspectionRequestNote: string | null;
   importRequestCode?: string;
+  inspectionRequestDate: string | null;
 }
 
 const ProductInspectionRequestInfo: React.FC<
@@ -26,12 +29,13 @@ const ProductInspectionRequestInfo: React.FC<
   inspectionRequestCode,
   inspectionRequestStatus,
   inspectionReportCreatedAt,
+  inspectionRequestDate,
   inspectionRequestNote,
   importRequestCode,
 }) => {
   return (
     <View>
-      <View className='flex-row items-center justify-between'>
+      <View className='flex-row items-center justify-between px-2'>
         <View className='flex-row items-center'>
           <Text className='text-slate-500 font-semibold'>
             Inspection Request:{' '}
@@ -52,10 +56,10 @@ const ProductInspectionRequestInfo: React.FC<
           <View className='flex-row items-center'>
             <Calendar size={20} color='#6b7280' className='mr-2' />
             <Text className='text-gray-700 font-medium'>
-              Date:{' '}
+              Request:{' '}
               <Text className='text-black font-bold'>
-                {inspectionReportCreatedAt
-                  ? convertDate(inspectionReportCreatedAt)
+                {inspectionRequestDate
+                  ? convertDateWithTime(inspectionRequestDate)
                   : 'N/A'}
               </Text>
             </Text>
@@ -64,7 +68,6 @@ const ProductInspectionRequestInfo: React.FC<
           <View className='flex-row items-center'>
             <UserRoundSearch size={20} color='#6b7280' className='mr-2' />
             <Text className='text-gray-700 font-medium'>
-              Inspector:{' '}
               <Text className='text-black font-bold'>
                 {/* update this later */}
                 {'Tung Trong'}
@@ -72,6 +75,16 @@ const ProductInspectionRequestInfo: React.FC<
               </Text>
             </Text>
           </View>
+        </View>
+
+        {/* Inspected Date */}
+        <View className='flex-row items-center mb-3'>
+          <CalendarCheck2 size={20} color={Theme.green[600]} className='mr-2' />
+          <Text className='text-green-800 font-medium'>Inspected Date: </Text>
+          <Text className='text-green-600 font-bold'>
+            {/* update this later */}
+            {convertDateWithTime(inspectionReportCreatedAt || '')}
+          </Text>
         </View>
 
         {/* Import Request Code */}

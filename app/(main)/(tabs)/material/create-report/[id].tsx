@@ -146,7 +146,7 @@ const CreateMaterialReport = () => {
       note: inspectionRequestNote,
       inspectionDepartment,
       warehouseManager,
-      importRequest: { importRequestDetail },
+      importRequest: { code: importRequestCode, importRequestDetail },
     } = data.data;
 
     const inspectionDeptFirstName =
@@ -156,7 +156,7 @@ const CreateMaterialReport = () => {
     const managerName = `${warehouseManager?.account?.firstName || 'N/A'} ${
       warehouseManager?.account?.lastName || 'N/A'
     }`;
-
+    console.log(JSON.stringify(importRequestDetail, null, 2));
     return (
       <>
         <ScrollView className='p-4 bg-white'>
@@ -168,6 +168,7 @@ const CreateMaterialReport = () => {
             inspectionDeptLastName={inspectionDeptLastName}
             inspectionRequestNote={inspectionRequestNote}
             managerName={managerName}
+            importRequestCode={importRequestCode}
           />
 
           {importRequestDetail?.map((detail: ImportRequestDetail) => (

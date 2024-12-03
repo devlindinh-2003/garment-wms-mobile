@@ -119,6 +119,7 @@ const InspectedDetails = () => {
           inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
           importRequestCode={importRequestCode}
+          inspectionRequestDate={inspectionRequest?.createdAt}
         />
         {/* Inspection Report */}
         <MaterialInspectionReport
