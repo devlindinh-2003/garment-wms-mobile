@@ -1,7 +1,12 @@
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
-import { Calendar, Notebook, UserRoundSearch } from 'lucide-react-native';
+import {
+  Calendar,
+  ClipboardCopy,
+  Notebook,
+  UserRoundSearch,
+} from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
@@ -12,6 +17,7 @@ interface ProductInspectionRequestInfoProps {
   inspectionReportCreatedAt: string | null;
   inspectionDeptName: string | null;
   inspectionRequestNote: string | null;
+  importRequestCode?: string;
 }
 
 const ProductInspectionRequestInfo: React.FC<
@@ -21,6 +27,7 @@ const ProductInspectionRequestInfo: React.FC<
   inspectionRequestStatus,
   inspectionReportCreatedAt,
   inspectionRequestNote,
+  importRequestCode,
 }) => {
   return (
     <View>
@@ -67,8 +74,19 @@ const ProductInspectionRequestInfo: React.FC<
           </View>
         </View>
 
+        {/* Import Request Code */}
+        <View className='flex-row items-center'>
+          <ClipboardCopy size={20} color='#6b7280' className='mr-2' />
+          <Text className='text-gray-700 font-medium'>Import Request: </Text>
+          <StatusBadge>
+            {/* update this later */}
+            {importRequestCode}
+            {/* {inspectionDeptName || 'Tung Trong'} */}
+          </StatusBadge>
+        </View>
+
         {/* Note Section */}
-        <View className='mb-4'>
+        <View className='mb-4 mt-3'>
           <View className='flex-row items-center mb-2'>
             <Notebook color={Theme.greyText} size={18} className='mr-2' />
             <Text className='text-gray-700 font-semibold'>Note</Text>

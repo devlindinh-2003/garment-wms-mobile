@@ -36,6 +36,7 @@ const InspectedDetails = () => {
         ? `${inspectionRequest.inspectionDepartment.account.firstName} ${inspectionRequest.inspectionDepartment.account.lastName}`
         : 'N/A';
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
+    const importRequestCode = inspectionRequest?.importRequest?.code || 'N/A';
 
     // Calculate totals
     const totalMaterials =
@@ -117,6 +118,7 @@ const InspectedDetails = () => {
           inspectionReportCreatedAt={inspectionReportCreatedAt}
           inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
+          importRequestCode={importRequestCode}
         />
         {/* Inspection Report */}
         <MaterialInspectionReport

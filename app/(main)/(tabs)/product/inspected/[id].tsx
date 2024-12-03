@@ -37,6 +37,7 @@ const InspectedProductDetails = () => {
         ? `${inspectionRequest.inspectionDepartment.account.firstName} ${inspectionRequest.inspectionDepartment.account.lastName}`
         : 'N/A';
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
+    const importRequestCode = inspectionRequest?.importRequest?.code || 'N/A';
 
     const totalMaterials =
       inspectionReportDetail?.reduce((acc: number, item: any) => {
@@ -109,6 +110,7 @@ const InspectedProductDetails = () => {
           inspectionReportCreatedAt={inspectionReportCreatedAt}
           inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
+          importRequestCode={importRequestCode}
         />
         {/* Inspection Report */}
         <ProductInspectionReport
