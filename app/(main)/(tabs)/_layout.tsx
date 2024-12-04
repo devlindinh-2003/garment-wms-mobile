@@ -2,19 +2,14 @@ import { router, Tabs } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { Bell, Box, Shirt, Warehouse } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
-import {
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  Alert,
-} from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AppBarHeaderLayout from '@/components/common/AppBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Drawer } from 'react-native-drawer-layout';
 import avatar from '@/assets/images/avatar.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSnackbar } from '@/app/_layout';
+import { Avatar } from 'react-native-paper';
 
 const TabLayout: React.FC = () => {
   return (
@@ -92,6 +87,7 @@ const TabLayout: React.FC = () => {
 const Layout: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const { showSnackbar } = useSnackbar();
 
   const toggleDrawer = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -100,12 +96,11 @@ const Layout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear();
-      Alert.alert('Logged Out', 'You have been logged out successfully.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-      ]);
+      showSnackbar('Logged out successfully!', 'success');
+      router.replace('/(auth)/login');
     } catch (error) {
       console.error('Error during logout:', error);
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+      showSnackbar('Failed to log out. Please try again.', 'error');
     }
   };
 
@@ -127,8 +122,11 @@ const Layout: React.FC = () => {
   const renderDrawerContent = () => (
     <SafeAreaView className='flex-1 bg-white p-6'>
       <View className='items-center mb-6'>
-        <Image source={avatar} className='w-20 h-20 rounded-full mb-3' />
-        <Text className='text-2xl font-bold'>Staff Profile</Text>
+        <Avatar.Image
+          size={90}
+          source={user?.avatarUrl ? { uri: user.avatarUrl } : avatar}
+        />
+        <Text className='text-2xl font-bold mt-3'>Staff Profile</Text>
       </View>
 
       <View className='mb-4'>
