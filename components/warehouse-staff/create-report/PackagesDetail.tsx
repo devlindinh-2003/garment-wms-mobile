@@ -1,6 +1,6 @@
 import AppbarHeader from '@/components/common/AppBarHeader';
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useGetDetailByReceipt } from '@/hooks/useGetDetailByReceipt';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import { Card, Text, Button, TextInput } from 'react-native-paper';
@@ -52,7 +52,7 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
   return (
     <View className='flex-1 bg-white'>
       <AppbarHeader title={receiptCode || 'Loading...'} onPress={closeModal} />
-      <View className='p-4 flex-1'>
+      <ScrollView className='p-4 flex-1'>
         {isPending && <SpinnerLoading />}
         {isError && (
           <Text className='text-red-500 text-center'>
@@ -92,7 +92,6 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                       : itemReceipt.productSize?.code || 'N/A'}
                   </Text>
                 </View>
-
                 {/* Receipt Code, Import Date, and Expire Date */}
                 <View className='flex-row items-start justify-between mt-4'>
                   <View>
@@ -120,10 +119,32 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                     {itemReceipt?.code}
                   </StatusBadge>
                 </View>
-
+                {/* <View className='mt-4'>
+                  <Text className='text-sm font-medium text-gray-700 mb-1'>
+                    Expected Quantity
+                  </Text>
+                  <TextInput
+                    mode='outlined'
+                    value={itemReceipt?.quantityByPack?.toString() || 'N/A'}
+                    disabled={true}
+                    keyboardType='numeric'
+                    outlineColor='#e5e7eb'
+                    activeOutlineColor='#3b82f6'
+                    style={{
+                      backgroundColor: '#ffffff',
+                    }}
+                    theme={{
+                      colors: {
+                        text: 'red',
+                        placeholder: Theme.blue[100],
+                        primary: '#3b82f6',
+                      },
+                    }}
+                  />
+                </View> */}
                 {/* Actual Quantity Input */}
                 <TextInput
-                  outlineColor={Theme.blue[200]}
+                  outlineColor={Theme.primaryLightBackgroundColor}
                   activeOutlineColor={Theme.primaryDarkBackgroundColor}
                   label='Actual Quantity'
                   value={actualQuantity}
@@ -136,7 +157,7 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
             </Card>
           </ScrollView>
         )}
-      </View>
+      </ScrollView>
       <View className='p-4 border-t border-gray-200 bg-white'>
         <Button
           mode='contained'
@@ -157,5 +178,14 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  box: {
+    width: 200, // Set barcode width
+    height: 200, // Set barcode height
+    borderRadius: 10, // Add rounded corners
+    overflow: 'hidden', // Ensure the barcode fits within the rounded corners
+  },
+});
 
 export default PackagesDetail;
