@@ -116,23 +116,23 @@ const CreateMaterialReport = () => {
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
 
-    mutate(requestBody, {
-      onSuccess: (response) => {
-        showSnackbar('Inspection Report created successfully', 'success');
-        console.log('Response success');
-        console.log(JSON.stringify(response.data, null, 2));
-        router.replace({
-          pathname: '/(main)/(tabs)/material/inspected/[id]',
-          params: { id: response.data?.inspectionReport?.id || '' },
-        });
-      },
-      onError: (error) => {
-        console.log('Response error');
-        console.log(JSON.stringify(error, null, 2));
-        showSnackbar('Inspection Report created failed', 'error');
-        setSnackbarVisibleError(true);
-      },
-    });
+    // mutate(requestBody, {
+    //   onSuccess: (response) => {
+    //     showSnackbar('Inspection Report created successfully', 'success');
+    //     console.log('Response success');
+    //     console.log(JSON.stringify(response.data, null, 2));
+    //     router.replace({
+    //       pathname: '/(main)/(tabs)/material/inspected/[id]',
+    //       params: { id: response.data?.inspectionReport?.id || '' },
+    //     });
+    //   },
+    //   onError: (error) => {
+    //     console.log('Response error');
+    //     console.log(JSON.stringify(error, null, 2));
+    //     showSnackbar('Inspection Report created failed', 'error');
+    //     setSnackbarVisibleError(true);
+    //   },
+    // });
   };
 
   if (isPending || isPendingDefects) {

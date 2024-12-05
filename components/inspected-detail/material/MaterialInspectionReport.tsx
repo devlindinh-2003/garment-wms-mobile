@@ -51,7 +51,9 @@ const MaterialInspectionReport: React.FC<MaterialInspectionReportProps> = ({
 
       {/* Total Materials */}
       <View className='px-3'>
-        <Text className='text-lg font-bold mt-4'>Total Materials</Text>
+        <Text className='text-lg font-bold mt-4'>
+          Total Inspected Materials
+        </Text>
         <Text className='text-4xl font-bold mb-3'>{totalMaterials}</Text>
       </View>
 
