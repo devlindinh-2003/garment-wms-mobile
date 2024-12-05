@@ -222,31 +222,31 @@ const MaterialPage: React.FC = () => {
           request.status === InspectionRequestStatus.INSPECTING
       ) || []
     : [];
-  console.log(JSON.stringify(inspectingMaterialList, null, 2));
+  // console.log(JSON.stringify(inspectingMaterialList, null, 2));
 
   const [index, setIndex] = useState(0);
   const routes = [
     {
-      key: 'inspected',
-      title: `Inspected (${inspectedMaterialList.length})`,
-    },
-    {
       key: 'inspecting',
       title: `Inspecting (${inspectingMaterialList.length})`,
+    },
+    {
+      key: 'inspected',
+      title: `Inspected (${inspectedMaterialList.length})`,
     },
   ];
 
   const renderScene = SceneMap({
-    inspected: () => (
-      <InspectedRoute
-        inspectedMaterialList={inspectedMaterialList}
+    inspecting: () => (
+      <InspectingRoute
+        inspectedMaterialList={inspectingMaterialList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
     ),
-    inspecting: () => (
-      <InspectingRoute
-        inspectedMaterialList={inspectingMaterialList}
+    inspected: () => (
+      <InspectedRoute
+        inspectedMaterialList={inspectedMaterialList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />

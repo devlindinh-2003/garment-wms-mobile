@@ -1,11 +1,12 @@
 import React from 'react';
 import { ScrollView, View, Image } from 'react-native';
-import { Text, Card, Divider } from 'react-native-paper';
+import { Text, Card } from 'react-native-paper';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
 import { useLocalSearchParams } from 'expo-router';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import AppbarHeader from '@/components/common/AppBarHeader';
+import { ProductVariant } from '../../../../types/Product';
 
 const ReportedInventoryReport = () => {
   const { id } = useLocalSearchParams();
@@ -67,7 +68,7 @@ const ReportedInventoryReport = () => {
         <Card
           className='bg-slate-300'
           style={{
-            borderColor: Theme.borderColor || '#e0e0e0',
+            borderColor: '#e0e0e0',
           }}
         >
           <Card.Content className='space-y-2'>
@@ -97,32 +98,42 @@ const ReportedInventoryReport = () => {
         {/* Inventory Report Details */}
         {inventoryReportDetail?.map((detail: any) => (
           <Card
-            key={detail.materialVariant?.id}
+            key={detail.materialVariant?.id || detail.productVariant?.id}
             style={{
               backgroundColor: Theme.blue[50],
               borderWidth: 1,
-              borderColor: Theme.borderColor || '#e0e0e0',
+              borderColor: '#e0e0e0',
               marginBottom: 16,
             }}
           >
             <Card.Content>
-              {/* Material Variant Details */}
+              {/* Variant or Size Details */}
               <View className='flex-row items-center'>
                 <Image
-                  source={{ uri: detail.materialVariant?.image }}
+                  source={{
+                    uri:
+                      detail.materialVariant?.image ||
+                      detail.productVariant?.image ||
+                      'https://via.placeholder.com/60',
+                  }}
                   style={{ width: 60, height: 60, borderRadius: 8 }}
                 />
                 <View className='ml-4 flex-1'>
                   <Text className='text-base font-bold text-gray-800'>
-                    {detail.materialVariant?.name ?? 'No Name'}
+                    {detail.materialVariant?.name ||
+                      detail.productVariant?.name ||
+                      'No Name'}
                   </Text>
                   <Text className='text-sm text-gray-600'>
-                    Code: {detail.materialVariant?.code ?? 'N/A'}
+                    Code:{' '}
+                    {detail.materialVariant?.code ||
+                      detail.productVariant?.code ||
+                      'N/A'}
                   </Text>
                 </View>
               </View>
 
-              {/* Material Packages and Inventory Details */}
+              {/* Material Packages */}
               {detail.materialPackages?.map((materialPackage: any) => (
                 <View
                   key={materialPackage.materialPackage?.id}
@@ -150,7 +161,7 @@ const ReportedInventoryReport = () => {
                         <Text className='text-sm text-gray-600'>
                           <Text className='font-medium'>Receipt Code:</Text>{' '}
                           <Text className='font-bold text-black'>
-                            {reportDetail?.materialReceipt?.code ?? 'N/A'}
+                            {reportDetail?.materialReceipt?.code || 'N/A'}
                           </Text>
                         </Text>
                         <Text className='text-sm text-gray-600'>
@@ -164,7 +175,56 @@ const ReportedInventoryReport = () => {
                         <Text className='text-sm text-gray-600'>
                           <Text className='font-medium'>Actual Quantity:</Text>{' '}
                           <Text className='font-bold text-green-500'>
-                            {' '}
+                            {reportDetail?.actualQuantity ?? 'N/A'}
+                          </Text>
+                        </Text>
+                      </View>
+                    )
+                  )}
+                </View>
+              ))}
+
+              {/* Product Sizes */}
+              {detail.productSizes?.map((productSize: any) => (
+                <View
+                  key={productSize.productSize?.id}
+                  style={{ marginTop: 16 }}
+                >
+                  <Text className='text-base font-semibold text-gray-600 mb-1'>
+                    Product :{' '}
+                    <Text className='text-primaryLight font-bold'>
+                      {productSize.productSize?.name ?? 'Unnamed Product Size'}
+                    </Text>
+                  </Text>
+
+                  {productSize.inventoryReportDetails?.map(
+                    (reportDetail: any) => (
+                      <View
+                        key={reportDetail.id}
+                        style={{
+                          marginTop: 8,
+                          paddingLeft: 12,
+                          borderLeftWidth: 2,
+                          borderLeftColor: Theme.primaryLightBackgroundColor,
+                        }}
+                      >
+                        <Text className='text-sm text-gray-600'>
+                          <Text className='font-medium'>Receipt Code:</Text>{' '}
+                          <Text className='font-bold text-black'>
+                            {reportDetail?.productReceipt?.code || 'N/A'}
+                          </Text>
+                        </Text>
+                        <Text className='text-sm text-gray-600'>
+                          <Text className='font-medium'>
+                            Expected Quantity:
+                          </Text>{' '}
+                          <Text className='font-bold text-red-500'>
+                            {reportDetail?.expectedQuantity ?? 'N/A'}
+                          </Text>
+                        </Text>
+                        <Text className='text-sm text-gray-600'>
+                          <Text className='font-medium'>Actual Quantity:</Text>{' '}
+                          <Text className='font-bold text-green-500'>
                             {reportDetail?.actualQuantity ?? 'N/A'}
                           </Text>
                         </Text>

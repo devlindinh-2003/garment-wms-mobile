@@ -22,11 +22,11 @@ const WarehouseLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear();
-      showSnackbar('You have been logged out successfully.', 'success'); // Show success snackbar
+      showSnackbar('You have been logged out successfully.', 'success');
       router.replace('/(auth)/login');
     } catch (error) {
       console.error('Error during logout:', error);
-      showSnackbar('Failed to log out. Please try again.', 'error'); // Show error snackbar
+      showSnackbar('Failed to log out. Please try again.', 'error');
     }
   };
 
@@ -39,7 +39,7 @@ const WarehouseLayout: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
-        showSnackbar('Failed to load user information.', 'error'); // Show error snackbar
+        showSnackbar('Failed to load user information.', 'error');
       }
     };
 

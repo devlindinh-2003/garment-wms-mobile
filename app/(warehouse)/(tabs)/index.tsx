@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Dimensions,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import {
   TabView,
   SceneMap,
@@ -22,9 +16,9 @@ import {
 import Theme from '@/constants/Theme';
 import StatusBadge from '@/components/common/StatusBadge';
 import EmptyDataComponent from '@/components/common/EmptyData';
-import { convertDate } from '@/helpers/converDate';
 import { router } from 'expo-router';
 import PullToRefresh from '@/components/common/PullToRefresh';
+import { convertDateWithTime } from '@/helpers/convertDateWithTime';
 
 const initialLayout = { width: Dimensions.get('window').width };
 
@@ -75,7 +69,7 @@ const WarehouseStaffDashboard = () => {
     >
       <Card.Content>
         <View className='flex-row justify-between items-center mb-4'>
-          <Text className='text-lg font-semibold text-gray-800'>
+          <Text className='text-lg font-semibold text-primaryLight'>
             {report.code}
           </Text>
           <StatusBadge
@@ -88,20 +82,20 @@ const WarehouseStaffDashboard = () => {
             {InventoryReportStatusLabels[report.status]}
           </StatusBadge>
         </View>
-        <View className='flex-row items-center mb-2'>
-          <Text className='text-gray-500 font-medium'>Created At:</Text>
-          <Text className='ml-2 text-gray-700'>
-            {convertDate(report.createdAt)}
+        <View className='flex-row justify-between mb-2'>
+          <Text className='text-gray-500 font-medium'>Request Date</Text>
+          <Text className='font-semibold'>
+            {convertDateWithTime(report.createdAt || '')}
           </Text>
         </View>
-        <View className='flex-row items-center'>
-          <Text className='text-gray-500 font-medium'>Note:</Text>
-          <Text className='ml-2 text-gray-700'>
+        <View className='flex-row justify-between mb-2'>
+          <Text className='text-gray-500 font-medium'>Note</Text>
+          <Text className='font-semibold text-gray-700'>
             {report.note || 'No note provided'}
           </Text>
         </View>
       </Card.Content>
-      <View className='items-end px-4 py-3'>
+      <View className='w-full px-4 py-3'>
         <Button
           mode='contained'
           icon={
@@ -186,8 +180,8 @@ const WarehouseStaffDashboard = () => {
   };
 
   const renderScene = SceneMap({
-    inProgress: InProgressRoute,
     reported: ReportedRoute,
+    inProgress: InProgressRoute,
   });
 
   const renderTabBar = (
@@ -233,8 +227,8 @@ const WarehouseStaffDashboard = () => {
         navigationState={{
           index,
           routes: [
-            { key: 'reported', title: 'Reported' },
             { key: 'inProgress', title: 'In Progress' },
+            { key: 'reported', title: 'Reported' },
           ],
         }}
         renderScene={renderScene}

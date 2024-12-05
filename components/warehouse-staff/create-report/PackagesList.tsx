@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Alert } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Button, Card, Divider, TextInput } from 'react-native-paper';
 import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -109,7 +109,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const handleSearch = () => {
     const searchQueryLower = searchQuery.trim().toLowerCase();
     if (!searchQueryLower) {
-      Alert.alert('Search Error', 'Please enter a valid search query.');
+      showSnackbar('Please enter a valid search query.', 'error');
       return;
     }
 
@@ -185,16 +185,12 @@ const PackagesList: React.FC<PackagesListProps> = ({
       });
 
       if (!found) {
-        Alert.alert(
-          'Not Found',
-          `Scanned code "${scannedData}" was not found in any inventory detail.`
-        );
         showSnackbar(
           `Scanned code "${scannedData}" was not found in any inventory detail.`,
           'error'
         );
       } else {
-        clearScannedData(); // Clear scanned data after it has been processed
+        clearScannedData();
       }
     }
   }, [scannedData, detailsState]);
