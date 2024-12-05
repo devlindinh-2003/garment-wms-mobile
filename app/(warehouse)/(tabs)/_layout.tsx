@@ -8,6 +8,7 @@ import AppBarHeaderLayout from '@/components/common/AppBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import avatar from '@/assets/images/avatar.png';
 import { useSnackbar } from '@/app/_layout';
+import { Avatar } from 'react-native-paper';
 
 const WarehouseLayout: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -48,8 +49,10 @@ const WarehouseLayout: React.FC = () => {
   const renderDrawerContent = () => (
     <SafeAreaView className='flex-1 bg-white p-6'>
       <View className='items-center mb-6'>
-        <Image source={avatar} className='w-20 h-20 rounded-full mb-3' />
-        <Text className='text-2xl font-bold'>Staff Profile</Text>
+        <Avatar.Image
+          size={90}
+          source={user?.avatarUrl ? { uri: user.avatarUrl } : avatar}
+        />
       </View>
 
       {user ? (

@@ -126,7 +126,6 @@ const Layout: React.FC = () => {
           size={90}
           source={user?.avatarUrl ? { uri: user.avatarUrl } : avatar}
         />
-        <Text className='text-2xl font-bold mt-3'>Staff Profile</Text>
       </View>
 
       <View className='mb-4'>

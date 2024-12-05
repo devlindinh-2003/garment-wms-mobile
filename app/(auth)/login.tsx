@@ -62,12 +62,12 @@ const Login = () => {
     <SafeAreaView className='flex-1 bg-white'>
       <View className='flex-1 px-6 justify-center'>
         <Text className='text-3xl font-bold text-center mb-8 uppercase text-primaryLight'>
-          Sign In
+          Garment Inventory
         </Text>
 
         <Image
           source={logo}
-          className='w-40 h-40 self-center mb-6'
+          className='w-52 h-w-52 self-center mb-6'
           accessibilityLabel='Warehouse icon'
         />
 

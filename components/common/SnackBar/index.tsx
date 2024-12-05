@@ -28,6 +28,7 @@ const SnackbarComponent: React.FC<SnackbarComponentProps> = ({
   return (
     <View className='absolute bottom-4 left-4 right-4'>
       <Snackbar
+        duration={3000}
         visible={visible}
         onDismiss={onDismiss}
         action={{
