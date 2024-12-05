@@ -47,10 +47,14 @@ const ProductStatistic: React.FC<ProductStatisticProps> = ({ statistic }) => {
   return (
     <View>
       <Card className='rounded-lg shadow-lg p-4 bg-white items-center'>
-        <Text className='text-gray-500 text-sm mb-1'>Total Request</Text>
-        <Text className='text-3xl font-bold text-gray-900 mb-5'>
-          {statistic?.total || 0}
-        </Text>
+        <View className='items-start'>
+          <Text className='text-gray-500 text-sm mb-1'>
+            Total Inspection Request
+          </Text>
+          <Text className='text-3xl  font-bold text-gray-900 mb-5'>
+            {statistic?.total || 0}
+          </Text>
+        </View>
         {/* Summary Chart */}
         <View>
           <View className='flex-row justify-center'>

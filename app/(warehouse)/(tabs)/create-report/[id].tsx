@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, View, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, StyleSheet } from 'react-native';
 import { Divider, Button } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useGetInventoryReporttById } from '@/hooks/useGetInventoryReportById';
@@ -10,8 +10,10 @@ import CameraComponent from '@/components/warehouse-staff/create-report/CameraCo
 import { createInventoryReport } from '@/api/inventoryReport';
 import PackagesList from '@/components/warehouse-staff/create-report/PackagesList';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
+import { useSnackbar } from '@/app/_layout';
 
 const CreateInventoryReport = () => {
+  const { showSnackbar } = useSnackbar();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInventoryReporttById(
     id as string
@@ -44,7 +46,7 @@ const CreateInventoryReport = () => {
 
   const handleSubmit = async () => {
     if (!inventoryReportDetail) {
-      Alert.alert('Error', 'No inventory details found.');
+      showSnackbar('No inventory details found.', 'error');
       return;
     }
 
@@ -75,7 +77,7 @@ const CreateInventoryReport = () => {
     });
 
     if (processedDetails.length === 0) {
-      Alert.alert('Error', 'No inventory details to submit.');
+      showSnackbar('No inventory details to submit.', 'success');
       return;
     }
 
@@ -84,13 +86,13 @@ const CreateInventoryReport = () => {
 
     try {
       await createInventoryReport(id as string, requestBody);
-      Alert.alert('Success', 'Inventory report submitted successfully.');
+      showSnackbar('Inventory report submitted successfully.', 'success');
       router.replace({
         pathname: '/(warehouse)/(tabs)/reported/[id]',
         params: { id },
       });
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to submit the report.');
+      showSnackbar(`${error.message}.`, 'error');
     }
   };
 

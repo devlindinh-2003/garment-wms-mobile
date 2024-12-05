@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Alert } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Button, Card, Divider, TextInput } from 'react-native-paper';
 import { InventoryReportDetailRoot } from '@/types/InventoryReport';
 import StatusBadge from '@/components/common/StatusBadge';
 import PackagesItem from './PackagesItem';
 import Theme from '@/constants/Theme';
 import { Scan } from 'lucide-react-native';
+import { useSnackbar } from '@/app/_layout';
 
 interface PackagesListProps {
   inventoryReportDetail: InventoryReportDetailRoot[];
@@ -22,6 +23,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   clearScannedData,
   onValidationChange,
 }) => {
+  const { showSnackbar } = useSnackbar();
   const [detailsState, setDetailsState] = useState(inventoryReportDetail);
   const [searchQuery, setSearchQuery] = useState<string>(''); // Search query state
   const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true); // Disable button by default
@@ -107,7 +109,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
   const handleSearch = () => {
     const searchQueryLower = searchQuery.trim().toLowerCase();
     if (!searchQueryLower) {
-      Alert.alert('Search Error', 'Please enter a valid search query.');
+      showSnackbar('Please enter a valid search query.', 'error');
       return;
     }
 
@@ -144,7 +146,7 @@ const PackagesList: React.FC<PackagesListProps> = ({
     });
 
     if (!found) {
-      Alert.alert('Not Found', `No receipt found for "${searchQuery}".`);
+      showSnackbar(`No receipt found for "${searchQuery}".`, 'error');
     }
   };
 
@@ -183,12 +185,12 @@ const PackagesList: React.FC<PackagesListProps> = ({
       });
 
       if (!found) {
-        Alert.alert(
-          'Not Found',
-          `Scanned code "${scannedData}" was not found in any inventory detail.`
+        showSnackbar(
+          `Scanned code "${scannedData}" was not found in any inventory detail.`,
+          'error'
         );
       } else {
-        clearScannedData(); // Clear scanned data after it has been processed
+        clearScannedData();
       }
     }
   }, [scannedData, detailsState]);

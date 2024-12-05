@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  Modal,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +9,7 @@ import axios from 'axios';
 import logo from '@/assets/images/DeliveryNoteIntro.png';
 import Theme from '@/constants/Theme';
 import { authApi } from '@/api/auth';
+import { useSnackbar } from '../_layout';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -24,16 +18,16 @@ const Login = () => {
   const [role, setRole] = useState(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // Error message state
   const [items, setItems] = useState([
     { label: 'Warehouse Staff', value: 'WAREHOUSE_STAFF' },
     { label: 'Inspection Staff', value: 'INSPECTION_DEPARTMENT' },
   ]);
-  const router = useRouter();
 
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
   const handleLogin = async () => {
     if (!email || !password || !role) {
-      setError('All fields are required.');
+      showSnackbar('All fields are required.', 'error');
       return;
     }
 
@@ -42,19 +36,23 @@ const Login = () => {
     try {
       const response = await axios(authApi.login(email, password, role));
       const { accessToken, user } = response.data.data;
-      console.log('Login Success Response:', response.data);
+
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
+      // Show success Snackbar
+      showSnackbar('Login successful!', 'success');
+
+      // Redirect immediately
       router.replace(
         role === 'WAREHOUSE_STAFF' ? '/(warehouse)/(tabs)' : '/(main)/(tabs)'
       );
     } catch (error: any) {
-      const message =
-        error.response?.status === 401
-          ? 'Invalid email or password. Please try again.'
-          : 'Login failed. Please try again later.';
-      setError(message);
+      const apiErrorMessage =
+        error.response?.data?.message ||
+        'Something went wrong. Please try again later.';
+      console.log(apiErrorMessage);
+      showSnackbar(apiErrorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -62,40 +60,14 @@ const Login = () => {
 
   return (
     <SafeAreaView className='flex-1 bg-white'>
-      {/* Modal for error display */}
-      <Modal
-        visible={!!error}
-        animationType='fade'
-        transparent={true}
-        onRequestClose={() => setError(null)}
-      >
-        <View className='flex-1 justify-center items-center bg-black bg-opacity-50'>
-          <View className='w-4/5 p-6 bg-white rounded-lg shadow-lg'>
-            <View className='flex-row items-center mb-4'>
-              <AlertCircle size={32} color='#DC2626' />
-              <Text className='text-xl font-semibold text-red-600 ml-3'>
-                Error
-              </Text>
-            </View>
-            <Text className='text-gray-700 text-base mb-4'>{error}</Text>
-            <TouchableOpacity
-              className='w-full py-2 bg-blue-600 rounded-lg items-center'
-              onPress={() => setError(null)}
-            >
-              <Text className='text-white text-lg font-semibold'>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       <View className='flex-1 px-6 justify-center'>
         <Text className='text-3xl font-bold text-center mb-8 uppercase text-primaryLight'>
-          Sign In
+          Garment Inventory
         </Text>
 
         <Image
           source={logo}
-          className='w-40 h-40 self-center mb-6'
+          className='w-52 h-w-52 self-center mb-6'
           accessibilityLabel='Warehouse icon'
         />
 

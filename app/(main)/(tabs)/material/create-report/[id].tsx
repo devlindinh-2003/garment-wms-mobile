@@ -11,8 +11,10 @@ import { ScrollView, View, Text } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
 import Theme from '@/constants/Theme';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
+import { useSnackbar } from '@/app/_layout';
 
 const CreateMaterialReport = () => {
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
@@ -116,10 +118,9 @@ const CreateMaterialReport = () => {
 
     mutate(requestBody, {
       onSuccess: (response) => {
-        setSnackbarMessage('Report submitted successfully!');
-        console.log('Response  success');
+        console.log('Response success');
         console.log(JSON.stringify(response.data, null, 2));
-        setSnackbarVisibleSuccess(true);
+        showSnackbar('Inspection Report created successfully', 'success');
         router.replace({
           pathname: '/(main)/(tabs)/material/inspected/[id]',
           params: { id: response.data?.inspectionReport?.id || '' },
@@ -128,7 +129,7 @@ const CreateMaterialReport = () => {
       onError: (error) => {
         console.log('Response error');
         console.log(JSON.stringify(error, null, 2));
-        setSnackbarMessage('Failed to submit the report.');
+        showSnackbar('Inspection Report created failed', 'error');
         setSnackbarVisibleError(true);
       },
     });

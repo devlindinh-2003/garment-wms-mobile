@@ -1,67 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { router, Tabs } from 'expo-router';
-import Theme from '@/constants/Theme';
-import { Warehouse } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  Alert,
-} from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 import AppBarHeaderLayout from '@/components/common/AppBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import avatar from '@/assets/images/avatar.png';
-
-const TabLayout: React.FC = () => {
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Theme.primaryLightBackgroundColor,
-        tabBarInactiveTintColor: Theme.greyText,
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name='index'
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ focused }) => (
-            <Warehouse
-              size={22}
-              color={
-                focused ? Theme.primaryLightBackgroundColor : Theme.greyText
-              }
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-};
+import { useSnackbar } from '@/app/_layout';
+import { Avatar } from 'react-native-paper';
 
 const WarehouseLayout: React.FC = () => {
-  const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const { showSnackbar } = useSnackbar();
 
   const toggleDrawer = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setDrawerOpen((prev) => !prev);
   };
 
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear();
-      Alert.alert('Logged Out', 'You have been logged out successfully.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-      ]);
+      showSnackbar('You have been logged out successfully.', 'success');
+      router.replace('/(auth)/login');
     } catch (error) {
       console.error('Error during logout:', error);
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+      showSnackbar('Failed to log out. Please try again.', 'error');
     }
   };
 
@@ -74,63 +39,50 @@ const WarehouseLayout: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
+        showSnackbar('Failed to load user information.', 'error');
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [showSnackbar]);
 
   const renderDrawerContent = () => (
     <SafeAreaView className='flex-1 bg-white p-6'>
       <View className='items-center mb-6'>
-        <Image source={avatar} className='w-20 h-20 rounded-full mb-3' />
-        <Text className='text-2xl font-bold'>Staff Profile</Text>
+        <Avatar.Image
+          size={90}
+          source={user?.avatarUrl ? { uri: user.avatarUrl } : avatar}
+        />
       </View>
 
-      <View className='mb-4'>
-        <Text className='text-gray-700 font-semibold mb-1'>Name</Text>
-        <TextInput
-          value={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
-          editable={false}
-          className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
-        />
-      </View>
-      <View className='mb-4'>
-        <Text className='text-gray-700 font-semibold mb-1'>Email</Text>
-        <TextInput
-          value={user?.email ?? 'N/A'}
-          editable={false}
-          className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
-        />
-      </View>
-      <View className='mb-4'>
-        <Text className='text-gray-700 font-semibold mb-1'>Date of Birth</Text>
-        <TextInput
-          value={
-            user?.dateOfBirth
-              ? new Date(user.dateOfBirth).toLocaleDateString()
-              : 'N/A'
-          }
-          editable={false}
-          className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
-        />
-      </View>
-      <View className='mb-4'>
-        <Text className='text-gray-700 font-semibold mb-1'>Phone Number</Text>
-        <TextInput
-          value={user?.phoneNumber ?? 'N/A'}
-          editable={false}
-          className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
-        />
-      </View>
-      <View className='mb-6'>
-        <Text className='text-gray-700 font-semibold mb-1'>Staff Role</Text>
-        <TextInput
-          value={user?.role ?? 'Warehouse Staff'}
-          editable={false}
-          className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
-        />
-      </View>
+      {user ? (
+        <>
+          <ProfileField
+            label='Name'
+            value={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
+          />
+          <ProfileField label='Email' value={user?.email ?? 'N/A'} />
+          <ProfileField
+            label='Date of Birth'
+            value={
+              user?.dateOfBirth
+                ? new Date(user.dateOfBirth).toLocaleDateString()
+                : 'N/A'
+            }
+          />
+          <ProfileField
+            label='Phone Number'
+            value={user?.phoneNumber ?? 'N/A'}
+          />
+          <ProfileField
+            label='Staff Role'
+            value={user?.role ?? 'Warehouse Staff'}
+          />
+        </>
+      ) : (
+        <Text className='text-gray-500'>Loading user information...</Text>
+      )}
+
       <TouchableOpacity
         onPress={handleLogout}
         className='bg-red-600 p-3 rounded-md'
@@ -140,22 +92,29 @@ const WarehouseLayout: React.FC = () => {
     </SafeAreaView>
   );
 
+  const ProfileField = ({ label, value }: { label: string; value: string }) => (
+    <View className='mb-4'>
+      <Text className='text-gray-700 font-semibold mb-1'>{label}</Text>
+      <TextInput
+        value={value}
+        editable={false}
+        className='border border-gray-300 p-3 rounded-md bg-gray-100 text-gray-800'
+      />
+    </View>
+  );
+
   return (
     <Drawer
-      open={open}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
+      open={drawerOpen}
+      onOpen={() => setDrawerOpen(true)}
+      onClose={() => setDrawerOpen(false)}
       renderDrawerContent={renderDrawerContent}
       drawerPosition='right'
     >
       <SafeAreaView style={{ flex: 1 }}>
         <AppBarHeaderLayout toggleDrawer={toggleDrawer} />
         <View style={{ flex: 1 }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
+          <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name='index' options={{}} />
           </Stack>
         </View>

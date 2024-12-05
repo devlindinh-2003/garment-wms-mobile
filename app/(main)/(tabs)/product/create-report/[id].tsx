@@ -10,8 +10,10 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
 import Theme from '@/constants/Theme';
+import { useSnackbar } from '@/app/_layout';
 
 const CreateProductReport = () => {
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { data, isSuccess, isPending } = useGetInspectionRequestById(
@@ -115,7 +117,7 @@ const CreateProductReport = () => {
 
     mutate(requestBody, {
       onSuccess: (response) => {
-        setSnackbarMessage('Report submitted successfully!');
+        showSnackbar('Inspection Report created successfully', 'success');
         setSnackbarVisibleSuccess(true);
         router.replace({
           pathname: '/(main)/(tabs)/product/inspected/[id]',
@@ -123,8 +125,9 @@ const CreateProductReport = () => {
         });
       },
       onError: (error) => {
-        console.error('Error submitting report:', error.message);
-        setSnackbarMessage('Failed to submit the report.');
+        console.log('Response error');
+        console.log(JSON.stringify(error, null, 2));
+        showSnackbar('Inspection Report created failed', 'error');
         setSnackbarVisibleError(true);
       },
     });

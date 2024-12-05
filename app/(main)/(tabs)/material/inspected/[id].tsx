@@ -14,8 +14,7 @@ const InspectedDetails = () => {
   const { data, isSuccess, isPending } = useGetInspectionReportById(
     id as string
   );
-  const { defectsList = [] } = useGetAllDefect(); // Default to an empty array if undefined
-
+  const { defectsList = [] } = useGetAllDefect();
   if (isPending) {
     return <SpinnerLoading />;
   }
@@ -38,6 +37,16 @@ const InspectedDetails = () => {
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
     const importRequestCode = inspectionRequest?.importRequest?.code || 'N/A';
 
+    const passCount =
+      inspectionReportDetail?.reduce(
+        (acc: number, item: any) => acc + (item.approvedQuantityByPack || 0),
+        0
+      ) || 0;
+    const failCount =
+      inspectionReportDetail?.reduce(
+        (acc: number, item: any) => acc + (item.defectQuantityByPack || 0),
+        0
+      ) || 0;
     // Calculate totals
     const totalMaterials =
       inspectionReportDetail?.reduce((acc: number, item: any) => {
@@ -50,17 +59,6 @@ const InspectedDetails = () => {
           (item.defectQuantityByPack || 0)
         );
       }, 0) || 0;
-
-    const passCount =
-      inspectionReportDetail?.reduce(
-        (acc: number, item: any) => acc + (item.approvedQuantityByPack || 0),
-        0
-      ) || 0;
-    const failCount =
-      inspectionReportDetail?.reduce(
-        (acc: number, item: any) => acc + (item.defectQuantityByPack || 0),
-        0
-      ) || 0;
     const totalCount = totalMaterials + passCount;
     console.log('Pass Count:', passCount);
     console.log('Fail Count:', failCount);
@@ -124,7 +122,7 @@ const InspectedDetails = () => {
         {/* Inspection Report */}
         <MaterialInspectionReport
           inspectionReportCode={inspectionReportCode}
-          totalMaterials={totalCount}
+          totalMaterials={totalMaterials}
           chartData={chartData}
           failPercentage={failPercentage}
           passPercentage={passPercentage}
