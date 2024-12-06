@@ -7,6 +7,7 @@ import {
 import { InspectionRequestListResponse } from '@/types/InspectionRequestResponse';
 import { ApiResponse } from '@/types/ApiResponse';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface GetAllInspectionRequestInput {
   sorting?: { id: string; desc: boolean }[];
@@ -53,10 +54,16 @@ export const getAllnspectionRequest = async ({
     order,
   });
 
-  const fullUrl = `/inspection-request${queryString}`;
+  const fullUrl = `/inspection-request/my${queryString}`;
 
   try {
-    const config = get(fullUrl);
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    if (!accessToken) {
+      throw new Error('Access token not found. Please log in again.');
+    }
+    const config = get(fullUrl, undefined, {
+      Authorization: `Bearer ${accessToken}`,
+    });
     const response = await axios(config);
     return response.data.data as InspectionRequestListResponse;
   } catch (error) {

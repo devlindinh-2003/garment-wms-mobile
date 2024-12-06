@@ -102,7 +102,7 @@ export const getWarehouseStaffInventoryReport = async ({
     });
 
     const response = await axios(config);
-    console.log('API Response:', JSON.stringify(response.data, null, 2));
+    // console.log('API Response:', JSON.stringify(response.data, null, 2));
     return response.data as InventoryReportListResponse;
   } catch (error: any) {
     console.error(
