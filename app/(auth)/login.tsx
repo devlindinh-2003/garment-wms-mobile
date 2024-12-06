@@ -45,7 +45,9 @@ const Login = () => {
 
       // Redirect immediately
       router.replace(
-        role === 'WAREHOUSE_STAFF' ? '/(warehouse)/(tabs)' : '/(main)/(tabs)'
+        role === 'WAREHOUSE_STAFF'
+          ? '/(warehouse)/(tabs)'
+          : '/(main)/(tabs)/material'
       );
     } catch (error: any) {
       const apiErrorMessage =

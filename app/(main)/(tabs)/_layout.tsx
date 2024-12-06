@@ -23,6 +23,7 @@ const TabLayout: React.FC = () => {
       <Tabs.Screen
         name='index'
         options={{
+          href: null,
           title: 'Dashboard',
           tabBarIcon: ({ focused }) => (
             <Warehouse
@@ -68,6 +69,7 @@ const TabLayout: React.FC = () => {
       <Tabs.Screen
         name='notification'
         options={{
+          href: null,
           title: 'Notification',
           tabBarIcon: ({ focused }) => (
             <Bell
