@@ -8,7 +8,6 @@ import { useRouter } from 'expo-router';
 import { Button, Card, Text } from 'react-native-paper';
 import { Dimensions, View } from 'react-native';
 import StatusBadge from '@/components/common/StatusBadge';
-import { convertDate } from '@/helpers/converDate';
 import Theme from '@/constants/Theme';
 import {
   NavigationState,
@@ -72,12 +71,12 @@ const ProductPage = () => {
   const [index, setIndex] = useState(0);
   const routes = [
     {
-      key: 'inspected',
-      title: `Inspected (${inspectedProductList.length})`,
-    },
-    {
       key: 'inspecting',
       title: `Inspecting (${inspectingProductList.length})`,
+    },
+    {
+      key: 'inspected',
+      title: `Inspected (${inspectedProductList.length})`,
     },
   ];
 
@@ -242,16 +241,16 @@ const ProductPage = () => {
   };
 
   const renderScene = SceneMap({
-    inspected: () => (
-      <InspectedRoute
-        inspectedProductList={inspectedProductList}
+    inspecting: () => (
+      <InspectingRoute
+        inspectedProductList={inspectingProductList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
     ),
-    inspecting: () => (
-      <InspectingRoute
-        inspectedProductList={inspectingProductList}
+    inspected: () => (
+      <InspectedRoute
+        inspectedProductList={inspectedProductList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
@@ -266,10 +265,10 @@ const ProductPage = () => {
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: index === 0 ? Theme.green[500] : '#3b82f6',
+        backgroundColor: index === 0 ? Theme.blue[500] : Theme.green[500],
       }}
       style={{ backgroundColor: 'white' }}
-      activeColor={index === 0 ? Theme.green[500] : '#3b82f6'}
+      activeColor={index === 0 ? Theme.blue[500] : Theme.green[500]}
       inactiveColor='#9ca3af'
     />
   );

@@ -261,10 +261,10 @@ const MaterialPage: React.FC = () => {
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: index === 0 ? Theme.green[500] : '#3b82f6',
+        backgroundColor: index === 0 ? Theme.blue[500] : Theme.green[500],
       }}
       style={{ backgroundColor: 'white' }}
-      activeColor={index === 0 ? Theme.green[500] : '#3b82f6'}
+      activeColor={index === 0 ? Theme.blue[500] : Theme.green[500]}
       inactiveColor='#9ca3af'
     />
   );
