@@ -66,6 +66,22 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
         />
       </View>
 
+      {/* Legend */}
+      <View className='flex-row justify-between mt-4 items-center w-40 mx-auto'>
+        <View className='flex-row items-center'>
+          <View className='w-3 h-3 bg-red-500 mr-2 rounded-full' />
+          <Text>Fail</Text>
+        </View>
+        <Text className='font-bold'>{failPercentage}%</Text>
+      </View>
+      <View className='flex-row justify-between mt-2 items-center w-40 mx-auto'>
+        <View className='flex-row items-center'>
+          <View className='w-3 h-3 bg-green-500 mr-2 rounded-full' />
+          <Text>Pass</Text>
+        </View>
+        <Text className='font-bold'>{passPercentage}%</Text>
+      </View>
+
       <View>
         <Text className='text-blue-500 mt-7 text-center text-2xl font-semibold mb-3 uppercase'>
           Inspection Report Details
