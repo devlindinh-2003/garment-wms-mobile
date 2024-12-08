@@ -19,6 +19,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 import SpinnerLoading from '@/components/common/SpinnerLoading';
 import PullToRefresh from '@/components/common/PullToRefresh';
 import { convertDateWithTime } from '@/helpers/convertDateWithTime';
+import EmptyDataComponent from '@/components/common/EmptyData';
 
 interface RouteProps {
   inspectedMaterialList: InspectionRequest[];
@@ -34,7 +35,9 @@ const InspectedRoute: React.FC<RouteProps> = ({
   onRefresh,
 }) => {
   const router = useRouter();
-
+  if (!inspectedMaterialList.length) {
+    return <EmptyDataComponent />;
+  }
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
       <ScrollView className='p-4'>
@@ -118,7 +121,9 @@ const InspectingRoute: React.FC<RouteProps> = ({
   onRefresh,
 }) => {
   const router = useRouter();
-
+  if (!inspectedMaterialList.length) {
+    return <EmptyDataComponent />;
+  }
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
       <ScrollView className='p-4'>
