@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "garment-wms-mobile",
+    "name": "Garment Warehouse Management Mobile",
     "slug": "garment-wms-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/warehouse-logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -19,7 +19,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ],
+      "package": "com.devlindinh2003.garmentwmsmobile"
     },
     "web": {
       "bundler": "metro",
@@ -28,13 +34,13 @@
     },
     "plugins": [
       "expo-router",
-      "react-native-blasted-image",
       "expo-build-properties",
       [
         "expo-build-properties",
         {
           "android": {
-            "newArchEnabled": true
+            "newArchEnabled": true,
+            "usesCleartextTraffic": true
           },
           "ios": {
             "newArchEnabled": true
@@ -52,6 +58,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b83c4fad-a4ea-48cb-a1a1-45029924e3f8"
+      }
+    },
+    "owner": "devlindinh2003"
   }
 }
