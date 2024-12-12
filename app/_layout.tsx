@@ -60,11 +60,16 @@ export default function RootLayout() {
       if (loaded) {
         showSnackbar('Redirecting to login page...', 'success');
         router.replace('/(auth)/login');
-        await SplashScreen.hideAsync();
       }
     };
     redirectToLogin();
   }, [loaded, showSnackbar]);
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
 
   if (!loaded) {
     return null;
