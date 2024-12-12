@@ -4,7 +4,7 @@
     "slug": "garment-wms-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/warehouse-logo.png",
+    "icon": "./assets/images/mobileLogo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
