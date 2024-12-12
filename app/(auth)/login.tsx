@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff } from 'lucide-react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import logo from '@/assets/images/DeliveryNoteIntro.png';
@@ -23,7 +23,6 @@ const Login = () => {
     { label: 'Inspection Staff', value: 'INSPECTION_DEPARTMENT' },
   ]);
 
-  const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const handleLogin = async () => {
     if (!email || !password || !role) {
