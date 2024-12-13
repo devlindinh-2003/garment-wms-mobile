@@ -9,9 +9,11 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
+import Dialog from 'react-native-dialog';
 import Theme from '@/constants/Theme';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 import { useSnackbar } from '@/app/_layout';
+import { AlertTriangle, CheckCircle, FileWarning } from 'lucide-react-native';
 
 const CreateMaterialReport = () => {
   const { showSnackbar } = useSnackbar();
@@ -34,6 +36,9 @@ const CreateMaterialReport = () => {
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
+
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogType, setDialogType] = useState<'warning' | 'confirmation'>();
 
   const handleReportUpdate = (
     id: string,
@@ -60,6 +65,8 @@ const CreateMaterialReport = () => {
     }
   );
 
+  const allFailed = reportDetails.every((detail) => detail.pass === 0);
+
   const handleSendReport = () => {
     if (!allInputsValid) {
       setSnackbarMessage(
@@ -68,6 +75,13 @@ const CreateMaterialReport = () => {
       setSnackbarVisibleError(true);
       return;
     }
+
+    setDialogType(allFailed ? 'warning' : 'confirmation');
+    setDialogVisible(true);
+  };
+
+  const confirmSubmitReport = () => {
+    setDialogVisible(false);
 
     const inspectionReportDetail = reportDetails.map((detail) => {
       const correspondingImportDetail =
@@ -202,10 +216,50 @@ const CreateMaterialReport = () => {
                 fontWeight: 'bold',
               }}
             >
-              {isCreatingReport ? 'Submitting...' : 'Send Report'}
+              {isCreatingReport ? 'Submitting...' : 'Create Report'}
             </Button>
           </View>
         </ScrollView>
+        <Dialog.Container visible={dialogVisible}>
+          <View className='flex items-center mb-3'>
+            {dialogType === 'warning' ? (
+              <AlertTriangle className='text-red-600' size={40} />
+            ) : (
+              <CheckCircle className='text-blue-900' size={40} />
+            )}
+            <Dialog.Title
+              className={`text-2xl mt-2 font-bold ${
+                dialogType === 'warning' ? 'text-red-600' : 'text-blue-900'
+              }`}
+            >
+              {dialogType === 'warning' ? 'Warning' : 'Confirmation'}
+            </Dialog.Title>
+          </View>
+          <Dialog.Description
+            className={`text-sm ${
+              dialogType === 'warning' ? 'text-red-400' : 'text-blue-400'
+            } mt-2`}
+          >
+            {dialogType === 'warning'
+              ? 'All materials have failed inspection. Do you still want to proceed?'
+              : 'Are you sure you want to submit this report?'}
+          </Dialog.Description>
+          <View className='flex-row justify-end mt-4'>
+            <Dialog.Button
+              label='Cancel'
+              onPress={() => setDialogVisible(false)}
+              className='text-sm font-semibold text-gray-500 mr-4'
+            />
+            <Dialog.Button
+              label='Submit'
+              onPress={confirmSubmitReport}
+              className={`text-sm font-semibold ${
+                dialogType === 'warning' ? 'text-red-600' : 'text-primaryLight'
+              }`}
+            />
+          </View>
+        </Dialog.Container>
+
         <Snackbar
           visible={snackbarVisibleSuccess}
           onDismiss={() => setSnackbarVisibleSuccess(false)}

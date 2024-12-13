@@ -8,7 +8,6 @@ import * as eva from '@eva-design/eva';
 import { ApplicationProvider } from '@ui-kitten/components';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import SnackbarComponent from '@/components/common/SnackBar';
 
 SplashScreen.preventAutoHideAsync();
@@ -53,24 +52,19 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const token = await AsyncStorage.getItem('accessToken');
-      if (token) {
-        setIsAuthenticated(true);
-        router.replace('/(warehouse)/(tabs)');
-      } else {
+    const redirectToLogin = async () => {
+      if (loaded) {
+        showSnackbar('Redirecting to login page...', 'success');
         router.replace('/(auth)/login');
+        await SplashScreen.hideAsync();
       }
     };
-
-    if (loaded) {
-      checkAuthStatus();
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    redirectToLogin();
+  }, [loaded, showSnackbar]);
 
   if (!loaded) {
     return null;

@@ -4,14 +4,18 @@ import { Text, Card } from 'react-native-paper';
 import {
   Calendar,
   CalendarCheck2,
+  CalendarX,
+  CircleX,
   ClipboardCopy,
   Notebook,
+  Omega,
   UserRoundSearch,
 } from 'lucide-react-native';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 import { convertDate } from '@/helpers/converDate';
 import { convertDateWithTime } from '@/helpers/convertDateWithTime';
+import { ImportRequestStatus } from '@/enums/importRequestStatus';
 
 interface MaterialInspectionRequestInfoProps {
   inspectionRequestCode: string;
@@ -21,6 +25,7 @@ interface MaterialInspectionRequestInfoProps {
   inspectionRequestDate: string | null;
   inspectionRequestNote: string | null;
   importRequestCode?: string;
+  importRequestStatus?: string;
 }
 
 const MaterialInspectionRequestInfo: React.FC<
@@ -32,6 +37,7 @@ const MaterialInspectionRequestInfo: React.FC<
   inspectionRequestDate,
   inspectionRequestNote,
   importRequestCode,
+  importRequestStatus,
 }) => {
   return (
     <View>
@@ -91,25 +97,62 @@ const MaterialInspectionRequestInfo: React.FC<
         <View className='flex-row items-center'>
           <ClipboardCopy size={20} color='#6b7280' className='mr-2' />
           <Text className='text-gray-700 font-medium'>Import Request: </Text>
-          <StatusBadge>
-            {/* update this later */}
-            {importRequestCode}
-            {/* {inspectionDeptName || 'Tung Trong'} */}
+          <StatusBadge
+            className={`px-2 py-1 rounded-full font-bold ${
+              importRequestStatus === ImportRequestStatus.REJECTED
+                ? 'bg-red-500 text-white'
+                : ''
+            }`}
+          >
+            {importRequestCode || 'N/A'}
           </StatusBadge>
         </View>
 
-        {/* Note Section */}
-        <View className='mb-4 mt-3'>
-          <View className='flex-row items-center mb-2'>
-            <Notebook color={Theme.greyText} size={18} className='mr-2' />
-            <Text className='text-gray-700 font-semibold'>Note</Text>
-          </View>
-          <Card className='bg-gray-100 p-3 rounded-md'>
-            <Text className='text-gray-600'>
-              {inspectionRequestNote || 'No notes available'}
+        {/* Import Request Status Rejected */}
+        {importRequestStatus === ImportRequestStatus.REJECTED && (
+          <View className='flex-row items-center mb-3 mt-3'>
+            <CalendarX size={20} color={Theme.red[600]} className='mr-2' />
+            <Text className='text-red-800 font-medium'>
+              Import Request Status:{' '}
             </Text>
-          </Card>
-        </View>
+            <Text className='text-red-600 font-bold'>
+              {/* update this later */}
+              {importRequestStatus}
+            </Text>
+          </View>
+        )}
+
+        {/* Reject reason */}
+        {importRequestStatus === ImportRequestStatus.REJECTED && (
+          <View className='mb-4 mt-3'>
+            <View className='flex-row items-center mb-2'>
+              <CircleX color={Theme.red[600]} size={18} className='mr-2' />
+              <Text className='text-red-800 font-semibold'>
+                Rejected reasons
+              </Text>
+            </View>
+            <Card className='bg-red-100 p-3 rounded-md'>
+              <Text className='text-red-900'>
+                There is no passed materials after inspection
+              </Text>
+            </Card>
+          </View>
+        )}
+
+        {/* Note Section */}
+        {importRequestStatus !== ImportRequestStatus.REJECTED && (
+          <View className='mb-4 mt-3'>
+            <View className='flex-row items-center mb-2'>
+              <Notebook color={Theme.greyText} size={18} className='mr-2' />
+              <Text className='text-gray-700 font-semibold'>Note</Text>
+            </View>
+            <Card className='bg-gray-100 p-3 rounded-md'>
+              <Text className='text-gray-600'>
+                {inspectionRequestNote || 'No notes available'}
+              </Text>
+            </Card>
+          </View>
+        )}
       </View>
     </View>
   );

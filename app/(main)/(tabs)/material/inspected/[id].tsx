@@ -36,6 +36,8 @@ const InspectedDetails = () => {
         : 'N/A';
     const inspectionRequestStatus = inspectionRequest?.status || 'N/A';
     const importRequestCode = inspectionRequest?.importRequest?.code || 'N/A';
+    const importRequestStatus =
+      inspectionRequest?.importRequest?.status || 'N/A';
 
     const passCount =
       inspectionReportDetail?.reduce(
@@ -117,6 +119,7 @@ const InspectedDetails = () => {
           inspectionDeptName={inspectionDeptName}
           inspectionRequestNote={inspectionRequestNote}
           importRequestCode={importRequestCode}
+          importRequestStatus={importRequestStatus}
           inspectionRequestDate={inspectionRequest?.createdAt}
         />
         {/* Inspection Report */}

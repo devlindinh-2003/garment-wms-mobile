@@ -9,8 +9,10 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { Button, Snackbar } from 'react-native-paper';
+import Dialog from 'react-native-dialog';
 import Theme from '@/constants/Theme';
 import { useSnackbar } from '@/app/_layout';
+import { CheckCircle } from 'lucide-react-native';
 
 const CreateProductReport = () => {
   const { showSnackbar } = useSnackbar();
@@ -31,6 +33,7 @@ const CreateProductReport = () => {
       defects: { defectId: string; quantityByPack: number }[];
     }[]
   >([]);
+  const [dialogVisible, setDialogVisible] = useState(false);
   const [snackbarVisibleSuccess, setSnackbarVisibleSuccess] = useState(false);
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -68,6 +71,12 @@ const CreateProductReport = () => {
       setSnackbarVisibleError(true);
       return;
     }
+
+    setDialogVisible(true);
+  };
+
+  const confirmSubmitReport = () => {
+    setDialogVisible(false);
 
     const inspectionReportDetail = reportDetails.map((detail) => {
       const correspondingImportDetail =
@@ -203,6 +212,29 @@ const CreateProductReport = () => {
             </Button>
           </View>
         </ScrollView>
+        <Dialog.Container visible={dialogVisible}>
+          <View className='flex items-center mb-3'>
+            <CheckCircle className='text-blue-900' size={40} />
+            <Dialog.Title className='text-center mt-2 text-2xl font-bold text-blue-900'>
+              Confirmation
+            </Dialog.Title>
+          </View>
+          <Dialog.Description className='text-sm text-blue-700 mt-2'>
+            Are you sure you want to submit this report?
+          </Dialog.Description>
+          <View className='flex-row justify-end mt-4'>
+            <Dialog.Button
+              label='Cancel'
+              onPress={() => setDialogVisible(false)}
+              className='text-sm font-semibold text-gray-500 mr-4'
+            />
+            <Dialog.Button
+              label='Submit'
+              onPress={confirmSubmitReport}
+              className='text-sm font-semibold text-primaryLight'
+            />
+          </View>
+        </Dialog.Container>
         <Snackbar
           visible={snackbarVisibleSuccess}
           onDismiss={() => setSnackbarVisibleSuccess(false)}

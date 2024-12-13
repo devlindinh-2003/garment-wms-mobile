@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView, View, Dimensions } from 'react-native';
 import { useGetAllInspectionRequest } from '@/hooks/useGetAllInspectionRequest';
 import { InspectionRequest } from '@/types/InspectionRequest';
 import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import { InspectionRequestStatus } from '@/enums/inspectionRequestStatus';
 import { useRouter } from 'expo-router';
 import { Button, Card, Text } from 'react-native-paper';
-import { Dimensions, View } from 'react-native';
-import StatusBadge from '@/components/common/StatusBadge';
-import Theme from '@/constants/Theme';
 import {
   NavigationState,
   SceneMap,
@@ -20,79 +17,18 @@ import SpinnerLoading from '@/components/common/SpinnerLoading';
 import PullToRefresh from '@/components/common/PullToRefresh';
 import EmptyDataComponent from '@/components/common/EmptyData';
 import { convertDateWithTime } from '@/helpers/convertDateWithTime';
-
-interface RouteProps {
-  inspectedProductList: InspectionRequest[];
-  refreshing: boolean;
-  onRefresh: () => void;
-}
+import StatusBadge from '@/components/common/StatusBadge';
+import Theme from '@/constants/Theme';
 
 const initialLayout = { width: Dimensions.get('window').width };
 
-const ProductPage = () => {
-  const { data, isSuccess, isPending, refetch } = useGetAllInspectionRequest({
-    pageSize: undefined,
-    pageIndex: 0,
-  });
-
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await Promise.all([refetchInspectionRequest()]);
-    } catch (error) {
-      console.error('Error during refresh:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const refetchInspectionRequest = async () => {
-    await refetch();
-  };
-
-  const inspectedProductList: InspectionRequest[] = isSuccess
-    ? data?.data.filter(
-        (request) =>
-          request.type === InspectionRequestType.PRODUCT &&
-          request.status === InspectionRequestStatus.INSPECTED
-      ) || []
-    : [];
-
-  const inspectingProductList: InspectionRequest[] = isSuccess
-    ? data?.data.filter(
-        (request) =>
-          request.type === InspectionRequestType.PRODUCT &&
-          request.status === InspectionRequestStatus.INSPECTING
-      ) || []
-    : [];
-
-  const [index, setIndex] = useState(0);
-  const routes = [
-    {
-      key: 'inspecting',
-      title: `Inspecting (${inspectingProductList.length})`,
-    },
-    {
-      key: 'inspected',
-      title: `Inspected (${inspectedProductList.length})`,
-    },
-  ];
-
-  const InspectedRoute: React.FC<RouteProps> = ({
-    inspectedProductList,
-    refreshing,
-    onRefresh,
-  }) => {
-    const router = useRouter();
-    if (!inspectedProductList.length) {
-      return <EmptyDataComponent />;
-    }
-    return (
-      <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
-        <ScrollView className='p-4'>
-          {inspectedProductList.map((item) => (
+const InspectedRoute = ({ inspectedProductList, refreshing, onRefresh }) => {
+  const router = useRouter();
+  return (
+    <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
+      <ScrollView className='p-4'>
+        {inspectedProductList.length ? (
+          inspectedProductList.map((item) => (
             <Card
               key={item.id}
               className='mb-4 rounded-xl shadow-sm border border-gray-300'
@@ -159,25 +95,22 @@ const ProductPage = () => {
                 </Button>
               </View>
             </Card>
-          ))}
-        </ScrollView>
-      </PullToRefresh>
-    );
-  };
+          ))
+        ) : (
+          <EmptyDataComponent />
+        )}
+      </ScrollView>
+    </PullToRefresh>
+  );
+};
 
-  const InspectingRoute: React.FC<RouteProps> = ({
-    inspectedProductList,
-    refreshing,
-    onRefresh,
-  }) => {
-    const router = useRouter();
-    if (!inspectedProductList.length) {
-      return <EmptyDataComponent />;
-    }
-    return (
-      <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
-        <ScrollView className='p-4'>
-          {inspectedProductList.map((item) => (
+const InspectingRoute = ({ inspectingProductList, refreshing, onRefresh }) => {
+  const router = useRouter();
+  return (
+    <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
+      <ScrollView className='p-4'>
+        {inspectingProductList.length ? (
+          inspectingProductList.map((item) => (
             <Card
               key={item.id}
               className='mb-4 rounded-xl shadow-sm border border-gray-300'
@@ -234,16 +167,66 @@ const ProductPage = () => {
                 </Button>
               </View>
             </Card>
-          ))}
-        </ScrollView>
-      </PullToRefresh>
-    );
+          ))
+        ) : (
+          <EmptyDataComponent />
+        )}
+      </ScrollView>
+    </PullToRefresh>
+  );
+};
+
+const ProductPage = () => {
+  const { data, isSuccess, isPending, refetch } = useGetAllInspectionRequest({
+    pageSize: undefined,
+    pageIndex: 0,
+  });
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
+
+  const inspectedProductList = isSuccess
+    ? data?.data.filter(
+        (request) =>
+          request.type === InspectionRequestType.PRODUCT &&
+          request.status === InspectionRequestStatus.INSPECTED
+      ) || []
+    : [];
+
+  const inspectingProductList = isSuccess
+    ? data?.data.filter(
+        (request) =>
+          request.type === InspectionRequestType.PRODUCT &&
+          request.status === InspectionRequestStatus.INSPECTING
+      ) || []
+    : [];
+
+  const [index, setIndex] = useState(0);
+  const routes = [
+    {
+      key: 'inspecting',
+      title: `Inspecting (${inspectingProductList.length})`,
+    },
+    {
+      key: 'inspected',
+      title: `Inspected (${inspectedProductList.length})`,
+    },
+  ];
 
   const renderScene = SceneMap({
     inspecting: () => (
       <InspectingRoute
-        inspectedProductList={inspectingProductList}
+        inspectingProductList={inspectingProductList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
