@@ -20,9 +20,19 @@ import { convertDateWithTime } from '@/helpers/convertDateWithTime';
 import StatusBadge from '@/components/common/StatusBadge';
 import Theme from '@/constants/Theme';
 
+interface RouteProps {
+  inspectedProductList: InspectionRequest[];
+  refreshing: any;
+  onRefresh: any;
+}
+
 const initialLayout = { width: Dimensions.get('window').width };
 
-const InspectedRoute = ({ inspectedProductList, refreshing, onRefresh }) => {
+const InspectedRoute: React.FC<RouteProps> = ({
+  inspectedProductList,
+  refreshing,
+  onRefresh,
+}) => {
   const router = useRouter();
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
@@ -104,13 +114,17 @@ const InspectedRoute = ({ inspectedProductList, refreshing, onRefresh }) => {
   );
 };
 
-const InspectingRoute = ({ inspectingProductList, refreshing, onRefresh }) => {
+const InspectingRoute: React.FC<RouteProps> = ({
+  inspectedProductList,
+  refreshing,
+  onRefresh,
+}) => {
   const router = useRouter();
   return (
     <PullToRefresh refreshing={refreshing} onRefresh={onRefresh}>
       <ScrollView className='p-4'>
-        {inspectingProductList.length ? (
-          inspectingProductList.map((item) => (
+        {inspectedProductList.length ? (
+          inspectedProductList.map((item) => (
             <Card
               key={item.id}
               className='mb-4 rounded-xl shadow-sm border border-gray-300'
@@ -226,7 +240,7 @@ const ProductPage = () => {
   const renderScene = SceneMap({
     inspecting: () => (
       <InspectingRoute
-        inspectingProductList={inspectingProductList}
+        inspectedProductList={inspectingProductList}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
