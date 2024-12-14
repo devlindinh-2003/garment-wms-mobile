@@ -1,8 +1,8 @@
 import SpinnerLoading from '@/components/common/SpinnerLoading';
-import ProductDetailCard from '@/components/inspected-detail/product/ProductDetailCard';
 import ProductInspectionReport from '@/components/inspected-detail/product/ProductInspectionReport';
 import ProductInspectionRequestInfo from '@/components/inspected-detail/product/ProductInspectionRequest';
 import Theme from '@/constants/Theme';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 import { useGetInspectionReportById } from '@/hooks/useGetInspectionReportById';
 import { useLocalSearchParams } from 'expo-router';
@@ -16,7 +16,9 @@ const InspectedProductDetails = () => {
     id as string
   );
   const { defectsList = [] } = useGetAllDefect();
-
+  const productDefects = defectsList.filter(
+    (defect: any) => defect.type === InspectionRequestType.PRODUCT
+  );
   if (isPending) {
     return <SpinnerLoading />;
   }
@@ -121,7 +123,7 @@ const InspectedProductDetails = () => {
           failPercentage={failPercentage}
           passPercentage={passPercentage}
           inspectionReportDetails={inspectionReportDetail}
-          allDefects={defectsList}
+          allDefects={productDefects}
         />
       </ScrollView>
     );
