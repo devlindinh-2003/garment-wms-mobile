@@ -13,6 +13,7 @@ import Dialog from 'react-native-dialog';
 import Theme from '@/constants/Theme';
 import { useSnackbar } from '@/app/_layout';
 import { CheckCircle } from 'lucide-react-native';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 
 const CreateProductReport = () => {
   const { showSnackbar } = useSnackbar();
@@ -22,6 +23,9 @@ const CreateProductReport = () => {
     id as string
   );
   const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
+  const productDefects = defectsList.filter(
+    (defect: any) => defect.type === InspectionRequestType.PRODUCT
+  );
   const { mutate, isPending: isCreatingReport } = useCreateInspectionReport();
 
   const [reportDetails, setReportDetails] = useState<
@@ -189,7 +193,7 @@ const CreateProductReport = () => {
               weight={`${detail.productSize.weight}kg`}
               length={`${detail.productSize.length}m`}
               total={detail.quantityByPack}
-              defects={defectsList}
+              defects={productDefects}
               onUpdate={(pass, fail, isValid, defects) =>
                 handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }

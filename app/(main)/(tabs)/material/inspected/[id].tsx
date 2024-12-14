@@ -8,6 +8,7 @@ import SpinnerLoading from '@/components/common/SpinnerLoading';
 import Theme from '@/constants/Theme';
 import { Text } from 'react-native-paper';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 
 const InspectedDetails = () => {
   const { id } = useLocalSearchParams();
@@ -15,6 +16,9 @@ const InspectedDetails = () => {
     id as string
   );
   const { defectsList = [] } = useGetAllDefect();
+  const materialDefects = defectsList.filter(
+    (defect: any) => defect.type === InspectionRequestType.MATERIAL
+  );
   if (isPending) {
     return <SpinnerLoading />;
   }
@@ -131,7 +135,7 @@ const InspectedDetails = () => {
           passPercentage={passPercentage}
           inspectionReportDetails={inspectionReportDetail}
           importRequest={inspectionRequest?.importRequest}
-          allDefects={defectsList} // Pass defectsList to MaterialInspectionReport
+          allDefects={materialDefects}
         />
       </ScrollView>
     );

@@ -25,7 +25,6 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
   allDefects,
 }) => {
   const mapDefects = (detailDefects: any[]) => {
-    // Map all defects and set missing ones to quantity 0
     return allDefects.map((defect) => {
       const matchedDefect = detailDefects.find((d) => d.defectId === defect.id);
       return {
@@ -35,6 +34,7 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
       };
     });
   };
+  console.log(JSON.stringify(mapDefects, null, 2));
 
   return (
     <View>

@@ -14,6 +14,7 @@ import Theme from '@/constants/Theme';
 import { useGetAllDefect } from '@/hooks/useGetAllDefect';
 import { useSnackbar } from '@/app/_layout';
 import { AlertTriangle, CheckCircle, FileWarning } from 'lucide-react-native';
+import { InspectionRequestType } from '@/enums/inspectionRequestType';
 
 const CreateMaterialReport = () => {
   const { showSnackbar } = useSnackbar();
@@ -36,7 +37,9 @@ const CreateMaterialReport = () => {
   const [snackbarVisibleError, setSnackbarVisibleError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { defectsList = [], isPending: isPendingDefects } = useGetAllDefect();
-
+  const materialDefects = defectsList.filter(
+    (defect: any) => defect.type === InspectionRequestType.MATERIAL
+  );
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogType, setDialogType] = useState<'warning' | 'confirmation'>();
 
@@ -200,7 +203,7 @@ const CreateMaterialReport = () => {
               onUpdate={(pass, fail, isValid, defects) =>
                 handleReportUpdate(detail.id, pass, fail, isValid, defects)
               }
-              defects={defectsList}
+              defects={materialDefects}
             />
           ))}
 
