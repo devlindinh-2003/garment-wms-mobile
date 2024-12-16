@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Dimensions } from 'react-native';
 import { useGetAllInspectionRequest } from '@/hooks/useGetAllInspectionRequest';
 import { InspectionRequest } from '@/types/InspectionRequest';
@@ -195,7 +195,9 @@ const ProductPage = () => {
     pageSize: undefined,
     pageIndex: 0,
   });
-
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {

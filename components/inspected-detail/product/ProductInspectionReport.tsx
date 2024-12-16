@@ -48,7 +48,7 @@ const ProductInspectionReport: React.FC<ProductInspectionReportProps> = ({
 
       {/* Total Materials */}
       <View className='px-3'>
-        <Text className='text-lg font-bold mt-4'>Total Materials</Text>
+        <Text className='text-lg font-bold mt-4'>Total Inspected Products</Text>
         <Text className='text-4xl font-bold mb-3'>{totalMaterials}</Text>
       </View>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Dimensions } from 'react-native';
 import {
   TabView,
@@ -220,6 +220,9 @@ const MaterialPage: React.FC = () => {
     pageSize: undefined,
     pageIndex: 0,
   });
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const inspectedMaterialList: InspectionRequest[] = isSuccess
     ? data?.data.filter(

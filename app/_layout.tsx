@@ -11,8 +11,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SnackbarComponent from '@/components/common/SnackBar';
 
 // SplashScreen.preventAutoHideAsync();
-const queryClient = new QueryClient();
-
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: true, // default: true
+    },
+  },
+});
 // Create Snackbar Context
 const SnackbarContext = createContext({
   showSnackbar: (message: string, type: 'success' | 'error') => {},
