@@ -199,6 +199,15 @@ const PackagesItem: React.FC<PackagesItemProps> = ({
             receiptCode={receiptCode}
             receiptType={receiptType}
             updateActualQuantity={updateActualQuantity}
+            expectedQuantity={
+              currentDetails
+                .find(
+                  (d) =>
+                    d.materialReceipt?.code === receiptCode ||
+                    d.productReceipt?.code === receiptCode
+                )
+                ?.expectedQuantity?.toString() || '0'
+            }
             actualQuantity={
               currentDetails
                 .find(

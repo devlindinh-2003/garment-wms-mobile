@@ -6,7 +6,7 @@ import SpinnerLoading from '@/components/common/SpinnerLoading';
 import { Card, Text, Button, TextInput } from 'react-native-paper';
 import StatusBadge from '@/components/common/StatusBadge';
 import { convertDate } from '../../../helpers/converDate';
-import { CalendarDays, CalendarX } from 'lucide-react-native';
+import { CalendarDays, CalendarX, NotepadText } from 'lucide-react-native';
 import Theme from '@/constants/Theme';
 
 interface PackagesDetailProps {
@@ -15,6 +15,7 @@ interface PackagesDetailProps {
   receiptType: 'material' | 'product';
   updateActualQuantity: (code: string, quantity: string) => void;
   actualQuantity: string;
+  expectedQuantity: string;
 }
 
 const PackagesDetail: React.FC<PackagesDetailProps> = ({
@@ -23,6 +24,7 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
   receiptType,
   updateActualQuantity,
   actualQuantity: initialQuantity,
+  expectedQuantity,
 }) => {
   const { itemReceipt, isPending, isError, error } = useGetDetailByReceipt(
     receiptCode || '',
@@ -119,36 +121,32 @@ const PackagesDetail: React.FC<PackagesDetailProps> = ({
                     {itemReceipt?.code}
                   </StatusBadge>
                 </View>
-                {/* <View className='mt-4'>
-                  <Text className='text-sm font-medium text-gray-700 mb-1'>
-                    Expected Quantity
+
+                {/* Expected Quantity Input */}
+                <View className='flex-row items-center justify-between mb-2'>
+                  <View className='flex-row items-center gap-2'>
+                    <NotepadText size={20} color={Theme.greyText} />
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      Expected Quantity:
+                    </Text>
+                  </View>
+                  <Text className='font-bold text-gray-700 text-lg'>
+                    {expectedQuantity}
                   </Text>
-                  <TextInput
-                    mode='outlined'
-                    value={itemReceipt?.quantityByPack?.toString() || 'N/A'}
-                    disabled={true}
-                    keyboardType='numeric'
-                    outlineColor='#e5e7eb'
-                    activeOutlineColor='#3b82f6'
-                    style={{
-                      backgroundColor: '#ffffff',
-                    }}
-                    theme={{
-                      colors: {
-                        text: 'red',
-                        placeholder: Theme.blue[100],
-                        primary: '#3b82f6',
-                      },
-                    }}
-                  />
-                </View> */}
+                </View>
+
                 {/* Actual Quantity Input */}
                 <TextInput
                   outlineColor={Theme.primaryLightBackgroundColor}
                   activeOutlineColor={Theme.primaryDarkBackgroundColor}
                   label='Actual Quantity'
                   value={actualQuantity}
-                  onChangeText={(text) => setActualQuantity(text)}
+                  onChangeText={(text) => {
+                    const numericValue = text.replace(/[^0-9]/g, ''); // Allow only numbers
+                    if (Number(numericValue) <= 999999) {
+                      setActualQuantity(numericValue);
+                    }
+                  }}
                   mode='outlined'
                   className='mt-4 bg-white'
                   keyboardType='numeric'

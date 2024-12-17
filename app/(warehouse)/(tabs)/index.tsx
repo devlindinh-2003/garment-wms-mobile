@@ -40,7 +40,8 @@ const WarehouseStaffDashboard = () => {
       const filteredReports = response?.data?.data?.filter(
         (report: any) =>
           report.status === InventoryReportStatus.IN_PROGRESS ||
-          report.status === InventoryReportStatus.REPORTED
+          report.status === InventoryReportStatus.REPORTED ||
+          report.status === InventoryReportStatus.FINISHED
       );
 
       setInventoryReports(filteredReports || []);
@@ -159,7 +160,9 @@ const WarehouseStaffDashboard = () => {
 
   const ReportedRoute = () => {
     const reports = inventoryReports.filter(
-      (report) => report.status === InventoryReportStatus.REPORTED
+      (report: any) =>
+        report.status === InventoryReportStatus.REPORTED ||
+        report.status === InventoryReportStatus.FINISHED
     );
 
     return (
