@@ -37,9 +37,8 @@ const CameraComponent = ({
 
   // Handle barcode scanning
   const handleBarCodeScanned = (result: any) => {
-    const { data } = result;
-    console.log('Barcode scanned:', data);
-
+    let { data } = result;
+    data = data.trim();
     if (!isLocked) {
       setIsLocked(true); // Lock the camera
       setScannedData(data); // Store scanned data
